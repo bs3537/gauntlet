@@ -165,6 +165,38 @@ patent offices, standards bodies, and foreign equivalents.
 - If a required connector is unavailable after reasonable checks, state that
 limitation and use the best authoritative fallback. Do not loop indefinitely.
 
+### Research execution model — Gauntlet fan-out (first pass)
+
+When this prompt runs as the Gauntlet Stage-1 first pass, you (Opus 4.8 at `/effort
+max`) are the ORCHESTRATOR, REVIEWER, and JUDGE of a research panel — not a solo
+researcher. The exhaustive evidence bar above is met by fan-out and then verified by
+you before anything enters the report.
+
+- Drive breadth with the **deep-research skill at the `ultradeep` setting** — mandatory
+for a Gauntlet run (install it first; it chains its Search-as-Code second pass). Its
+four concurrent research lanes are your four **Opus 4.8, xhigh-effort** research
+subagents. Give each lane a non-overlapping evidence stream matched to the company's
+archetype — for example (1) demand, TAM, and epidemiology or unit volumes; (2)
+competition, moat, and pipeline or product roadmap; (3) filings, financials, and
+valuation inputs; (4) catalysts, regulatory, legal, and management or governance.
+Never pad lanes; collapse to fewer if the company has fewer independent streams.
+- Spawn additional **Opus 4.8, xhigh-effort** Agent subagents for any residual
+coverage gap or deep single-source dive. Every subagent gets a complete brief:
+objective and decision relevance, exact output path and format, lane boundary and
+prohibited overlap, the source-identity/date/locator/direct-excerpt standard,
+two-attempt abstention, and the rule that a delegated leaf never spawns its own
+subagents.
+- As orchestrator and judge, QC every lane and subagent artifact for non-emptiness,
+brief compliance, and evidence anchors; independently verify each load-bearing claim;
+and admit ONLY verified lane evidence into the evidence ledger (subject to the lock
+rule) and the draft. A lane's raw output is a claim to be checked, never a finished
+input. Disagreements between lanes become explicit `[SOURCE CONFLICT]` items, never
+silent averages.
+
+This fan-out supplies breadth and internal cross-checking, but it does NOT replace the
+external, different-vendor adversarial review in Stage 2: every first-pass subagent is
+the same model family and shares its blind spots and training-data gaps.
+
 ### Files that must be created (v2 set)
 
 Save work in the assignment's output directory, not as hidden chain-of-thought. At

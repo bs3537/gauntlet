@@ -15,6 +15,10 @@
 #   REVIEWER_TIMEOUT_S  (default 3600)
 #   QC_MIN_BYTES        (default 3000)
 #   PREFLIGHT=1         run a cheap codex auth/availability ping before the review
+#   QC_MODE             judge (default; full scored-review token gate) | lane (size-only, for research lanes)
+#   PROMPT_FILE / REVIEW_FILE / CAPTURE_FILE   override the round-derived paths so this
+#                       hardened launcher can run each panel research lane and the judge
+#                       (panel mode). Unset = the single-reviewer round-1/round-2 defaults.
 #
 # Exit codes: 0 review completed AND passed QC · 3 QC fail · 124 timeout · 2 usage/missing input · 1 launch/preflight failure
 #
@@ -51,10 +55,17 @@ else
   capture_file="$run_dir/10_review_capture_r1.md"
 fi
 
+# Panel mode: override the round-derived paths so this hardened launcher+QC can run
+# each research lane and the judge. Unset = the single-reviewer defaults above.
+prompt_file="${PROMPT_FILE:-$prompt_file}"
+review_file="${REVIEW_FILE:-$review_file}"
+capture_file="${CAPTURE_FILE:-$capture_file}"
+
 REVIEWER_MODEL="${REVIEWER_MODEL:-gpt-5.6-sol}"
 REVIEWER_EFFORT="${REVIEWER_EFFORT:-max}"
 REVIEWER_TIMEOUT_S="${REVIEWER_TIMEOUT_S:-3600}"
 QC_MIN_BYTES="${QC_MIN_BYTES:-3000}"
+QC_MODE="${QC_MODE:-judge}"   # judge = full scored-review gate; lane = size-only
 
 qc_gate() {  # qc_gate <file>  -> 0 pass / 1 fail (prints reason)
   local f="$1"
@@ -62,10 +73,12 @@ qc_gate() {  # qc_gate <file>  -> 0 pass / 1 fail (prints reason)
   local bytes; bytes="$(wc -c < "$f")"
   if [ "$bytes" -lt "$QC_MIN_BYTES" ]; then echo "[qc] FAIL: $f is $bytes bytes < $QC_MIN_BYTES"; return 1; fi
   local ok=0 tok
-  for tok in 'VERDICT' '/100' 'CLAIM VERIFICATION' 'COMPLIANCE'; do
-    grep -qi -- "$tok" "$f" || { echo "[qc] FAIL: token not found in $f: $tok"; ok=1; }
-  done
-  [ "$ok" -eq 0 ] && echo "[qc] PASS: $f ($bytes bytes)"
+  if [ "$QC_MODE" = "judge" ]; then
+    for tok in 'VERDICT' '/100' 'CLAIM VERIFICATION' 'COMPLIANCE'; do
+      grep -qi -- "$tok" "$f" || { echo "[qc] FAIL: token not found in $f: $tok"; ok=1; }
+    done
+  fi
+  [ "$ok" -eq 0 ] && echo "[qc] PASS ($QC_MODE): $f ($bytes bytes)"
   return "$ok"
 }
 
