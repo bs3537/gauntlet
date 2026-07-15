@@ -106,10 +106,16 @@ go; there is nothing else to download or install separately.
 | **`valuation`** | Damodaran-grounded rNPV/DCF/SOTP engine (dev-stage biotech §4B) | first pass + reviewer |
 | **`hybrid-model-fusion`** | provides `scripts/run_codex.sh`, the hardened codex launcher | reviewer |
 
-> The bundled `valuation` skill carries Damodaran *method → chapter/page* reference **notes**, not
-> the book. Its deepest guidance-lookup path expects the full *Investment Valuation* text at
-> `~/valuation_reference/` (intentionally **not** redistributed here, for copyright reasons); the
-> rNPV/DCF **engine** that Gauntlet actually calls runs without it.
+> **Damodaran text (optional — standalone `valuation` deep-lookups only).** The bundled `valuation`
+> skill ships original *method → chapter/page* reference **notes** and its engine hard-codes the
+> formulas, so **Gauntlet and the rNPV/DCF engine need nothing more**. The skill's *standalone*
+> STEP 0 deep page-lookups additionally `grep` the full text of Damodaran's *Investment Valuation*
+> (3rd ed.) at `~/valuation_reference/damodaran_investment_valuation_fulltext.txt` (page-delimited
+> `===== PAGE N =====`). That book is **© John Wiley & Sons — not redistributed here**; to enable
+> those lookups, obtain your own copy and place it there. Damodaran also publishes extensive **free**
+> valuation material — lecture notes, chapter front matter, spreadsheets — on his official NYU site
+> (<https://pages.stern.nyu.edu/~adamodar/>). ("Available as a PDF somewhere on the web" does **not**
+> make the book public-domain — it stays Wiley-copyrighted, so it is not bundled or linked here.)
 
 ---
 
@@ -181,9 +187,10 @@ Then configure the external data sources above, and you are ready to invoke.
 run the gauntlet on <TICKER>
 ```
 
-You get back: the rating + weighted target + expected return in the first sentence; the path to
-`FINAL_REPORT.md` and the run directory; the reviewer's score; and the 2–3 highest-impact
-adjudication outcomes (what the second model caught, what was rejected and why).
+You get back: the rating + weighted target + expected return in the first sentence; **direct
+clickable links to both deliverables — `FINAL_REPORT.md` and the styled `FINAL_REPORT.html`** — plus
+the run directory; the reviewer's score; and the 2–3 highest-impact adjudication outcomes (what the
+second model caught, what was rejected and why).
 
 ## Outputs (in the run directory)
 
@@ -191,7 +198,9 @@ adjudication outcomes (what the second model caught, what was rejected and why).
 · `05_valuation_model.py` (+ `05_valuation_plan.json` + engine `*_rnpv_results.json/.xlsx`) ·
 `06_model_outputs.csv` · `07_working_research.md` · `08_preliminary_report.md` ·
 `09_reviewer_*` prompts · `10_reviewer_lane{1..4}.md` + `10_adversarial_review_gpt56sol.md` ·
-`11_adjudication_and_corrections.md` · **`FINAL_REPORT.md`** · `VERIFICATION_LOG.md`.
+`11_adjudication_and_corrections.md` · **`FINAL_REPORT.md`** + **`FINAL_REPORT.html`** (styled,
+self-contained twin — same content in a Gauntlet-branded template with a rating / target / return /
+reviewer-score metric dashboard) · `VERIFICATION_LOG.md`.
 
 ## Cost & quota (read before running)
 
@@ -208,6 +217,8 @@ screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol max judge when q
 - `references/master_research_prompt.md` — the universal institutional research prompt (Phases 0–6 + 8, the Stage-1 fan-out model, §4B valuation-engine delegation, degraded-mode self-review appendix).
 - `references/reviewer_prompt_template.md` — the GPT-5.6 Sol adversarial **judge** prompt (panel mode, rubric D1–D7, delivery contract, placeholders incl. `{{LANE_FINDINGS}}`).
 - `scripts/run_review.sh` — hardened codex launcher + QC gate; reused per research lane (`QC_MODE=lane`, path overrides) and for the judge (`QC_MODE=judge`).
+- `scripts/render_report.sh` — renders `FINAL_REPORT.md` → styled `FINAL_REPORT.html` (+ optional PDF) via the bundled deep-research `md_to_html.py`; prints the HTML path.
+- `references/gauntlet_report_template.html` — the Gauntlet-branded HTML template (McKinsey-style, metric dashboard) `render_report.sh` fills.
 - `install.sh` — one-shot installer: copies gauntlet + all companion skills into the Claude tree and mirrors the reviewer-side `valuation` into the codex tree.
 - `companion-skills/` — the four bundled dependencies (`deep-research`, `search-as-code`, `valuation`, `hybrid-model-fusion`), so a clone is self-contained.
 - `docs/` — the approved implementation plan.

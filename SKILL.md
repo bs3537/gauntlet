@@ -63,7 +63,9 @@ the session model, recording the deviation in `VERIFICATION_LOG.md`. Do not sile
 
 - `references/master_research_prompt.md` — the full universal master research prompt (Phases 0–6 and 8, v2 file set, degraded-mode self-review appendix). Stage 1 and Stage 5 execute it.
 - `references/reviewer_prompt_template.md` — the adversarial reviewer prompt with `{{PLACEHOLDERS}}`. Stage 2 assembles it.
+- `references/gauntlet_report_template.html` — Gauntlet-branded HTML report template (metric dashboard); Stage 5 fills it.
 - `scripts/run_review.sh` — preflight + codex launch (hardened runner with raw fallback) + QC gate.
+- `scripts/render_report.sh` — Stage 5 renders `FINAL_REPORT.md` → styled `FINAL_REPORT.html` (+ optional PDF) via the bundled deep-research `md_to_html.py`.
 
 ## Stage 0 — Intake and preflight
 
@@ -205,10 +207,33 @@ sustained finding reflected; every rejected finding has a documented, evidence-b
 Do not mention the adversarial-review process in the polished report body; it lives in
 `VERIFICATION_LOG.md` and the appendix.
 
+**Emit BOTH formats (required): Markdown + styled HTML.** Write `FINAL_REPORT.md`, then render its
+self-contained HTML twin with the bundled renderer (absolute paths only):
+
+```bash
+bash <skill_dir>/scripts/render_report.sh "$RUN_DIR/FINAL_REPORT.md" \
+  --title "<Company> (<TICKER>) — Gauntlet Equity Research" --date <AS_OF_DATE> \
+  --metric "Rating=<RATING>" --metric "Weighted Target=<TARGET>" \
+  --metric "Expected Return=<ER>" --metric "Reviewer Score=<SCORE>/100"
+```
+
+It writes `FINAL_REPORT.html` next to the Markdown — the Gauntlet-branded McKinsey-style template
+with the four `--metric` values as the header dashboard — and prints the HTML path on stdout.
+`render_report.sh` locates the deep-research `md_to_html.py` across skill trees; if that companion
+skill is absent it exits non-zero, so ship the Markdown alone and log the failed HTML step in
+`VERIFICATION_LOG.md`. Add `--pdf-out "$RUN_DIR/FINAL_REPORT.pdf"` for an optional PDF (needs
+Chrome/Chromium). The HTML is a rendering of the SAME content — never let it diverge from the `.md`.
+
 ## Presenting
 
-Give the user: rating + weighted target + expected return in the first sentence; the path to
-`FINAL_REPORT.md` and the run directory; the reviewer's score and 2–3 highest-impact adjudication
+Give the user, in the first sentence: rating + weighted target + expected return. Then **direct,
+clickable links to both deliverables** — use absolute `file://` paths so the terminal makes them
+clickable:
+- **Markdown** — `file://$RUN_DIR/FINAL_REPORT.md`
+- **HTML (styled)** — `file://$RUN_DIR/FINAL_REPORT.html` — on WSL, open it in the Windows browser
+  with `explorer.exe "$(wslpath -w "$RUN_DIR/FINAL_REPORT.html")"`, or re-run the render step with `--open`.
+
+Then give the run-directory path, the reviewer's score, and the 2–3 highest-impact adjudication
 outcomes (what the second model caught, what was rejected and why). Do not paste the whole report
 into chat.
 
