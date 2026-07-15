@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "valuation_plan",
+  "description": "Input plan consumed by valuation_engine.py. The skill/agent gathers data (FMP/Perplexity/SEC/BioMCP), assembles this plan, then runs the engine. Units are millions unless noted; rates are decimals (0.09 = 9%).",
+  "type": "object",
+  "required": ["method", "company"],
+  "properties": {
+    "method": {"type": "string", "enum": ["fcff", "fcfe", "ddm", "rnpv", "relative", "apv"]},
+    "company": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string"},
+        "ticker": {"type": "string"},
+        "currency": {"type": "string", "default": "USD"},
+        "units": {"type": "string", "default": "millions"},
+        "as_of": {"type": "string"}
+      }
+    },
+    "wacc": {
+      "description": "Either supply 'wacc' directly, or supply the build inputs and the engine computes it.",
+      "type": "object",
+      "properties": {
+        "wacc": {"type": "number"},
+        "rf": {"type": "number"},
+        "erp": {"type": "number"},
+        "beta": {"type": "number"},
+        "peer_betas": {"type": "array", "items": {"type": "number"}},
+        "peer_de": {"type": "array", "items": {"type": "number"}},
+        "firm_de": {"type": "number"},
+        "tax_rate": {"type": "number"},
+        "cost_of_debt_after_tax": {"type": "number"},
+        "interest_coverage": {"type": "number"},
+        "equity_value": {"type": "number"},
+        "debt_value": {"type": "number"},
+        "crp": {"type": "number", "description": "Country-risk premium (decimal). Widens the validator's acceptable WACC band to 5%–(20%+crp) so legitimate emerging-market discount rates are not flagged."},
+        "tax_band": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "Optional [lo, hi] override for the acceptable tax-rate band (default [0.15, 0.30]) for non-US jurisdictions."}
+      }
+    },
+    "dcf": {
+      "description": "Inputs for fcff/fcfe/apv. base_cf = base-year FCFF (fcff/apv) or FCFE (fcfe). FCFE is NEVER discounted at WACC: supply 'rate' (a precomputed cost of equity) or wacc build inputs (rf/erp/beta). APV supply 'rho_u' (unlevered cost of equity) or wacc build inputs so beta can be unlevered; plus tax_shield_pv and optional distress_pv.",
+      "type": "object",
+      "properties": {
+        "base_cf": {"type": "number"},
+        "growth_rates": {"type": "array", "items": {"type": "number"}},
+        "stable_growth": {"type": "number"},
+        "rate": {"type": "number", "description": "Precomputed discount rate. For fcfe this is the cost of equity (ke) — the engine hard-errors rather than silently fall back to WACC. For fcff, used only when no built WACC is available."},
+        "rho_u": {"type": "number", "description": "APV only: unlevered cost of equity. If omitted, derived by unlevering the wacc-block beta."},
+        "roc": {"type": "number", "description": "Stable-phase return on capital (ROIC for fcff/apv, ROE for fcfe). If supplied, the validator checks g = RR × ROC (RR = g/ROC ≤ 1) and warns when ROC ≤ discount rate (value-destroying growth)."},
+        "rf": {"type": "number"},
+        "tax_rate": {"type": "number"},
+        "tax_shield_pv": {"type": "number", "description": "APV only: PV of interest tax shields, added once explicitly (never embed it in the discount rate)."},
+        "distress_pv": {"type": "number", "description": "APV only: PV of expected financial-distress/bankruptcy cost, subtracted. Default 0."},
+        "mid_year": {"type": "boolean", "default": true},
+        "net_debt": {"type": "number"},
+        "minority_interest": {"type": "number"},
+        "nonoperating_assets": {"type": "number"},
+        "shares": {"type": "number"},
+        "options_value": {"type": "number"},
+        "drivers": {
+          "type": "object",
+          "description": "Driver-based FCFF (young/high-growth/cyclical firms, Ch.22-23). When present under method=fcff, the engine builds the FCFF stream from revenue→margin→reinvestment instead of base_cf+growth_rates.",
+          "properties": {
+            "base_revenue": {"type": "number"},
+            "revenue_growth": {"type": "array", "items": {"type": "number"}, "description": "Per-year revenue growth (decelerating)."},
+            "current_margin": {"type": "number", "description": "Current operating margin (decimal; may be negative)."},
+            "target_margin": {"type": "number", "description": "Mature/steady-state operating margin."},
+            "margin_converge": {"type": "number", "default": 0.5, "description": "Fraction of the current→target margin gap closed each year (0.5=LinkedIn, ~0.333=Tesla)."},
+            "margin_mode": {"type": "string", "enum": ["fraction", "linear"], "default": "fraction"},
+            "sales_to_capital": {"type": "number", "description": "Sales-to-capital ratio; reinvestment = ΔRevenue / sales_to_capital."},
+            "tax_rate": {"type": "number"},
+            "nol": {"type": "number", "default": 0, "description": "Opening NOL carryforward balance; 0% tax until exhausted."},
+            "terminal_roc": {"type": "number", "description": "Stable-phase ROC; terminal reinvestment = g/terminal_roc. If omitted, the last explicit FCFF is grown by (1+g)."}
+          }
+        }
+      }
+    },
+    "ddm": {
+      "description": "Dividend Discount Model. Single-stage: supply dps1, ke_stable, stable_growth. Two-stage: supply dps0, high_growth, high_years, ke_high, ke_stable, stable_growth, and — for a payout step-up at the stable transition (Damodaran P&G) — BOTH payout_high and payout_stable so the terminal dividend is earnings-anchored.",
+      "type": "object",
+      "properties": {
+        "dps0": {"type": "number"},
+        "dps1": {"type": "number"},
+        "high_growth": {"type": "number"},
+        "high_years": {"type": "integer"},
+        "stable_growth": {"type": "number"},
+        "ke_high": {"type": "number"},
+        "ke_stable": {"type": "number"},
+        "payout_high": {"type": "number", "description": "High-phase dividend payout ratio; required with payout_stable to convert DPS_n back to EPS_n."},
+        "payout_stable": {"type": "number", "description": "Stable-phase payout ratio (= 1 − g/ROE_stable)."},
+        "rf": {"type": "number", "description": "Risk-free rate; activates the g <= rf economic terminal-growth cap on the DDM path."},
+        "roc": {"type": "number", "description": "Stable-phase ROE. If omitted but payout_stable is given, derived as g/(1−payout_stable) for the value-creating-growth check."},
+        "shares": {"type": "number"}
+      }
+    },
+    "rnpv": {
+      "type": "object",
+      "properties": {
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "loa", "pv_commercial"],
+            "properties": {
+              "name": {"type": "string"},
+              "peak_sales": {"type": "number", "description": "Informational headline only — NOT a present value and never used as pv_commercial."},
+              "loa": {"type": "number", "minimum": 0, "maximum": 1},
+              "pv_commercial": {"type": "number", "description": "Required: PV of risk-unadjusted commercial cash flows ($M)."},
+              "pv_dev_cost": {"type": "number"},
+              "floor_zero": {"type": "boolean", "default": true},
+              "committed": {"type": "boolean", "default": false, "description": "Contractually committed program (no right to abandon); overrides floor_zero so a negative rNPV is carried through."},
+              "commercial": {
+                "type": "object",
+                "description": "Optional drug commercial-curve drivers to BUILD pv_commercial (risk-UNADJUSTED) instead of hand-supplying it. Risk stays in loa. Ch.28 rNPV foundation.",
+                "properties": {
+                  "peak_sales": {"type": "number"},
+                  "launch_year": {"type": "integer", "description": "First calendar year with sales (years from valuation date)."},
+                  "ramp_years": {"type": "integer", "description": "Linear ramp length to peak."},
+                  "plateau_years": {"type": "integer"},
+                  "erosion_years": {"type": "integer"},
+                  "erosion_rate": {"type": "number", "description": "Geometric post-LoE decline per year (0-1)."},
+                  "margin": {"type": "number", "description": "Net cash-flow margin on revenue."},
+                  "discount_rate": {"type": "number", "description": "Biotech/asset discount rate (risk goes in loa, not here)."},
+                  "tax_rate": {"type": "number", "description": "Optional; if given, NCF = revenue×margin×(1−tax)."}
+                }
+              }
+            }
+          }
+        },
+        "net_cash": {"type": "number"},
+        "overhead_pv": {"type": "number"},
+        "options_value": {"type": "number", "description": "Black-Scholes value of options/warrants ($M), subtracted from equity as a liability; per-share then uses BASIC shares."},
+        "shares": {"type": "number", "description": "BASIC shares outstanding (millions)."},
+        "scenarios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "prob", "target"],
+            "properties": {
+              "name": {"type": "string"},
+              "prob": {"type": "number"},
+              "target": {"type": "number"}
+            }
+          }
+        }
+      }
+    },
+    "relative": {
+      "type": "object",
+      "properties": {
+        "metric_name": {"type": "string"},
+        "basis": {"type": "string", "enum": ["aggregate", "per_share"], "description": "What target_metric is. EV/* multiples require 'aggregate' (EBITDA/sales, $M). Equity (P/*) multiples need 'per_share' (EPS/BVPS/SPS) or 'aggregate' ($M net income/book equity/sales) — REQUIRED for P/* to avoid a dual-unit order-of-magnitude error."},
+        "target_metric": {"type": "number"},
+        "stat": {"type": "string", "enum": ["median", "mean"], "default": "median"},
+        "exclude_outliers": {"type": "boolean", "default": false, "description": "Drop Tukey-fence outliers from the central multiple and 25/75 range. Default false = outliers flagged but INCLUDED."},
+        "peers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "multiple": {"type": "number"}}
+          }
+        },
+        "net_debt": {"type": "number"},
+        "shares": {"type": "number"}
+      }
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "excel": {"type": "boolean", "default": true},
+        "memo": {"type": "boolean", "default": true},
+        "out_dir": {"type": "string"}
+      }
+    }
+  }
+}

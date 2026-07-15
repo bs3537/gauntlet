@@ -1,0 +1,7 @@
+# valuation skill — Python dependencies
+openpyxl>=3.1      # Excel model builder
+numpy>=1.24        # calculators (DCF, comps, rNPV)
+scipy>=1.10        # Black-Scholes (patent / equity-as-option) via scipy.stats.norm
+python-docx>=1.1   # memo .docx rendering (memo_builder / md2docx)
+requests>=2.28     # optional: direct FMP /stable/ REST fallback
+# Note: LibreOffice (soffice) is optional — if absent, Excel formulas compute on open.

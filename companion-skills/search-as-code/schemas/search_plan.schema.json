@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SearchPlan",
+  "type": "object",
+  "required": ["topic", "mode", "queries"],
+  "additionalProperties": false,
+  "properties": {
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["quick", "standard", "deep", "ultradeep"]
+    },
+    "output_dir": {
+      "type": "string"
+    },
+    "plan_type": {"type": "string"},
+    "entity": {"type": "string"},
+    "ticker": {"type": "string"},
+    "exchange": {"type": ["string", "null"]},
+    "sector": {"type": ["string", "null"]},
+    "issuer_domains": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "queries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["query", "purpose"],
+        "additionalProperties": false,
+        "properties": {
+          "query": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "query_type": {
+            "type": "string",
+            "enum": ["filings", "financials", "governance", "issuer_ir", "results_earnings", "ma", "news_catalyst", "valuation", "peers", "bear_case"]
+          },
+          "search_domain_filter": {
+            "type": "array",
+            "items": {"type": "string"},
+            "maxItems": 20
+          },
+          "search_recency_filter": {
+            "type": "string",
+            "enum": ["hour", "day", "week", "month", "year"]
+          },
+          "search_after_date_filter": {"type": "string"},
+          "search_before_date_filter": {"type": "string"},
+          "last_updated_after_filter": {"type": "string"},
+          "last_updated_before_filter": {"type": "string"},
+          "country": {"type": "string"},
+          "max_results": {"type": "integer", "minimum": 1, "maximum": 20},
+          "snippet_mode": {"type": "string", "enum": ["low", "medium", "high"]},
+          "max_tokens": {"type": "integer", "minimum": 1},
+          "max_tokens_per_page": {"type": "integer", "minimum": 1},
+          "priority": {"type": "integer", "minimum": 1}
+        }
+      }
+    }
+  }
+}

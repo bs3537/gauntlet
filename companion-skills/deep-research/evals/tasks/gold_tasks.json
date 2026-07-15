@@ -1,0 +1,166 @@
+{
+  "version": "1.0",
+  "external_comparability": false,
+  "tasks": [
+    {
+      "task_id": "drb-style-biotech-001",
+      "category": "deepresearch-bench-style",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Assess whether a hypothetical Phase 2 autoimmune biologic readout supports advancing to Phase 3, including efficacy, safety, dose-response, trial design, and competitive context.",
+      "success_criteria": ["Separates facts from inference", "Checks clinical endpoint support", "Discusses limitations and next evidence needed"]
+    },
+    {
+      "task_id": "drb-style-policy-002",
+      "category": "deepresearch-bench-style",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Compare two regulatory frameworks for AI model safety reporting and identify where their disclosure requirements conflict or overlap.",
+      "success_criteria": ["Uses primary regulatory text", "Surfaces disagreements", "Avoids treating summaries as law"]
+    },
+    {
+      "task_id": "drb-style-tech-003",
+      "category": "deepresearch-bench-style",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Evaluate the state of open-source vector databases for hybrid search in production knowledge systems.",
+      "success_criteria": ["Covers retrieval quality, operations, and ecosystem", "Cites current documentation", "Names tradeoffs"]
+    },
+    {
+      "task_id": "drb-style-market-004",
+      "category": "deepresearch-bench-style",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Analyze the supply-chain bottlenecks for high-bandwidth memory capacity expansion over the next 18 months.",
+      "success_criteria": ["Uses primary/company sources where possible", "Distinguishes capacity from demand", "Quantifies uncertainty"]
+    },
+    {
+      "task_id": "drb-style-science-005",
+      "category": "deepresearch-bench-style",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Review evidence for a contested nutrition intervention and explain why study design differences change the conclusion.",
+      "success_criteria": ["Weights evidence hierarchy", "Flags confounders", "Avoids medical advice overreach"]
+    },
+    {
+      "task_id": "deepconsult-business-001",
+      "category": "deepconsult-style-business",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Prepare a board memo on whether a mid-market SaaS company should enter an adjacent vertical in the next fiscal year.",
+      "success_criteria": ["Answers decision first", "Covers TAM, competition, GTM, product fit", "States key assumptions"]
+    },
+    {
+      "task_id": "deepconsult-business-002",
+      "category": "deepconsult-style-business",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Compare build, buy, and partner options for adding AI document review to an enterprise workflow product.",
+      "success_criteria": ["Compares cost/time/risk", "Uses market evidence", "Names implementation risks"]
+    },
+    {
+      "task_id": "deepconsult-business-003",
+      "category": "deepconsult-style-business",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Diagnose why a consumer subscription app's growth slowed despite stable retention and propose a research plan.",
+      "success_criteria": ["Separates hypotheses", "Requests missing data", "Avoids unsupported certainty"]
+    },
+    {
+      "task_id": "deepconsult-business-004",
+      "category": "deepconsult-style-business",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Assess whether a pricing-packaging change should target ARPU expansion or conversion lift first.",
+      "success_criteria": ["Explains tradeoffs", "Defines metrics", "Identifies guardrails"]
+    },
+    {
+      "task_id": "deepconsult-business-005",
+      "category": "deepconsult-style-business",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Create an evidence-backed vendor shortlist for a finance team's close-management automation project.",
+      "success_criteria": ["States selection criteria", "Compares vendors fairly", "Flags procurement risks"]
+    },
+    {
+      "task_id": "browsecomp-hardfact-001",
+      "category": "browsecomp-style-hard-fact",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Find the exact publication date and primary source for a niche technical standard update, then explain what changed.",
+      "success_criteria": ["Finds primary source", "Uses exact date", "Shows search persistence"]
+    },
+    {
+      "task_id": "browsecomp-hardfact-002",
+      "category": "browsecomp-style-hard-fact",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Identify the original source for a quoted market statistic that appears in several secondary articles.",
+      "success_criteria": ["Traces source lineage", "Rejects circular citations", "Labels unresolved provenance"]
+    },
+    {
+      "task_id": "browsecomp-hardfact-003",
+      "category": "browsecomp-style-hard-fact",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Determine whether a small public agency changed a filing deadline after initial publication.",
+      "success_criteria": ["Checks archived/current pages", "Uses absolute dates", "Surfaces ambiguity"]
+    },
+    {
+      "task_id": "browsecomp-hardfact-004",
+      "category": "browsecomp-style-hard-fact",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Resolve conflicting product specification claims across official docs, release notes, and reseller pages.",
+      "success_criteria": ["Prioritizes official docs", "Explains conflicts", "Avoids stale specs"]
+    },
+    {
+      "task_id": "browsecomp-hardfact-005",
+      "category": "browsecomp-style-hard-fact",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Find whether a named clinical trial changed its primary endpoint between registry versions.",
+      "success_criteria": ["Uses registry history", "Quotes endpoint language", "Separates amendment timing from results"]
+    },
+    {
+      "task_id": "adversarial-negation-001",
+      "category": "adversarial-citation-faithfulness",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Audit a report section where evidence says a trial failed its primary endpoint but the prose claims it met the endpoint.",
+      "success_criteria": ["Detects negation contradiction", "Blocks delivery", "Explains fix"]
+    },
+    {
+      "task_id": "adversarial-paraphrase-002",
+      "category": "adversarial-citation-faithfulness",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Audit paraphrased claims whose wording differs from the source but should still be entailed by the evidence.",
+      "success_criteria": ["Does not over-rely on lexical overlap", "Preserves entailed paraphrases", "Flags unsupported additions"]
+    },
+    {
+      "task_id": "adversarial-display-map-003",
+      "category": "adversarial-citation-faithfulness",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Audit a report where source registration order differs from first-use citation order.",
+      "success_criteria": ["Uses display_map.json", "Avoids ordinal mismatch", "Links claims to correct source IDs"]
+    },
+    {
+      "task_id": "adversarial-table-004",
+      "category": "adversarial-citation-faithfulness",
+      "mode": "standard",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Audit a competitive landscape table containing figures and statuses that require source support.",
+      "success_criteria": ["Extracts table claims", "Checks row citations", "Flags unsupported cells"]
+    },
+    {
+      "task_id": "adversarial-subagent-merge-005",
+      "category": "adversarial-citation-faithfulness",
+      "mode": "deep",
+      "rubric_version": "race-mini-v1",
+      "prompt": "Audit a multi-subagent run where evidence arrives in separate handoff files and must be merged before verification.",
+      "success_criteria": ["Normalizes subagent evidence", "Deduplicates sources", "Gate sees merged evidence"]
+    }
+  ]
+}

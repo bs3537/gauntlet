@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CoverageMap",
+  "description": "Planned-vs-executed lane and query-family coverage for warn-first run-trace accounting.",
+  "type": "object",
+  "required": ["version", "generated_at", "mode", "lane_coverage", "query_family_coverage", "overall"],
+  "properties": {
+    "version": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "mode": { "type": "string", "enum": ["quick", "standard", "deep", "ultradeep"] },
+    "lane_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lane_id", "planned", "executed", "source_count", "provider_call_count", "expected_source_min", "missing_from_plan", "status"],
+        "properties": {
+          "lane_id": { "type": "string" },
+          "planned": { "type": "boolean" },
+          "executed": { "type": "boolean" },
+          "executed_role": { "type": ["string", "null"] },
+          "source_count": { "type": "integer", "minimum": 0 },
+          "evidence_count": { "type": "integer", "minimum": 0 },
+          "provider_call_count": { "type": "integer", "minimum": 0 },
+          "subagent_count": { "type": "integer", "minimum": 0 },
+          "expected_source_min": { "type": "integer", "minimum": 0 },
+          "missing_from_plan": { "type": "boolean" },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "in_progress", "covered", "bounded", "gap_disclosed", "below_target"]
+          },
+          "gaps": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "query_family_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["query_family_id", "lane_id", "planned", "executed", "provider_call_count", "retained_source_count", "status"],
+        "properties": {
+          "query_family_id": { "type": "string" },
+          "lane_id": { "type": "string" },
+          "planned": { "type": "boolean" },
+          "executed": { "type": "boolean" },
+          "provider_call_count": { "type": "integer", "minimum": 0 },
+          "retained_source_count": { "type": "integer", "minimum": 0 },
+          "status": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overall": {
+      "type": "object",
+      "required": ["planned_lanes", "executed_lanes", "covered_lanes", "gap_disclosed_lanes", "bounded_lanes", "below_target_lanes", "total_sources", "total_evidence", "status"],
+      "properties": {
+        "planned_lanes": { "type": "integer", "minimum": 0 },
+        "executed_lanes": { "type": "integer", "minimum": 0 },
+        "covered_lanes": { "type": "integer", "minimum": 0 },
+        "gap_disclosed_lanes": { "type": "integer", "minimum": 0 },
+        "bounded_lanes": { "type": "integer", "minimum": 0 },
+        "below_target_lanes": { "type": "integer", "minimum": 0 },
+        "total_sources": { "type": "integer", "minimum": 0 },
+        "total_evidence": { "type": "integer", "minimum": 0 },
+        "status": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

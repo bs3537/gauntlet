@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source",
+  "description": "A research source with stable identity. source_id = sha256(canonical_locator)[:16].",
+  "type": "object",
+  "required": ["source_id", "canonical_locator", "raw_url", "title", "source_type", "metadata_status", "registered_at"],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "sha256(canonical_locator)[:16] — stable across edits and continuation"
+    },
+    "canonical_locator": {
+      "type": "string",
+      "description": "Canonical identifier: doi:10.1038/..., arxiv:2305.14251, or normalized URL (scheme+host+path, no fragment/tracking params)"
+    },
+    "raw_url": {
+      "type": "string",
+      "description": "Original URL as retrieved, before normalization"
+    },
+    "title": {
+      "type": "string"
+    },
+    "authors": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "default": null
+    },
+    "year": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "venue": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Journal, conference, preprint server, or publisher venue when available"
+    },
+    "provider_ids": {
+      "type": ["object", "null"],
+      "additionalProperties": { "type": "string" },
+      "default": null,
+      "description": "Provider-specific IDs, e.g. semantic_scholar paperId, PMID, PMCID, DOI"
+    },
+    "citation_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null,
+      "description": "Citation count from Semantic Scholar or another provider when recorded"
+    },
+    "influential_citation_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null,
+      "description": "Influential citation count from Semantic Scholar when recorded"
+    },
+    "open_access_pdf_url": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Open-access PDF URL from Semantic Scholar or another provider when available"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["web", "academic", "documentation", "code", "news", "government", "book", "regulatory", "sec_filing", "clinical_trial", "company_ir", "conference", "financial_data", "local_file", "dataset", "pdf", "image"]
+    },
+    "source_tier": {
+      "type": ["string", "null"],
+      "enum": ["primary", "high_quality_secondary", "secondary", "low_confidence", null],
+      "default": null,
+      "description": "Investment-research source tier"
+    },
+    "document_date": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Publication, filing, presentation, label, or source document date when available"
+    },
+    "retrieved_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "Timestamp when the source was retrieved"
+    },
+    "metadata_status": {
+      "type": "string",
+      "enum": ["unverified", "doi_verified", "url_verified", "title_matched"],
+      "description": "How far metadata has been verified"
+    },
+    "editorial_notice_status": {
+      "type": ["string", "null"],
+      "enum": ["none", "retracted", "expression_of_concern", "correction", "unknown", null],
+      "default": null,
+      "description": "Machine-checkable Scite/editorial-notice status for peer-reviewed sources"
+    },
+    "scite_checked_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "Timestamp when Scite/editorial notices were checked"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when source was registered"
+    }
+  },
+  "additionalProperties": false
+}

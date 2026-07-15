@@ -1,0 +1,14 @@
+{
+  "shared_evidence_pack": {
+    "default": false,
+    "reason": "Harness-gated only; shared retrieval can improve source parity but may reduce Stage 1 independence."
+  },
+  "bounded_single_round_critique": {
+    "default": false,
+    "reason": "Harness-gated only; use one dissent-preserving critique round, never iterate-to-consensus by default."
+  },
+  "poll_three_judge_panel": {
+    "default": false,
+    "reason": "Harness-gated only; compare against the default single fresh judge before enabling."
+  }
+}

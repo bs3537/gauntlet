@@ -93,9 +93,11 @@ in the codex tree) and cross-checks the rNPV independently.
 
 ---
 
-## Required companion skills (install these too)
+## Bundled companion skills (no separate install)
 
-Gauntlet orchestrates other skills; install them in the same `~/.claude/skills/` tree:
+Gauntlet orchestrates four other skills. **They ship inside this repo under
+[`companion-skills/`](companion-skills/)** — cloning gauntlet gets you every dependency in one
+go; there is nothing else to download or install separately.
 
 | Skill | Role in Gauntlet | Needed by |
 |---|---|---|
@@ -104,24 +106,73 @@ Gauntlet orchestrates other skills; install them in the same `~/.claude/skills/`
 | **`valuation`** | Damodaran-grounded rNPV/DCF/SOTP engine (dev-stage biotech §4B) | first pass + reviewer |
 | **`hybrid-model-fusion`** | provides `scripts/run_codex.sh`, the hardened codex launcher | reviewer |
 
-Plus: the **`codex` CLI** on PATH and authenticated for `gpt-5.6-sol` (a ChatGPT plan with
-sufficient quota), with the scite / fmp / biomcp / perplexity MCPs configured in
-`~/.codex/config.toml` for the reviewer.
+> The bundled `valuation` skill carries Damodaran *method → chapter/page* reference **notes**, not
+> the book. Its deepest guidance-lookup path expects the full *Investment Valuation* text at
+> `~/valuation_reference/` (intentionally **not** redistributed here, for copyright reasons); the
+> rNPV/DCF **engine** that Gauntlet actually calls runs without it.
+
+---
+
+## External data sources & tools you must provide
+
+The bundled skills are the *orchestration* — they are not useful until you connect them to live
+data and search. **None of the following are bundled**; supply whichever your target names
+require:
+
+- **Financial data — required.** An **FMP (Financial Modeling Prep)** API key
+  (`~/.fmp_api_key`, and/or the FMP MCP) for quotes, financials, filings, estimates, and
+  ownership — use FMP `/stable/` endpoints. **Or substitute an equivalent financial-data
+  provider** your MCPs/models can reach; Gauntlet just needs *some* authoritative fundamentals +
+  market-data source.
+- **Literature search — required for source-backed research; pick per domain.**
+  - **Biomedical / biotech names** → **BioMCP** (PubMed / PMC) as the backbone, plus
+    **Semantic Scholar** (`S2_API_KEY`) for citation graphs and **Scite** for citation context,
+    retraction / editorial-notice checks, and full text.
+  - **Tech / general / non-bio names** → **Scite** and/or **Semantic Scholar** for technical
+    literature.
+- **Web search for `search-as-code` — required, but zero-config by default.** search-as-code runs
+  on the **LLM's native web search** out of the box (no key needed). For programmable,
+  cost-tracked query fanout you can instead wire an external web-search API — **Perplexity, Brave,
+  or Exa** — via that provider's API key.
+- **Reviewer side (Stage 2) — required for the cross-model review.** The **`codex` CLI** on PATH
+  and authenticated for **`gpt-5.6-sol`** (a ChatGPT plan with sufficient quota), with the
+  scite / fmp / biomcp / perplexity MCPs configured in `~/.codex/config.toml`. Without codex,
+  Stage 2 falls back to a labeled same-model self-review.
+
+See each bundled skill's own `SKILL.md` / `README.md` for its exact key names and MCP setup.
 
 ---
 
 ## Install / deploy
 
-Gauntlet is a **Claude-tree-orchestrated** skill: the canonical copy lives at
-`~/.claude/skills/gauntlet/`; the `~/.codex/skills/gauntlet/` copy is parity/reference only (do
-not invoke it from codex — codex is the reviewer *target*, and running it there would make the
-reviewer self-review).
+Clone the repo and run the installer — it copies gauntlet **and** all four companion skills into
+your Claude Code skills tree (and mirrors the reviewer-side `valuation` engine into the codex
+tree) in one step:
 
 ```bash
-# from the staging repo (bs3537/gauntlet)
-cp -r SKILL.md scripts references README.md ~/.claude/skills/gauntlet/   # canonical host tree
-cp -r SKILL.md scripts references README.md ~/.codex/skills/gauntlet/    # parity copy
+git clone https://github.com/bs3537/gauntlet.git
+cd gauntlet
+./install.sh
 ```
+
+Gauntlet is a **Claude-tree-orchestrated** skill: its canonical copy lives at
+`~/.claude/skills/gauntlet/`, and the `~/.codex/skills/gauntlet/` copy is parity/reference only
+(do not invoke it from codex — codex is the reviewer *target*, and running it there would make the
+reviewer self-review). The installer sets up both trees.
+
+Prefer to do it by hand? Copy the trees yourself:
+
+```bash
+# Claude tree — gauntlet + every companion skill
+cp -r SKILL.md scripts references README.md ~/.claude/skills/gauntlet/
+cp -r companion-skills/* ~/.claude/skills/
+
+# Codex tree — the reviewer needs valuation to rerun the engine (+ gauntlet parity copy)
+cp -r companion-skills/valuation ~/.codex/skills/
+cp -r SKILL.md scripts references README.md ~/.codex/skills/gauntlet/
+```
+
+Then configure the external data sources above, and you are ready to invoke.
 
 ## Invoke
 
@@ -157,6 +208,8 @@ screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol max judge when q
 - `references/master_research_prompt.md` — the universal institutional research prompt (Phases 0–6 + 8, the Stage-1 fan-out model, §4B valuation-engine delegation, degraded-mode self-review appendix).
 - `references/reviewer_prompt_template.md` — the GPT-5.6 Sol adversarial **judge** prompt (panel mode, rubric D1–D7, delivery contract, placeholders incl. `{{LANE_FINDINGS}}`).
 - `scripts/run_review.sh` — hardened codex launcher + QC gate; reused per research lane (`QC_MODE=lane`, path overrides) and for the judge (`QC_MODE=judge`).
+- `install.sh` — one-shot installer: copies gauntlet + all companion skills into the Claude tree and mirrors the reviewer-side `valuation` into the codex tree.
+- `companion-skills/` — the four bundled dependencies (`deep-research`, `search-as-code`, `valuation`, `hybrid-model-fusion`), so a clone is self-contained.
 - `docs/` — the approved implementation plan.
 
 ## Key design invariants (don't break these)

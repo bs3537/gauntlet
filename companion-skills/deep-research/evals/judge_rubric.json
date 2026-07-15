@@ -1,0 +1,26 @@
+{
+  "rubric_version": "race-mini-v1",
+  "external_comparability": false,
+  "dimensions": {
+    "instruction_following": {
+      "scale": "0-100",
+      "description": "Did the report answer the requested task, respect scope, and satisfy explicit format constraints?"
+    },
+    "comprehensiveness": {
+      "scale": "0-100",
+      "description": "Did the report cover the major relevant subtopics, counterarguments, sources, and limitations?"
+    },
+    "insight": {
+      "scale": "0-100",
+      "description": "Did the report synthesize evidence into non-obvious, useful conclusions rather than only summarizing sources?"
+    },
+    "writing_objectivity": {
+      "scale": "0-100",
+      "description": "Was the writing clear, calibrated, source-bounded, and free of unsupported overclaiming?"
+    }
+  },
+  "fact_mini": {
+    "verdicts": ["entailed", "contradicted", "insufficient"],
+    "description": "Evaluate sampled factual cited claims against linked evidence or fetched source text when network mode is explicitly enabled."
+  }
+}

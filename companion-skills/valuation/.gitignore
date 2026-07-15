@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# editor / OS / backups
+*.bak
+*.tmp
+*.swp
+.DS_Store
+
+# generated model/memo artifacts (outputs go to a project/out-dir, never into the skill)
+*.xlsx
+*.docx
+
+# the 2.6MB Damodaran fulltext + page-count CSV live in ~/valuation_reference (shared), never here
+damodaran_investment_valuation_fulltext.txt
+damodaran_page_charcounts.csv

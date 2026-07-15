@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResearchPlan",
+  "description": "Warn-first research plan artifact for lane and query-family coverage accounting.",
+  "type": "object",
+  "required": ["version", "mode", "created_at", "lanes"],
+  "properties": {
+    "version": { "type": "string" },
+    "mode": { "type": "string", "enum": ["quick", "standard", "deep", "ultradeep"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "checkpoint": {
+      "type": "object",
+      "description": "Editable-plan checkpoint before retrieval.",
+      "required": ["status", "interactive"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["ready_for_review", "approved", "edited_approved", "skipped_headless"]
+        },
+        "interactive": { "type": "boolean" },
+        "paused_at": { "type": "string", "format": "date-time" },
+        "approved_at": { "type": "string", "format": "date-time" },
+        "approved_by": { "type": "string" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "plan_hash_before_review": { "type": "string" },
+        "approved_plan_hash": { "type": "string" },
+        "edits_detected": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "lanes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lane_id", "role", "objective", "query_families", "expected_source_min", "expected_roles", "stop_conditions"],
+        "properties": {
+          "lane_id": { "type": "string" },
+          "role": {
+            "type": "string",
+            "enum": ["main_thread", "primary_source", "corroboration", "adversarial", "gap_scout", "domain_specialist", "other"]
+          },
+          "objective": { "type": "string" },
+          "query_families": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["query_family_id", "description", "queries"],
+              "properties": {
+                "query_family_id": { "type": "string" },
+                "description": { "type": "string" },
+                "queries": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "expected_source_min": { "type": "integer", "minimum": 0 },
+          "expected_roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "execution_budget": {
+            "type": "object",
+            "description": "Role-specific model, reasoning, timeout, and tool-call hints for agent execution.",
+            "required": ["model_hint", "reasoning_effort", "timeout_seconds", "max_tool_calls"],
+            "properties": {
+              "model_hint": { "type": "string" },
+              "reasoning_effort": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "xhigh", "runtime_default"]
+              },
+              "timeout_seconds": { "type": "integer", "minimum": 60 },
+              "max_tool_calls": { "type": "integer", "minimum": 0 },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "stop_conditions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

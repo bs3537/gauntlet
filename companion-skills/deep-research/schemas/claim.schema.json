@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Claim",
+  "description": "An atomic claim extracted from the report. claim_id = sha256(section_id + sentence_text)[:16].",
+  "type": "object",
+  "required": ["claim_id", "section_id", "text", "claim_type", "support_status"],
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "sha256(section_id + normalized_text)[:16]"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Section identifier (e.g. executive_summary, finding_1, synthesis)"
+    },
+    "text": {
+      "type": "string",
+      "description": "The atomic claim sentence"
+    },
+    "claim_type": {
+      "type": "string",
+      "enum": ["factual", "synthesis", "recommendation", "speculation"],
+      "description": "Only factual claims hard-fail on lack of support"
+    },
+    "claim_domain": {
+      "type": ["string", "null"],
+      "enum": ["clinical", "regulatory", "financial", "commercial", "competitive", "scientific", "market", null],
+      "default": null,
+      "description": "Biotech/pharma investment research domain. Use this for the AGENTS.md claim-ledger claim_type field to preserve script compatibility."
+    },
+    "claim": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Optional alias for text when importing an investment-research claim ledger"
+    },
+    "ticker": { "type": ["string", "null"], "default": null },
+    "company": { "type": ["string", "null"], "default": null },
+    "asset": { "type": ["string", "null"], "default": null },
+    "indication": { "type": ["string", "null"], "default": null },
+    "source_tier": {
+      "type": ["string", "null"],
+      "enum": ["primary", "high_quality_secondary", "secondary", "low_confidence", null],
+      "default": null
+    },
+    "source_name": { "type": ["string", "null"], "default": null },
+    "source_url": { "type": ["string", "null"], "default": null },
+    "document_date": { "type": ["string", "null"], "default": null },
+    "retrieved_at": { "type": ["string", "null"], "default": null },
+    "evidence_quote_or_span": { "type": ["string", "null"], "default": null },
+    "status": {
+      "type": ["string", "null"],
+      "enum": ["verified", "partially_verified", "conflicting", "not_found", "stale", null],
+      "default": null,
+      "description": "Investment-research verification status, distinct from support_status"
+    },
+    "investment_relevance": {
+      "type": ["string", "null"],
+      "enum": ["high", "medium", "low", null],
+      "default": null
+    },
+    "notes": { "type": ["string", "null"], "default": null },
+    "cited_source_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+      "default": [],
+      "description": "Stable source_ids cited for this claim"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+      "default": [],
+      "description": "Evidence rows that support this claim"
+    },
+    "support_status": {
+      "type": "string",
+      "enum": ["unverified", "supported", "partial", "unsupported", "needs_review"],
+      "description": "Set by verify_claim_support.py (PR5)"
+    },
+    "support_status_llm": {
+      "type": ["string", "null"],
+      "enum": ["entailed", "contradicted", "insufficient", "not_checked", null],
+      "default": null,
+      "description": "Set by verify_claim_support_llm.py when semantic entailment verification is run"
+    },
+    "support_rationale_llm": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "support_judge_model": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "support_judge_version": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "support_llm_checked_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null
+    },
+    "support_llm_evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "semantic_gate": {
+      "type": ["string", "null"],
+      "enum": ["pass", "warning", "critical", null],
+      "default": null
+    },
+    "extracted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

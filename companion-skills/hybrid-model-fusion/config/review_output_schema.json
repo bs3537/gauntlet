@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["reviewer", "reviewed_responses", "ranked_order", "scores", "confidence"],
+  "properties": {
+    "reviewer": {"type": "string"},
+    "reviewed_responses": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "ranked_order": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "forced_choice_winner": {"type": "string"},
+    "scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["correctness", "evidence_quality", "completeness", "reasoning_quality", "calibration", "actionability", "total"],
+        "properties": {
+          "correctness": {"type": "number"},
+          "evidence_quality": {"type": "number"},
+          "completeness": {"type": "number"},
+          "reasoning_quality": {"type": "number"},
+          "calibration": {"type": "number"},
+          "actionability": {"type": "number"},
+          "total": {"type": "number"}
+        }
+      }
+    },
+    "best_supported_claims": {"type": "object"},
+    "weak_or_unsupported_claims": {"type": "object"},
+    "missed_by_response": {"type": "object"},
+    "claim_verdicts": {"type": "array"},
+    "decisive_differences": {"type": "array"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "notes_for_judge": {"type": "array"}
+  },
+  "additionalProperties": true
+}

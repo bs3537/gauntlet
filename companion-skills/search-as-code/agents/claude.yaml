@@ -1,0 +1,4 @@
+interface:
+  display_name: "Search as Code"
+  short_description: "Programmable Perplexity search harness"
+  default_prompt: "Use $search-as-code to build a cost-tracked discovery pack for this research topic."

@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "panelists": [
+    {
+      "slug": "opus4.8",
+      "display": "Opus 4.8",
+      "report_file": "report_opus4.8.md",
+      "prompt_file": "prompt_opus4.8.txt",
+      "review_file": "review_opus4.8.md",
+      "review_prompt_file": "review_prompt_opus4.8.txt",
+      "html_title": "Opus 4.8 (max)"
+    },
+    {
+      "slug": "grok4.5",
+      "display": "Grok 4.5",
+      "report_file": "report_grok4.5.md",
+      "prompt_file": "prompt_grok4.5.txt",
+      "review_file": "review_grok4.5.md",
+      "review_prompt_file": "review_prompt_grok4.5.txt",
+      "html_title": "Grok 4.5 (high)"
+    },
+    {
+      "slug": "gemini3.5flash",
+      "display": "Gemini 3.5 Flash",
+      "report_file": "report_gemini3.5flash.md",
+      "prompt_file": "prompt_gemini3.5flash.txt",
+      "review_file": "review_gemini3.5flash.md",
+      "review_prompt_file": "review_prompt_gemini3.5flash.txt",
+      "html_title": "Gemini 3.5 Flash (High)"
+    },
+    {
+      "slug": "fable5",
+      "display": "Fable 5",
+      "report_file": "report_fable5.md",
+      "prompt_file": "prompt_fable5.txt",
+      "review_file": "review_fable5.md",
+      "review_prompt_file": "review_prompt_fable5.txt",
+      "html_title": "Fable 5 (max)"
+    },
+    {
+      "slug": "gpt5.6sol",
+      "display": "GPT-5.6 Sol",
+      "report_file": "report_gpt5.6sol.md",
+      "prompt_file": "prompt_gpt5.6sol.txt",
+      "review_file": "review_gpt5.6sol.md",
+      "review_prompt_file": "review_prompt_gpt5.6sol.txt",
+      "html_title": "GPT-5.6 Sol (max)"
+    }
+  ],
+  "presets": {
+    "default": {
+      "panelists": ["opus4.8", "grok4.5", "gemini3.5flash", "gpt5.6sol"],
+      "description": "DRACO-validated default roster (4-model: Opus 4.8, Grok 4.5, Gemini 3.5 Flash, GPT-5.6 Sol)."
+    },
+    "fable-panelist": {
+      "panelists": ["fable5", "grok4.5", "gemini3.5flash"],
+      "description": "Held-out Anthropic panelist variant for eval harness comparison."
+    },
+    "deweighted-gemini": {
+      "panelists": ["opus4.8", "grok4.5", "fable5"],
+      "description": "Gemini replacement variant for tasks where Gemini underperforms or flakes."
+    },
+    "budget": {
+      "panelists": ["grok4.5", "gemini3.5flash", "fable5"],
+      "description": "Lower-cost variant that omits Opus as a panelist while preserving a 3-model panel."
+    }
+  },
+  "judge": {
+    "default_model": "claude-opus-4-8",
+    "default_effort": "max",
+    "blind_default": true
+  }
+}
