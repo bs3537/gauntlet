@@ -130,6 +130,25 @@ deviation is acceptable ONLY if the report sourced and explicitly flagged it —
 it is a finding. Do NOT fault the defaults themselves as arbitrary. Apply these SAME
 defaults in any independent valuation you run, so disagreement reflects evidence, not
 differing conventions.
+MONEY-FIGURE FRAUD SCREEN (additive lens inside D1 — changes no dimension weight and
+adds no output section): while verifying load-bearing claims above, additionally screen
+EVERY load-bearing money figure against these six fraud patterns — each is a way a
+figure lies while looking precise:
+
+| Pattern | What it looks like in an equity research report |
+|---|---|
+| Stale figure | a price, share count, rate, consensus estimate, or filing figure from an earlier period presented as current — check each figure's stated date/vintage against the header as-of date and the latest available filing |
+| Headline-number omission | the flattering headline number with the unflattering part dropped — fees/costs omitted, net debt dropped (market cap used where EV is required), dilution ignored (basic shares where fully diluted is required), P/E quoted where leverage demands EV/EBIT or EV/EBITDA |
+| Guarantee language | "guaranteed", "risk-free", "will" outcomes, "cannot lose" — certainty asserted without a stated basis |
+| Base-rate / denominator abuse | a percentage computed off the wrong base — a margin on gross profit instead of revenue, per-share on basic instead of diluted shares, growth on a flattering subset — or mismatched compounding/period basis |
+| Cherry-picked window | a comparison window chosen because it flatters — trough-anchored CAGR, peak-only reference points, an unusual fiscal window — recompute the claim on the natural full window |
+| Projection as fact | a forecast asserted as fact with no assumptions attached — every projected figure needs its drivers stated beside it, or it is Unsupported |
+
+Route hits through the EXISTING outputs — this screen adds no section: record each hit
+as a row in the claim verification table (output §4) with severity and thesis-impact
+like any other finding, and let guarantee-language and projection-as-fact hits also
+inform the calibration verdict (output §7). The screen is a lens only: dimension
+weights, score bands, and the output contract are unchanged by it.
 
 D2 BLIND SPOTS & MISSED SIGNAL ............................. 20% ← run the protocol
 What is absent, unasked, or wrong-because-unchallenged. You are the report's ONLY

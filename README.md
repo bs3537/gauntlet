@@ -211,6 +211,28 @@ screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol max judge when q
 
 ---
 
+## Money-figure fraud screen + planted-fraud eval
+
+Two additive validation layers guard the money figures:
+
+- **Fraud screen (runtime, inside the reviewer).** The adversarial reviewer's D1 dimension
+  ends with a six-pattern screen applied to every load-bearing money figure — *stale
+  figure · headline-number omission (net debt / dilution / fees dropped, market-cap-vs-EV,
+  P/E-vs-EV/EBIT) · guarantee language · base-rate / denominator abuse · cherry-picked
+  window · projection as fact*. Strictly additive: dimension weights, score bands, and the
+  reviewer's output contract are unchanged — hits surface as ordinary §4 claim-verification
+  rows and feed the §7 calibration verdict.
+- **Planted-fraud eval (`eval/`, off the runtime path).** A fictional, clearly-bannered
+  doctored `08_preliminary_report.md` (Exemplar Grid Industries, "XGRD") carrying exactly
+  six planted frauds — one per pattern — plus two clean controls, with a `GROUND-TRUTH.md`
+  answer sheet the model under test never sees. `bash eval/check.sh` is the cheap
+  deterministic gate (fixture ⇄ answer sheet ⇄ reviewer template kept in sync; no LLM, no
+  network); the full test feeds the fixture through a real `PANEL=0` Stage-2 review and
+  scores it against the answer sheet (**pass ≥ 5/6**). Smoke-grade by design — it validates
+  that the screen exists and its patterns are catchable; it does not benchmark the reviewer.
+
+---
+
 ## File layout
 
 - `SKILL.md` — the orchestrator: Stages 0–5, gates, gotchas, env tuning (the operational contract).
@@ -221,6 +243,7 @@ screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol max judge when q
 - `references/gauntlet_report_template.html` — the Gauntlet-branded HTML template (McKinsey-style, metric dashboard) `render_report.sh` fills.
 - `install.sh` — one-shot installer: copies gauntlet + all companion skills into the Claude tree and mirrors the reviewer-side `valuation` into the codex tree.
 - `companion-skills/` — the four bundled dependencies (`deep-research`, `search-as-code`, `valuation`, `hybrid-model-fusion`), so a clone is self-contained.
+- `eval/` — planted-fraud validation asset: fictional doctored preliminary report + GROUND-TRUTH answer sheet + deterministic `check.sh` (pure validation; the live pipeline never loads it).
 - `docs/` — the approved implementation plan.
 
 ## Key design invariants (don't break these)

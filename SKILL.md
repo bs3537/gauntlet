@@ -66,6 +66,7 @@ the session model, recording the deviation in `VERIFICATION_LOG.md`. Do not sile
 - `references/gauntlet_report_template.html` — Gauntlet-branded HTML report template (metric dashboard); Stage 5 fills it.
 - `scripts/run_review.sh` — preflight + codex launch (hardened runner with raw fallback) + QC gate.
 - `scripts/render_report.sh` — Stage 5 renders `FINAL_REPORT.md` → styled `FINAL_REPORT.html` (+ optional PDF) via the bundled deep-research `md_to_html.py`.
+- `eval/` — planted-fraud validation asset (fictional doctored preliminary report + GROUND-TRUTH answer sheet + deterministic `check.sh`); pure validation, nothing at runtime loads it (see Validation section below).
 
 ## Stage 0 — Intake and preflight
 
@@ -270,6 +271,35 @@ into chat.
 | `PANEL` | `1` (intended) | orchestration flag: `0` = skip the 4 research lanes, run the single GPT-5.6 Sol max judge only |
 | `QC_MODE` | `judge` | `judge` = full scored-review gate; `lane` = size-only gate for a research lane |
 | `PROMPT_FILE` / `REVIEW_FILE` / `CAPTURE_FILE` | round-derived | per-lane path overrides so `run_review.sh` runs each lane and the judge |
+
+## Validation — money-figure fraud screen + planted-fraud eval (smoke-grade)
+
+The reviewer prompt carries a six-pattern **MONEY-FIGURE FRAUD SCREEN** at the end of D1
+(stale figure · headline-number omission · guarantee language · base-rate / denominator
+abuse · cherry-picked window · projection as fact). It is strictly additive: no dimension
+weight, placeholder, score band, or output section changed — hits land as ordinary rows in
+the reviewer's existing §4 claim-verification table and feed the §7 calibration verdict, so
+the Stage-2 QC gate and delivery contract are untouched.
+
+`eval/` smoke-tests that screen from OFF the runtime path (nothing the pipeline loads
+references it):
+
+- `eval/scenarios/planted-fraud-money-figures/08_preliminary_report.md` — a fictional,
+  clearly-bannered doctored preliminary report carrying exactly six planted frauds (one
+  per pattern) plus two clean controls; named to match the Stage-2 input so it can be fed
+  through a real `PANEL=0` review.
+- `eval/scenarios/planted-fraud-money-figures/GROUND-TRUTH.md` — the assessor answer sheet
+  (planted text → pattern → correct value → expected response; pass ≥ 5/6, fail ≤ 3/6).
+  Never include it in anything shown to the model under test.
+- `bash eval/check.sh` — the cheap deterministic gate (no LLM, no network): fixture ⇄
+  answer sheet ⇄ reviewer-template screen all in sync, banners present, no stray
+  placeholder braces. Run it after any edit to the fraud screen, the fixture, or the
+  answer sheet.
+
+The optional live smoke run (manual, quota-heavy) feeds the fixture through a real Stage-2
+`PANEL=0` review and scores the result against the answer sheet — procedure in
+`eval/README.md`. Smoke-grade by design: it validates that the screen exists and its
+patterns are catchable; it does not benchmark the reviewer.
 
 ## Dependencies
 
