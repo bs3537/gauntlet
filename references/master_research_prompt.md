@@ -174,7 +174,7 @@ minimum create:
 2. `02_source_manifest.csv`
 3. `03_evidence_ledger.csv`
 4. `04_catalyst_and_pos_model.py`
-5. `05_valuation_model.py`
+5. `05_valuation_model.py` — for a developmental-stage biotech/pharma, a driver-plus-engine wrapper that writes `05_valuation_plan.json`, invokes the audited valuation engine, and produces `<name>_rnpv_results.json`, `<name>_rnpv_model.xlsx`, and `<name>_rnpv_validation.json`
 6. `06_model_outputs.csv`
 7. `07_working_research.md`
 8. `08_preliminary_report.md` — the full Phase-8-format draft that the external reviewer audits
@@ -680,6 +680,66 @@ Disclose the financing need from the cost build above as a runway and solvency
 check and a qualitative risk, but bridge to equity value on today's fully diluted
 share count — basic plus all outstanding options, RSUs, warrants, and convertibles
 or preferred on an as-converted basis — rather than a hypothetical future one.
+
+#### Valuation engine — delegate the rNPV/DCF mechanics (do not hand-roll)
+
+Build the drivers above, then compute value with the audited, Damodaran-grounded
+valuation engine so risk-singularity, the launch/ramp/plateau/erosion curve, the
+enterprise-to-equity bridge, and the per-share math run in tested code rather than
+ad hoc script. `05_valuation_model.py` becomes a thin driver-plus-engine wrapper: it
+assembles the plan below, writes `05_valuation_plan.json`, invokes the engine, and
+builds `06_model_outputs.csv` from the engine results. Resolve the engine path in
+either tree — `~/.claude/skills/valuation/scripts/valuation_engine.py`, falling back
+to `~/.codex/skills/valuation/scripts/valuation_engine.py` — and run `python3
+<engine> run --plan 05_valuation_plan.json --out-dir <RUN_DIR>`. The engine writes
+`<name>_rnpv_results.json`, `<name>_rnpv_model.xlsx`, and `<name>_rnpv_validation.json`
+and raises on a validation FAIL; resolve any FAIL before the report ships.
+
+Model each geography as its own asset entry sharing one clinical `loa` (single
+program, single approval gate), so the mandated staggered launches and regional ASPs
+fall straight out of the schema:
+
+```json
+{"method": "rnpv", "company": {"name": "<COMPANY>"},
+ "rnpv": {
+   "assets": [
+     {"name": "<asset> — US", "loa": "<PoS>",
+      "pv_dev_cost": "<PV of remaining R&D/trial/CMC to launch, $M>",
+      "commercial": {"peak_sales": "<US eligible pop x peak penetration x US net ASP x persistence, $M>",
+        "launch_year": "<model year of first US sales>", "ramp_years": 6,
+        "plateau_years": "<peak-to-LoE>", "erosion_years": "<LoE curve>",
+        "erosion_rate": "<LoE>", "margin": "<drug operating margin>", "discount_rate": 0.15}},
+     {"name": "<asset> — Europe", "loa": "<same PoS>", "pv_dev_cost": 0,
+      "commercial": {"peak_sales": "<EU pop x penetration x (0.50 x US net ASP) x persistence>",
+        "launch_year": "<US launch_year + 1>", "ramp_years": 6, "plateau_years": "<...>",
+        "erosion_years": "<...>", "erosion_rate": "<...>", "margin": "<...>", "discount_rate": 0.15}},
+     {"name": "<asset> — ROW/Japan", "loa": "<same PoS>", "pv_dev_cost": 0,
+      "commercial": {"peak_sales": "<ROW/Japan pop x penetration x (0.50 x US net ASP) x persistence>",
+        "launch_year": "<US launch_year + 1>", "ramp_years": 6, "plateau_years": "<...>",
+        "erosion_years": "<...>", "erosion_rate": "<...>", "margin": "<...>", "discount_rate": 0.15}}
+   ],
+   "net_cash": "<current net cash, $M>",
+   "overhead_pv": "<PV of unallocated corporate opex NOT in drug margin — G&A and any non-asset R&D, pre- and post-launch, $M>",
+   "options_value": 0,
+   "shares": "<today's fully diluted count, millions>"}}
+```
+
+Field mapping to the mandated defaults: `discount_rate` = 0.15 base WACC on every
+asset; `loa` carries clinical/regulatory risk once while the commercial curve stays
+risk-UNADJUSTED (never also raise the discount rate); `ramp_years` = 6 puts peak in the
+sixth year of sales for each geography (a six-year linear ramp); ex-US `launch_year` =
+US + 1; `peak_sales` embeds the 0.74×WAC US net ASP and the 0.50×US ex-US ASP;
+`pv_dev_cost` (per-asset remaining development) plus `overhead_pv` (unallocated corporate
+opex) carry the full pre- and post-launch operating-cost build; `margin` is the
+drug-level operating margin net of COGS and directly attributable costs, with corporate
+SG&A/unallocated R&D going to `overhead_pv` so nothing is double-counted; and `shares` =
+today's fully diluted count with `options_value` = 0 — the fully diluted count already
+captures option/warrant/convert dilution, so do not also subtract option value (that
+double-counts). Charge the shared program's `pv_dev_cost` on a single asset entry (0 on
+the others) so remaining development cost is counted once. For scenario targets pass an
+`rnpv.scenarios` list of `{name, prob, target}`; the engine returns the
+probability-weighted target. Use the same engine (method `dcf`, `fcff`, `apv`, `ddm`, or
+`relative`) for any non-rNPV archetype rather than hand-rolled math.
 
 #### Non-biotech branch
 

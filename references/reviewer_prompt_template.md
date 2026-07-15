@@ -86,6 +86,16 @@ and {{RUN_DIR}}/05_valuation_model.py in your shell; reconcile their outputs aga
 bridge and fully diluted per-share bridge, the dilution treatment, and that scenario
 probabilities sum to 100%. A model that does not run, or outputs that do not match the
 report, is a CRITICAL finding.
+For a developmental-stage biotech, {{RUN_DIR}}/05_valuation_model.py delegates the rNPV
+mechanics to the audited valuation engine (valuation/scripts/valuation_engine.py,
+mirrored in your codex tree); rerunning it regenerates 05_valuation_plan.json and the
+engine's <name>_rnpv_results.json / _model.xlsx / _validation.json. Confirm the
+validation JSON is not FAIL and that every input in 05_valuation_plan.json matches the
+report's driver assumptions and the mandated defaults below. Then RECOMPUTE the rNPV
+INDEPENDENTLY by a different route — a quick hand rNPV from the plan's own peak_sales,
+loa, and discount inputs, or an EV-per-eligible-patient / analog-deal cross-check — and
+flag any material divergence from the engine result: rerunning the same engine is not by
+itself an independent check.
 DEVELOPMENTAL-STAGE BIOTECH VALUATION DEFAULTS (part of D1): if the company has no
 marketed or approved revenue-generating product, the report was REQUIRED to build its
 rNPV/DCF/SOTP on these base-case defaults — (1) target population sourced separately for
@@ -290,7 +300,8 @@ Working artifacts on disk (read-only; open/execute as needed):
 | {{RUN_DIR}}/02_source_manifest.csv | Every source discovered/opened/cited, with tiers |
 | {{RUN_DIR}}/03_evidence_ledger.csv | Atomic claims with locators, excerpts, status |
 | {{RUN_DIR}}/04_catalyst_and_pos_model.py | Catalyst probability-of-success model (executable) |
-| {{RUN_DIR}}/05_valuation_model.py | Valuation model (executable) |
+| {{RUN_DIR}}/05_valuation_model.py | Valuation model (executable; for a dev-stage biotech, a wrapper that calls the audited valuation engine) |
+| {{RUN_DIR}}/05_valuation_plan.json | Declarative valuation inputs fed to the engine (dev-stage biotech; absent if valuation was hand-rolled) |
 | {{RUN_DIR}}/06_model_outputs.csv | Model outputs the report's tables are built from |
 | {{RUN_DIR}}/07_working_research.md | Working research notes |
 | {{RUN_DIR}}/08_preliminary_report.md | The PRELIMINARY report under review (inlined below) |
