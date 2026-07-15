@@ -571,8 +571,12 @@ spectrum costs, capital intensity, advertising, engagement, and leverage
 Select the primary valuation method or methods that fit the company's economics.
 Explain why each method is appropriate and what it cannot capture. Use relative
 valuation only as an external reasonableness check unless it is structurally the most
-appropriate method. Do not use sell-side price targets as valuation inputs. Do not
-include future share dilutions in your calculations (per Damodaran).
+appropriate method. Do not use sell-side price targets as valuation inputs. In every
+method — DCF, rNPV, and SOTP alike — bridge to equity value on today's fully diluted
+share count: basic shares plus all currently outstanding in-the-money options, RSUs,
+warrants, and convertible notes or preferred stock on an as-converted basis, using
+treasury-stock and if-converted methods as appropriate. Do not include future
+(not-yet-issued) share dilutions in your calculations (per Damodaran).
 
 Examples of fit include:
 
@@ -617,6 +621,66 @@ For each actively pursued pipeline candidate model:
 Do not probability-weight peak sales and then probability-weight the same asset again.
 Make risk adjustment explicit and singular.
 
+#### Developmental-stage (pre-commercial, no marketed products) defaults
+
+Apply this block whenever the company has no marketed or approved revenue-
+generating product and all value sits in clinical- or preclinical-stage assets.
+These defaults parameterize the pipeline-candidate model above. Treat them as
+required base-case inputs; override only with a sourced, documented reason and
+flag every deviation explicitly.
+
+- Epidemiology and eligible population: for each lead indication, source the
+target patient population separately for the United States, Europe (EU5:
+Germany, France, Italy, Spain, and the United Kingdom — the standard pharma
+commercial grouping; expand to EU27 plus the United Kingdom only where the data
+support it), and Rest of World including Japan, from reliable primary sources
+(peer-reviewed epidemiology, disease registries, government or agency health
+statistics, or company epidemiology disclosures with traceable methodology). Use
+prevalence for chronic or maintenance therapies and incidence, meaning annual
+new cases, for acute, curative, or one-time treatments; state which and why.
+Bridge raw epidemiology to the treated-eligible population through explicit and
+individually sourced diagnosis, treatment, line-of-therapy, biomarker or
+eligibility, and access rates. Do not use model recall for any epidemiology
+figure; cite the passage.
+- Price and average selling price (ASP): anchor the annual drug price to
+comparator or analog pricing, meaning the annual course at the labeled dose of
+the closest approved analog. Set the modeled United States net ASP equal to 0.74
+times the comparator annual wholesale or list (WAC) price. The 0.74 factor
+already embeds gross-to-net, so do not apply a second gross-to-net haircut on top
+of it. Set the Europe net ASP and the Rest-of-World-including-Japan net ASP each
+equal to 0.50 times the United States net ASP. Model every geography in
+USD-equivalent and hold real price flat unless a sourced erosion or step-down
+schedule is justified.
+- Launch timing and revenue ramp: model the United States launch first; Europe
+and Rest of World including Japan each launch one year after the United States
+launch. In every geography ramp revenue to peak sales six years after that
+geography's own launch, so the ex-United States peak occurs one year after the
+United States peak. Peak sales equal treated-eligible population times peak
+penetration or market share times the regional net ASP times compliance or
+persistence, with peak share taken from analog launch curves rather than
+assumed. Hold at peak until patent or exclusivity expiry, then apply an explicit
+loss-of-exclusivity erosion curve.
+- Discount rate: use a 15% base-case WACC for the developmental-stage, no-product
+company and carry it as the base column of the peak-sales-versus-discount-rate
+sensitivity table (band it, for example, roughly 12% to 18%). Capture clinical
+and regulatory risk separately and singularly through indication-specific PoS
+applied to the cash flows; do not also bury that risk inside the discount rate
+beyond the 15%, and do not double-count it against peak sales.
+- Full operating-cost build, pre-launch and post-launch: project the complete
+operating-cost stack across the entire horizon, not just peak revenue —
+remaining R&D and clinical-trial costs, manufacturing and CMC scale-up, and SG&A
+including the pre-launch commercial build during the pre-revenue years, and
+COGS, ongoing R&D, and commercial SG&A after launch. The pre-launch years are
+cash-negative; show the cumulative pre-launch burn and the resulting external
+capital and runway gap required to reach launch as a solvency and financing-need
+disclosure.
+- Dilution: do not create hypothetical future share issuance to dilute today's
+per-share value, consistent with the top-level Damodaran instruction in 4B.
+Disclose the financing need from the cost build above as a runway and solvency
+check and a qualitative risk, but bridge to equity value on today's fully diluted
+share count — basic plus all outstanding options, RSUs, warrants, and convertibles
+or preferred on an as-converted basis — rather than a hypothetical future one.
+
 #### Non-biotech branch
 
 Build segment-level operating forecasts from auditable revenue drivers, unit economics,
@@ -647,7 +711,9 @@ free-cash-flow tables
 - Discount-rate construction with source-backed inputs and sensitivity
 - Terminal-value or finite-life logic, including the share of value from the terminal period
 - Enterprise-to-equity bridge
-- Fully diluted per-share bridge
+- Fully diluted per-share bridge on today's share count (basic plus in-the-money
+options, RSUs, warrants, and convertibles or preferred on an as-converted basis via
+treasury-stock and if-converted methods)
 - Explicit treatment of net operating losses, leases, pensions, minorities, equity
 investments, options, warrants, converts, preferred stock, and future financing
 where material

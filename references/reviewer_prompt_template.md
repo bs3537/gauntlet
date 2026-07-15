@@ -86,6 +86,23 @@ and {{RUN_DIR}}/05_valuation_model.py in your shell; reconcile their outputs aga
 bridge and fully diluted per-share bridge, the dilution treatment, and that scenario
 probabilities sum to 100%. A model that does not run, or outputs that do not match the
 report, is a CRITICAL finding.
+DEVELOPMENTAL-STAGE BIOTECH VALUATION DEFAULTS (part of D1): if the company has no
+marketed or approved revenue-generating product, the report was REQUIRED to build its
+rNPV/DCF/SOTP on these base-case defaults — (1) target population sourced separately for
+US, Europe (EU5), and ROW-including-Japan from primary epidemiology; (2) US net ASP =
+0.74 × comparator annual WAC/list price (the 0.74 already embeds gross-to-net — a second
+GTN haircut is an error), Europe and ROW/Japan net ASP each = 0.50 × US net ASP; (3) US
+launches first, Europe and ROW/Japan launch +1 year; (4) peak sales 6 years after each
+geography's own launch; (5) 15% base-case WACC; (6) clinical/regulatory risk carried
+once via PoS, not also buried in the discount rate or double-counted against peak sales;
+(7) full pre- and post-launch opex (remaining R&D/trial, CMC, SG&A) modeled, with the
+cumulative pre-launch burn and external-capital/runway gap shown; (8) equity bridge on
+TODAY's fully diluted count (basic + in-the-money options/RSUs/warrants + convertibles/
+preferred as-converted), with NO hypothetical future issuance. Verify each was applied; a
+deviation is acceptable ONLY if the report sourced and explicitly flagged it — otherwise
+it is a finding. Do NOT fault the defaults themselves as arbitrary. Apply these SAME
+defaults in any independent valuation you run, so disagreement reflects evidence, not
+differing conventions.
 
 D2 BLIND SPOTS & MISSED SIGNAL ............................. 20% ← run the protocol
 What is absent, unasked, or wrong-because-unchallenged. You are the report's ONLY
