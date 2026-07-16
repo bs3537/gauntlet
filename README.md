@@ -81,6 +81,12 @@ perspective. Neither replaces the other.
 
 ## Valuation (built in)
 
+The bundled **`valuation` skill is grounded in the principles of Aswath Damodaran's *Investment
+Valuation*** (its DCF / FCFF / FCFE / DDM, rNPV and real-options, relative-valuation, cost-of-capital,
+and per-share / dilution methods) **and, for biotech, in the principles of the *Pharmagellan Guide to
+Biotech Forecasting and Valuation*** (the risk-adjusted-NPV framework for pipeline assets). Gauntlet
+layers the mandated conventions below on top of that foundation.
+
 For **developmental-stage biotech/pharma with no marketed product**, the master prompt (§4B)
 uses mandated base-case conventions — regional epidemiology (US / EU5 / ROW-incl-Japan), US net
 ASP = 0.74 × comparator WAC, ex-US ASP = 0.50 × US, US-first launch with EU/ROW +1yr, peak sales
@@ -144,6 +150,10 @@ require:
   and authenticated for **`gpt-5.6-sol`** (a ChatGPT plan with sufficient quota), with the
   scite / fmp / biomcp / perplexity MCPs configured in `~/.codex/config.toml`. Without codex,
   Stage 2 falls back to a labeled same-model self-review.
+- **FinTwit / X sentiment — optional.** The default-on Tier-4 social-sentiment step (bundled `fintwit`
+  companion) needs an **xAI API key** at `~/.claude/secrets/xai.env` (`XAI_API_KEY=…`, chmod 600, from
+  console.x.ai). Without it, gauntlet simply skips FinTwit and notes it in the report — it never blocks
+  a run.
 
 See each bundled skill's own `SKILL.md` / `README.md` for its exact key names and MCP setup.
 
