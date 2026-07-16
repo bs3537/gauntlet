@@ -241,6 +241,13 @@ paths do not open from Windows).
   **skipping the adversarial review, adjudication, and gate**. Delivers a quick (~1-hour) single-model
   report that carries a prominent "NOT adversarially reviewed" banner and LOW confidence. Use it when
   speed matters more than the extra rigor; the default is always full review.
+- **Reasoning effort — a separate speed lever (works in both modes).** Both sides default to their
+  highest reasoning tier, and **we recommend keeping `max`: max effort produces materially better,
+  more reliable reports.** If you need faster generation you can drop either model to `high`: the
+  **first-pass** side follows the session effort, so run `/effort high` before invoking; the
+  **reviewer** side reads `REVIEWER_EFFORT`, so pass `REVIEWER_EFFORT=high` (otherwise its four
+  research lanes run at `xhigh` and the judge at `max`). Lower effort trades depth of verification
+  and cross-checking for speed — keep `max` for high-stakes names.
 
 ## Cost & quota (read before running)
 
