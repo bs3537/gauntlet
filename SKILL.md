@@ -240,6 +240,17 @@ into chat.
 
 ## Failure modes and gotchas (load-bearing)
 
+- **Future-dilution / capital-raise haircut (the most common LLM valuation error — HARDENED, do NOT
+  ship it)**: value on TODAY's fully diluted share count. Neither the first-pass model NOR the
+  adversarial reviewer may haircut per-share value for a hypothetical future raise, divide by a
+  projected post-raise share count, or demand a "financing/dilution state" that reduces base value —
+  the rNPV/DCF already captures the cash to be raised (Damodaran p.371/443/658-659: charging again is
+  double counting; a fair-value raise is value-neutral). A funding gap is a **solvency DISCLOSURE +
+  falsifier**, not a value hit; a genuinely below-intrinsic / distress raise belongs in the
+  probability-weighted **bear** scenario only. Options/warrants: value as a liability, subtract,
+  divide by primary shares (p.446). The reviewer template's **FUTURE-DILUTION GUARDRAIL** and master
+  prompt §4B enforce this; if a reviewer pushes the haircut anyway, **REJECT it in Stage-3
+  adjudication** with the page anchors (this exact error occurred and was corrected on the KROS run).
 - **`FUSION_FAST` must stay 0** (the script pins it): fast mode switches codex to
   `workspace-write` + `--ignore-user-config`, killing MCP connectors and run-dir writes.
 - **Absolute paths only** in the reviewer payload — the reviewer's cwd is a throwaway scratch dir;

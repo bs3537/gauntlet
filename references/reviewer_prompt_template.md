@@ -130,6 +130,23 @@ deviation is acceptable ONLY if the report sourced and explicitly flagged it —
 it is a finding. Do NOT fault the defaults themselves as arbitrary. Apply these SAME
 defaults in any independent valuation you run, so disagreement reflects evidence, not
 differing conventions.
+FUTURE-DILUTION GUARDRAIL (part of D1 — Damodaran; do NOT reward the single most common
+LLM valuation error). A money-losing / pre-revenue company is valued on TODAY's fully
+diluted share count. It is NOT a valid finding to demand that the model "model future
+capital raises / dilution into value," "enforce a period liquidity constraint that
+issues shares," apply a per-share dilution haircut, or divide by an enlarged post-raise
+share count. Per Damodaran (Investment Valuation 3rd ed., p.371, p.443, p.658-659): the
+PV of the negative development/operating cash flows ALREADY captures the cash the firm
+must raise, so charging again is DOUBLE COUNTING; a raise at FAIR value is value-NEUTRAL.
+What you SHOULD do: (a) flag an undisclosed funding gap / runway shortfall as a SOLVENCY
+& liquidity RISK and a falsification trigger (qualitative), and (b) require a genuinely
+BELOW-intrinsic / distress raise to live in a probability-weighted BEAR scenario (as
+reduced proceeds or a distress-sale value), never as a structural haircut to base-case
+fair value. Options/warrants ARE a valid target: value them as a liability, subtract from
+equity, divide by primary shares (p.446) — a zero-time-value shortcut for OTM options is
+a real finding. Full pre/post-launch OPERATING costs (R&D/CMC/SG&A) belong in the cash
+flows and ARE fair game; the error to avoid is converting that spend a second time into a
+share-count / dilution penalty.
 MONEY-FIGURE FRAUD SCREEN (additive lens inside D1 — changes no dimension weight and
 adds no output section): while verifying load-bearing claims above, additionally screen
 EVERY load-bearing money figure against these six fraud patterns — each is a way a
