@@ -28,10 +28,16 @@ Enterprise rNPV = Σ rNPV_i (across all pipeline assets i)
                + PV(marketed product cash flows)
                + PV(platform/technology option value)
 
-Equity Value = Enterprise rNPV + Net Cash − Debt − PV(G&A overhead) − PV(future R&D dilution)
+Equity Value = Enterprise rNPV + Net Cash − Debt − PV(G&A overhead)
 ```
 
-**Dilution treatment (Damodaran principle, Ch.16 [printed p.423 / PDF p.442]):** Future fundraising dilution should be captured through the negative cash outflow of development costs (the firm must raise cash to fund Phase 2, 3, etc.). Do NOT add a separate dilution discount on top — that would double-count the cost of capital already embedded in the PV computation.
+**Dilution treatment (Damodaran, p.371 / p.443 / p.658-659):** value on TODAY's fully diluted share
+count. Do NOT subtract a "PV(future R&D dilution)" term or divide by a projected post-raise share
+count. Future fundraising is already captured through the negative development/operating cash outflows
+(the PV of that spend IS the dilution discount); charging again double-counts, and a fair-value raise
+is value-neutral. Model a funding gap as a solvency/liquidity DISCLOSURE and a falsifier, and put a
+genuinely below-intrinsic / distress raise in the probability-weighted bear scenario — never as a
+structural per-share haircut. Value options as a liability, subtract, and divide by primary shares (p.446).
 
 ### LoA Benchmarks (industry rule-of-thumb, not from Damodaran directly)
 - Phase 1 → Approval: ~10–15% for oncology; ~20–25% for non-oncology
@@ -49,6 +55,30 @@ Target Price = p_bull × TP_bull + p_base × TP_base + p_bear × TP_bear
 ```
 
 Where each TP is computed from a full rNPV/SOTP under that macro/market scenario.
+
+### 1a. Partnered / out-licensed asset — value the ROYALTY + MILESTONE interest (not product sales)
+
+When an asset is OUT-LICENSED (the company earns royalties + milestones while the partner funds and
+commercializes), value the company's economic INTEREST, not the product P&L:
+
+1. **Royalty FCF stream.** Project the PARTNER's product net sales (launch → ramp → plateau → LoE
+   erosion, by geography), multiply by the licensor's royalty rate, risk-adjust by the indication LoA,
+   and discount each year at WACC. Royalty income carries ~no COGS/commercial cost to the licensor, so
+   it is ~free cash flow (net a modest admin/tax; NOLs may shield early years).
+2. **Milestones — PoS-weighted, discounted, INCLUDED in the base case.** Value every development,
+   regulatory/commercial, and sales milestone tranche as `amount × PoS ÷ (1+WACC)^year`. **Derive each
+   PoS** from historical clinical + FDA success rates for the SPECIALTY (e.g. BIO / QLS / Informa
+   phase-transition & likelihood-of-approval by disease area — the §36 LoA benchmarks are a floor; use
+   the specialty figure where available) through the analysis's ensemble. Gate by trigger: development
+   ≈ the phase→filing rate (above the approval LoA, since filing precedes approval); commercial/approval
+   ≈ the approval LoA; sales ≈ LoA × P(peak sales ≥ threshold | approved) over the (often confidential)
+   threshold ladder. Do NOT bracket confidential milestones to zero — credit them at the derived PoS
+   and disclose the ladder assumption + sensitivity; carry the conditional tails into bear/bull.
+3. **Per-asset SOTP** = discounted royalty FCFs + PoS-weighted discounted milestones (+ any second
+   territory licensee as its own stream). Sum across candidates, add net cash, subtract PV(overhead not
+   borne by the partner) and the option liability, and bridge to equity on TODAY's fully diluted shares
+   (no future-dilution haircut). Cross-check with a full income-statement → FCF DCF in which the
+   licensor's "revenue" is the risk-adjusted royalty + milestone stream (both should bracket the value).
 
 ### Upstream Bio Canonical Worked Example (rNPV for one asset)
 [Synthetic illustration based on Upstream Bio-style analysis:]

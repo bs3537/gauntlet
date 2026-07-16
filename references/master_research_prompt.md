@@ -327,7 +327,14 @@ before the event being predicted.
 ## PHASE 2: COMPETITIVE LANDSCAPE AND MOAT ANALYSIS
 
 Analyze each actively pursued indication, product market, operating segment, or
-material value pool separately. Use one table per indication or market.
+material value pool separately. Use one table per indication or market. **For biotech /
+pharma specifically: produce a SEPARATE competitive-landscape table AND a SEPARATE
+moat-score table for EACH pipeline indication that is APPROVED or in PHASE 2 or later —
+scoring the subject company's own asset in that indication on the moat framework below
+(0-10, weighted). Do NOT fold multiple indications into one table, and do NOT score only
+the lead asset: a Phase-2+ second indication or a wholly-owned candidate (e.g. the KROS
+DMD program) each gets its own scored table. Programs earlier than Phase 2, or
+discontinued, may be grouped or listed as unscored, with the reason.**
 
 | Rank | Company | Product or Offering | Stage or Scale | Mechanism or Business Model | Key Verified Data | Moat Score 0-10 | Rationale |
 |---|---|---|---|---|---|---|---|
@@ -504,10 +511,16 @@ multiplying probabilities as if sequential events were independent.
 
 ### 3.4 Management and governance profiles
 
-Profile the CEO, CFO, COO, chief commercial officer, chief scientific or technology
-officer, and other decision-critical executives. Include:
+Profile EACH decision-critical executive the company HAS — at minimum the CEO, CFO, COO,
+chief business officer, chief commercial officer, chief scientific officer, chief medical
+officer, and head of R&D, plus the board chair — and present them in a table. **Explicitly
+flag any of these roles that are VACANT or were eliminated (e.g. a missing CMO during a
+Phase-2 push, or a cut COO) — an incomplete C-suite is itself a material signal.** Include:
 
 - Verified career history and relevant prior outcomes
+- **Prior roles at BIG PHARMA or notable biotechs, and any M&A experience** (companies
+founded / sold / acquired, or deals led — e.g. a founder whose prior company was acquired)
+- **Brief education** (degrees and institutions)
 - Evidence of domain, operating, scientific, regulatory, capital-allocation,
 integration, or turnaround experience
 - Tenure and role at the company
@@ -661,6 +674,38 @@ For each actively pursued pipeline candidate model:
 
 Do not probability-weight peak sales and then probability-weight the same asset again.
 Make risk adjustment explicit and singular.
+
+#### Partnered / out-licensed pipeline asset (royalty + milestone interest) — the SOTP method
+
+When a candidate is OUT-LICENSED (the company earns royalties + milestones while the partner funds
+development and commercialization), value the company's economic INTEREST as a per-candidate,
+FCF-based SOTP — do NOT model the company as if it booked the product sales:
+
+1. Project the PARTNER's product net sales for the candidate (the launch → ramp → plateau → LoE
+   erosion curve, or a full revenue build) by geography.
+2. Royalty FCF stream: royalty_rate × the partner's projected net sales, by year. Royalty income
+   carries ~no COGS or commercial cost to the licensor, so it is ~free cash flow (net only a modest
+   admin/tax; NOLs may shield early years). Risk-adjust by the indication LoA (PoS) and discount
+   every year back at WACC.
+3. Milestone payments — INCLUDE them in the base case with a PROPERLY DERIVED PoS; do not bracket
+   them to zero. Value every future development, regulatory/commercial, and sales-based milestone
+   tranche as `amount × PoS ÷ (1+WACC)^year`. **Derive each tranche's PoS yourself** from historical
+   clinical-and-FDA success rates for the SPECIALTY where available (e.g. the BIO / QLS Advisors /
+   Informa "Clinical Development Success Rates" phase-transition and likelihood-of-approval figures by
+   disease area — hematology, oncology, etc.), run through the SAME ensemble used for the primary
+   catalyst PoS, and gate each class on its trigger: development milestones ≈ the phase→filing rate
+   (often ABOVE the approval LoA, since filing precedes approval); commercial/approval milestones ≈
+   the approval LoA; sales milestones ≈ LoA × P(peak sales ≥ threshold | approved) over the (often
+   confidential) sales-threshold ladder. State the ladder assumption and its sensitivity; carry the
+   conditional tails into bear/bull.
+4. Credit any SECOND licensee for other territories (e.g. a separate China partner) as its own
+   royalty + milestone stream.
+5. Per-candidate SOTP = discounted royalty FCFs + PoS-weighted discounted milestones. Sum across
+   candidates, add net cash, subtract PV(corporate overhead not borne by the partners) and the
+   option liability, and bridge to equity on TODAY's fully diluted share count (no future-dilution
+   haircut — §4B and Damodaran). Cross-check with a full income-statement → FCF DCF in which the
+   licensor's "revenue" IS the risk-adjusted royalty + milestone stream (both methods should bracket
+   the same value).
 
 #### Developmental-stage (pre-commercial, no marketed products) defaults
 

@@ -68,6 +68,27 @@ the session model, recording the deviation in `VERIFICATION_LOG.md`. Do not sile
 - `scripts/render_report.sh` — Stage 5 renders `FINAL_REPORT.md` → styled `FINAL_REPORT.html` (+ optional PDF) via the bundled deep-research `md_to_html.py`.
 - `eval/` — planted-fraud validation asset (fictional doctored preliminary report + GROUND-TRUTH answer sheet + deterministic `check.sh`); pure validation, nothing at runtime loads it (see Validation section below).
 
+## Modes — full review (default) vs fast (no review)
+
+Gauntlet runs in one of two modes:
+
+- **Full (DEFAULT) — WITH adversarial review.** The complete Stage 0–5 pipeline: first-pass research
+  and draft, the external GPT-5.6 Sol adversarial review, adjudication, the gate, and the final
+  report. The cross-model review is what makes the output decision-grade; it typically adds ~1 hour
+  (the five GPT-5.6 Sol codex calls), for a total wall-clock of roughly 1.5–2.5 hours.
+- **Fast — WITHOUT adversarial review.** Runs Stage 0, Stage 1 (first-pass research + draft), and
+  Stage 5 (final report) ONLY; it SKIPS Stage 2 (adversarial review), Stage 3 (adjudication), and
+  Stage 4 (gate). Use it when the user wants a quick report in about an hour and accepts a
+  single-model, un-reviewed product. **Trigger:** the user says "fast" (`/gauntlet fast <TICKER>`,
+  "run gauntlet fast on X") or sets `GAUNTLET_FAST=1`. The final report MUST carry a prominent banner
+  at the top — **"FAST MODE — single-model draft, NOT adversarially reviewed"** — and confidence is
+  capped at LOW, because the blind-spot / confident-hallucination catch that is the whole point of
+  Gauntlet did not run. Everything else (master-prompt research rigor, the Python models, the detailed
+  Excel, the Damodaran valuation, FinTwit, the moat/management/valuation methodology) still applies.
+  In fast mode, `VERIFICATION_LOG.md` records "adversarial review: SKIPPED (fast mode)".
+
+**Default to FULL** unless the user explicitly asks for fast / a quick (~1-hour) report.
+
 ## Stage 0 — Intake and preflight
 
 1. Fill the master prompt's INPUT BLOCK from the user's request (company, ticker, as-of date, price

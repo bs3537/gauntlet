@@ -221,6 +221,17 @@ On WSL the final `.md` / `.html` / `.xlsx` are also copied to a Windows-accessib
 presented as native `C:\Users\…` paths, so they open with a double-click (raw `file:///home/…` Linux
 paths do not open from Windows).
 
+## Modes: full review (default) vs fast (no review)
+
+- **Full (default)** — the complete pipeline including the GPT-5.6 Sol adversarial review,
+  adjudication, and gate. The cross-model review adds roughly an hour but is what makes the output
+  decision-grade (it catches the blind spots and confident hallucinations a single model cannot see
+  in itself). Total wall-clock ~1.5–2.5 hours.
+- **Fast** (`/gauntlet fast <TICKER>` or `GAUNTLET_FAST=1`) — first-pass research + final report only,
+  **skipping the adversarial review, adjudication, and gate**. Delivers a quick (~1-hour) single-model
+  report that carries a prominent "NOT adversarially reviewed" banner and LOW confidence. Use it when
+  speed matters more than the extra rigor; the default is always full review.
+
 ## Cost & quota (read before running)
 
 A full run is **deliberately heavy** — four Opus 4.8 xhigh deep-research lanes plus a five-call
