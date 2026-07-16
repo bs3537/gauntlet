@@ -151,7 +151,7 @@ require:
   scite / fmp / biomcp / perplexity MCPs configured in `~/.codex/config.toml`. Without codex,
   Stage 2 falls back to a labeled same-model self-review.
 - **FinTwit / X sentiment — optional.** The default-on Tier-4 social-sentiment step (bundled `fintwit`
-  companion) needs an **xAI API key** at `~/.claude/secrets/xai.env` (`XAI_API_KEY=…`, chmod 600, from
+  companion) needs an **xAI API key** at `~/.claude/secrets/xai.env` (the `XAI_API_KEY` env var, chmod 600, from
   console.x.ai). Without it, gauntlet simply skips FinTwit and notes it in the report — it never blocks
   a run.
 

@@ -80,7 +80,7 @@ echo "Done. Installed skills: gauntlet ${COMPANIONS[*]}"
 echo
 echo "NOTE — fintwit (default-on Tier-4 X/sentiment step) needs an xAI API key:"
 echo "  create one at https://console.x.ai , then:"
-echo "    printf 'XAI_API_KEY=xai-...\\n' > ~/.claude/secrets/xai.env && chmod 600 ~/.claude/secrets/xai.env"
+echo "    save your xAI API key into ~/.claude/secrets/xai.env (chmod 600); the variable name is XAI_API_KEY"
 echo "  Without it, a gauntlet run simply SKIPS FinTwit and notes it in the report (nothing else breaks)."
 echo
 echo "NEXT — provide the external data sources & tools Gauntlet relies on"

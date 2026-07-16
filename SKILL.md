@@ -129,8 +129,8 @@ master prompt's "Research execution model — Gauntlet fan-out"):
    move the rating**, and respect the bot/promo flags. **If the xAI key is absent** (`~/.claude/secrets/xai.env`
    missing / `XAI_API_KEY` unset — the engine exits non-zero with "XAI_API_KEY not set"), SKIP the step,
    put a one-line "FinTwit skipped — no xAI API key" in that report section, and **PROMPT the user in the
-   terminal**: create a key at console.x.ai, then `printf 'XAI_API_KEY=xai-...\n' > ~/.claude/secrets/xai.env
-   && chmod 600 ~/.claude/secrets/xai.env`, and re-run. `SKIP_FINTWIT=1` also skips. The `fintwit` skill
+   terminal**: create a key at console.x.ai, then save it into `~/.claude/secrets/xai.env` as the
+   `XAI_API_KEY` variable (`chmod 600`), and re-run. `SKIP_FINTWIT=1` also skips. The `fintwit` skill
    must be installed (bundled in the repo's `companion-skills/`; installs with the others via `install.sh`).
 
 ## Stage 2 — External adversarial review (GPT-5.6 Sol panel via codex)
@@ -376,7 +376,7 @@ patterns are catchable; it does not benchmark the reviewer.
 - **`search-as-code`** — deep-research chains it as its second pass.
 - **`valuation`** — Stage 1 valuation delegates dev-stage biotech rNPV to `valuation/scripts/valuation_engine.py` (master prompt 4B); mirrored in `~/.codex/skills/valuation/` so the reviewer can rerun it.
 - **`hybrid-model-fusion`** — its `scripts/run_codex.sh` is the hardened codex launcher `run_review.sh` prefers.
-- **`fintwit`** — Stage 1 runs the default-on Tier-4 X/sentiment step (`scripts/fintwit.sh "$RUN_DIR" <TICKER>` → `fintwit_context.md`, feeding the report's FinTwit / X Sentiment section). Requires an xAI API key at `~/.claude/secrets/xai.env` (`XAI_API_KEY=…`, chmod 600, from console.x.ai); absent that, the step is skipped, the user is prompted to add a key, and the section says so. `SKIP_FINTWIT=1` disables it.
+- **`fintwit`** — Stage 1 runs the default-on Tier-4 X/sentiment step (`scripts/fintwit.sh "$RUN_DIR" <TICKER>` → `fintwit_context.md`, feeding the report's FinTwit / X Sentiment section). Requires an xAI API key at `~/.claude/secrets/xai.env` (the `XAI_API_KEY` variable, chmod 600, from console.x.ai); absent that, the step is skipped, the user is prompted to add a key, and the section says so. `SKIP_FINTWIT=1` disables it.
 
 `codex` on PATH and authenticated (preflight checks this). Prefers the hardened
 `~/.claude/skills/hybrid-model-fusion/scripts/run_codex.sh` (transient retry, safety fallback,
