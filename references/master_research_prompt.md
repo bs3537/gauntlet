@@ -608,7 +608,16 @@ method — DCF, rNPV, and SOTP alike — bridge to equity value on today's fully
 share count: basic shares plus all currently outstanding in-the-money options, RSUs,
 warrants, and convertible notes or preferred stock on an as-converted basis, using
 treasury-stock and if-converted methods as appropriate. Do not include future
-(not-yet-issued) share dilutions in your calculations (per Damodaran).
+(not-yet-issued) share dilutions in your calculations, and do NOT apply a per-share
+dilution haircut or divide by an enlarged post-raise share count for expected future
+capital raises (per Damodaran, Investment Valuation 3rd ed. p.371, p.443, p.658-659): the
+present value of the negative development/operating cash flows ALREADY captures the cash
+the firm must raise, so charging again double-counts, and a raise at fair value is
+value-neutral. Model any funding gap as a solvency/liquidity DISCLOSURE and a falsifier,
+never as a value haircut; put a genuinely below-intrinsic / distress raise in the
+probability-weighted bear scenario (as reduced proceeds or a distress value), not in the
+base per-share bridge. Value options/warrants as a liability and divide by primary shares
+(p.446); a zero-time-value shortcut for out-of-the-money options is itself an error.
 
 Examples of fit include:
 
