@@ -1,0 +1,12 @@
+# Curated X handles for the fintwit engine (optional).
+# One handle per line, NO leading @, max 20 active (lines beyond 20 are ignored).
+# Lines starting with # and blank lines are ignored.
+#
+# When passed via `--handles <this file>`, searches are restricted to these accounts
+# (x_search allowed_x_handles). Leave empty (all commented) to let Grok search ALL
+# public X posts and auto-prioritize credible investors (the default behavior).
+#
+# Populate over time with the experienced investors you trust, e.g.:
+# unusual_whales
+# zerohedge
+# RampCapitalLLC

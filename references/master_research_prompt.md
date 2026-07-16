@@ -1052,8 +1052,15 @@ writing it, reopen and read every file created for this assignment — including
 
 ### Format
 
-- Target 2,000 words, plus or minus 10%, excluding tables, figure captions, source
-notes, appendices, and the verification log
+- Target AT LEAST 3,000 words (aim 3,000–3,800), excluding tables, figure captions, source
+notes, appendices, and the verification log. Depth is expected — do not pad, but do expand:
+(a) the competitive landscape (a table per indication/segment PLUS a dedicated
+"Differentiation vs named competitors" subsection that compares mechanism, label/population,
+head-to-head or cross-trial data with caveats, price, and durability); (b) the valuation
+(show the revenue/royalty build, the operating-expense and free-cash-flow build, the
+DCF/rNPV/SOTP mechanics, the enterprise-to-equity and per-share bridge, the milestone
+schedule, and at least two two-dimensional sensitivity tables); and (c) the catalyst,
+governance, and risk analysis. Prefer more well-captioned tables and figures over prose.
 - Begin with an approximately 400-word executive summary
 - Put the recommendation and differentiated conclusion in the first two sentences
 - Use compelling, precise titles, headers, and subheaders
@@ -1063,6 +1070,14 @@ material product market
 - Show catalyst PoS, method outputs, adjusted weights, independence score,
 bounds, and expected reaction in tables
 - Show DCF, rNPV, SOTP, scenario, per-share bridge, and sensitivity calculations in tables
+- Also emit a detailed, editable Excel model `<TICKER>_Gauntlet_Model.xlsx` (formula-driven so the
+user can change inputs and re-run): a separate sheet PER SCENARIO (bear / base / bull) with the full
+year-by-year income statement -> free cash flow build (revenue -> COGS -> gross profit -> R&D ->
+SG&A -> EBITDA -> EBIT -> D&A -> interest -> taxes -> net income -> NOPAT -> FCF -> discounted PV),
+an equity-value bridge sheet per scenario (NPV of FCF + net cash + other assets − liabilities −
+option value -> value/share), an editable Assumptions tab, a WACC tab, and at least one live
+sensitivity tab. For a licensor/royalty company, "revenue" is the risk-adjusted royalty + milestone
+stream. Verify the formulas compute (recalc or re-implement the semantics) before shipping.
 - Use absolute dates and an explicit as-of or data-cutoff time
 - Attach citations or exact locators to the claims they support
 - If fewer than 301 unique relevant sources were triaged or fewer than 50 credible
@@ -1086,7 +1101,12 @@ instructions
 12. Convexity, Position Sizing, and Crisis Alpha if applicable
 13. Risks, Falsifiers, and Kill Switches
 14. Proof Lite
-15. Source-Coverage Disclosure and Data Cutoff
+15. FinTwit / X Sentiment (Tier-4 social signal; default-on). Present the verdict, 0-100
+score, bull and bear themes, and any catalysts from `fintwit_context.md`, clearly labeled
+`[SOCIAL SENTIMENT — Tier 4]`; respect `[PROMO/BOT?]` flags; NEVER anchor a material claim
+to it or let it move the rating. If it was skipped for lack of an xAI API key, say so in one
+line and note that a key placed in `~/.claude/secrets/xai.env` (from console.x.ai) enables it.
+16. Source-Coverage Disclosure and Data Cutoff
 
 ### Required appendices
 

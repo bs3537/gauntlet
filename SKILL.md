@@ -100,6 +100,17 @@ master prompt's "Research execution model — Gauntlet fan-out"):
    verified evidence into `03_evidence_ledger.csv` (lock rule) and the draft; lane disagreements
    become `[SOURCE CONFLICT]` items. The `deep-research` and `valuation` skills must be installed
    (see Dependencies); the biotech valuation delegates to the `valuation` engine per master prompt 4B.
+4. **FinTwit / X sentiment (default-on, Tier-4).** Run the social-sentiment pass as a standard
+   first-pass step: `XAI_ENV_FILE=~/.claude/secrets/xai.env bash ~/.claude/skills/fintwit/scripts/fintwit.sh
+   "$RUN_DIR" <TICKER>` → writes `$RUN_DIR/fintwit_context.md` (+ `.json`: verdict, 0-100 score,
+   bull/bear themes, catalysts, `[PROMO/BOT?]` flags). Fold it into the report's dedicated **FinTwit / X
+   Sentiment** section — Tier-4 social signal only: **never anchor a material claim to it, never let it
+   move the rating**, and respect the bot/promo flags. **If the xAI key is absent** (`~/.claude/secrets/xai.env`
+   missing / `XAI_API_KEY` unset — the engine exits non-zero with "XAI_API_KEY not set"), SKIP the step,
+   put a one-line "FinTwit skipped — no xAI API key" in that report section, and **PROMPT the user in the
+   terminal**: create a key at console.x.ai, then `printf 'XAI_API_KEY=xai-...\n' > ~/.claude/secrets/xai.env
+   && chmod 600 ~/.claude/secrets/xai.env`, and re-run. `SKIP_FINTWIT=1` also skips. The `fintwit` skill
+   must be installed (bundled in the repo's `companion-skills/`; installs with the others via `install.sh`).
 
 ## Stage 2 — External adversarial review (GPT-5.6 Sol panel via codex)
 
@@ -207,6 +218,16 @@ including the review and adjudication files). The final quality gate includes v2
 sustained finding reflected; every rejected finding has a documented, evidence-backed rejection.
 Do not mention the adversarial-review process in the polished report body; it lives in
 `VERIFICATION_LOG.md` and the appendix.
+
+**Also emit the detailed Excel model (required):** build `<TICKER>_Gauntlet_Model.xlsx` per master
+prompt Phase 8 — a formula-driven workbook with a full income-statement→FCF DCF sheet PER SCENARIO
+(bear/base/bull: revenue → COGS → R&D → SG&A → EBITDA → EBIT → taxes → net income → FCF → PV), an
+equity-value bridge per scenario, an editable Assumptions tab, a WACC tab, and a live sensitivity
+tab. For a licensor/royalty name, "revenue" is the risk-adjusted royalty + milestone stream; the
+rNPV/SOTP stays the primary method and the DCF is the detailed cross-check. Headless recalc
+(LibreOffice) is usually absent in WSL, so **verify** by re-implementing the sheet semantics in
+Python and confirming they reproduce the model, and set `fullCalcOnLoad` so Excel/Sheets recompute
+on open. Link it in the final deliverables alongside the `.md`/`.html`.
 
 **Emit BOTH formats (required): Markdown + styled HTML.** Write `FINAL_REPORT.md`, then render its
 self-contained HTML twin with the bundled renderer (absolute paths only):
@@ -319,6 +340,7 @@ patterns are catchable; it does not benchmark the reviewer.
 - **`search-as-code`** — deep-research chains it as its second pass.
 - **`valuation`** — Stage 1 valuation delegates dev-stage biotech rNPV to `valuation/scripts/valuation_engine.py` (master prompt 4B); mirrored in `~/.codex/skills/valuation/` so the reviewer can rerun it.
 - **`hybrid-model-fusion`** — its `scripts/run_codex.sh` is the hardened codex launcher `run_review.sh` prefers.
+- **`fintwit`** — Stage 1 runs the default-on Tier-4 X/sentiment step (`scripts/fintwit.sh "$RUN_DIR" <TICKER>` → `fintwit_context.md`, feeding the report's FinTwit / X Sentiment section). Requires an xAI API key at `~/.claude/secrets/xai.env` (`XAI_API_KEY=…`, chmod 600, from console.x.ai); absent that, the step is skipped, the user is prompted to add a key, and the section says so. `SKIP_FINTWIT=1` disables it.
 
 `codex` on PATH and authenticated (preflight checks this). Prefers the hardened
 `~/.claude/skills/hybrid-model-fusion/scripts/run_codex.sh` (transient retry, safety fallback,

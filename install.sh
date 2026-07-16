@@ -3,7 +3,7 @@
 # Gauntlet one-shot installer.
 #
 # Installs the gauntlet skill AND every bundled companion skill
-# (deep-research, search-as-code, valuation, hybrid-model-fusion) into your
+# (deep-research, search-as-code, valuation, hybrid-model-fusion, fintwit) into your
 # Claude Code skills tree in a single step — no separate downloads.
 #
 # It also mirrors the valuation engine (and a gauntlet parity copy) into the
@@ -29,7 +29,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_SKILLS="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
 CODEX_SKILLS="${CODEX_SKILLS_DIR:-$HOME/.codex/skills}"
 
-COMPANIONS=(deep-research search-as-code valuation hybrid-model-fusion)
+COMPANIONS=(deep-research search-as-code valuation hybrid-model-fusion fintwit)
 
 # Copy the CONTENTS of $1 into $2 (portable; GNU + BSD cp). Overlay, never delete.
 install_dir() {
@@ -77,6 +77,11 @@ fi
 
 echo
 echo "Done. Installed skills: gauntlet ${COMPANIONS[*]}"
+echo
+echo "NOTE — fintwit (default-on Tier-4 X/sentiment step) needs an xAI API key:"
+echo "  create one at https://console.x.ai , then:"
+echo "    printf 'XAI_API_KEY=xai-...\\n' > ~/.claude/secrets/xai.env && chmod 600 ~/.claude/secrets/xai.env"
+echo "  Without it, a gauntlet run simply SKIPS FinTwit and notes it in the report (nothing else breaks)."
 echo
 echo "NEXT — provide the external data sources & tools Gauntlet relies on"
 echo "(none are bundled; see README.md 'External data sources & tools'):"
