@@ -248,12 +248,27 @@ Chrome/Chromium). The HTML is a rendering of the SAME content — never let it d
 
 ## Presenting
 
-Give the user, in the first sentence: rating + weighted target + expected return. Then **direct,
-clickable links to both deliverables** — use absolute `file://` paths so the terminal makes them
-clickable:
-- **Markdown** — `file://$RUN_DIR/FINAL_REPORT.md`
-- **HTML (styled)** — `file://$RUN_DIR/FINAL_REPORT.html` — on WSL, open it in the Windows browser
-  with `explorer.exe "$(wslpath -w "$RUN_DIR/FINAL_REPORT.html")"`, or re-run the render step with `--open`.
+Give the user, in the first sentence: rating + weighted target + expected return. Then **openable
+links to all THREE deliverables** — the `.md` report, the styled `.html`, and the detailed `.xlsx`
+model.
+
+**IMPORTANT — make the links actually openable on WSL.** A raw `file:///home/...` Linux path does
+NOT open from Windows (the OS can't resolve the Linux path, and terminals rarely make it clickable).
+So on WSL, first COPY the deliverables to a Windows-accessible folder and present the native Windows
+path the user can paste into Explorer / a browser / Excel:
+
+```bash
+WINUSER="$(ls /mnt/c/Users | grep -viE 'public|default|all users' | head -1)"   # or ask the user
+WIN="/mnt/c/Users/$WINUSER/Downloads/<TICKER>_Gauntlet_<YYYYMMDD>"
+mkdir -p "$WIN"
+cp "$RUN_DIR"/FINAL_REPORT.md "$RUN_DIR"/FINAL_REPORT.html "$RUN_DIR"/<TICKER>_Gauntlet_Model.xlsx "$WIN"/
+wslpath -w "$WIN/FINAL_REPORT.html"   # -> C:\Users\...\FINAL_REPORT.html  (give this to the user)
+```
+
+Present each file's **Windows path** (from `wslpath -w`, e.g. `C:\Users\<user>\Downloads\...\FINAL_REPORT.html`)
+and offer to open the HTML/xlsx now with `explorer.exe "$(wslpath -w "$WIN/FINAL_REPORT.html")"`. A
+`file://wsl.localhost/<distro>/home/...` URL of the run-dir original is an acceptable fallback, but the
+Windows-copied path is the most reliable. Keep the run-dir originals as the canonical copies.
 
 Then give the run-directory path, the reviewer's score, and the 2–3 highest-impact adjudication
 outcomes (what the second model caught, what was rejected and why). Do not paste the whole report
