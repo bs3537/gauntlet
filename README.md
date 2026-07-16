@@ -187,20 +187,39 @@ Then configure the external data sources above, and you are ready to invoke.
 run the gauntlet on <TICKER>
 ```
 
-You get back: the rating + weighted target + expected return in the first sentence; **direct
-clickable links to both deliverables — `FINAL_REPORT.md` and the styled `FINAL_REPORT.html`** — plus
-the run directory; the reviewer's score; and the 2–3 highest-impact adjudication outcomes (what the
-second model caught, what was rejected and why).
+You get back: the rating + weighted target + expected return in the first sentence; **openable
+Windows paths to the three deliverables — `FINAL_REPORT.md`, the styled `FINAL_REPORT.html`, and the
+detailed `<TICKER>_Gauntlet_Model.xlsx`** — plus the run directory (the full auditable artifact trail
+described under *Outputs* below); the reviewer's score; and the 2–3 highest-impact adjudication
+outcomes (what the second model caught, what was rejected and why).
 
-## Outputs (in the run directory)
+## Outputs — a complete, auditable trail (in the run directory)
 
-`01_scope…` · `02_source_manifest.csv` · `03_evidence_ledger.csv` · `04_catalyst_and_pos_model.py`
-· `05_valuation_model.py` (+ `05_valuation_plan.json` + engine `*_rnpv_results.json/.xlsx`) ·
-`06_model_outputs.csv` · `07_working_research.md` · `08_preliminary_report.md` ·
-`09_reviewer_*` prompts · `10_reviewer_lane{1..4}.md` + `10_adversarial_review_gpt56sol.md` ·
-`11_adjudication_and_corrections.md` · **`FINAL_REPORT.md`** + **`FINAL_REPORT.html`** (styled,
-self-contained twin — same content in a Gauntlet-branded template with a rating / target / return /
-reviewer-score metric dashboard) · `VERIFICATION_LOG.md`.
+**Every step of a Gauntlet run is written to disk in `~/Documents/<TICKER>_Gauntlet_<YYYYMMDD>/`, so
+the whole analysis is reproducible and auditable end to end — nothing important lives only in chat.**
+You can open any intermediate artifact and trace the reasoning from raw evidence to the final call:
+the scope and locked evidence ledger, the source manifest, the **first-pass (preliminary) report**,
+the **four adversarial-lane reviews and the scored judge review**, the point-by-point **adjudication**
+(every finding accepted / partial / rejected with its verification), the **executable valuation and
+catalyst-PoS models** (and the audited engine's Excel/JSON outputs), the **detailed multi-scenario DCF
+workbook**, the **final report** in Markdown and styled HTML, the Tier-4 FinTwit sentiment pull, and
+the verification log. Keep the folder and you keep the entire paper trail.
+
+| File(s) | What it is |
+|---|---|
+| `01_scope_and_assumptions.md` · `02_source_manifest.csv` · `03_evidence_ledger.csv` | scope/archetype, every source (tiered), and the locked atomic-claim ledger |
+| `04_catalyst_and_pos_model.py` · `05_valuation_model.py` (+ `05_valuation_plan.json`, engine `*_rnpv_results.json` / `.xlsx` / `_validation.json`) · `06_model_outputs.csv` | the **executable** catalyst-PoS and valuation models plus their outputs |
+| `07_working_research.md` · `08_preliminary_report.md` | working notes and the **first-pass report** the reviewer audits |
+| `09_reviewer_*` · `10_reviewer_lane{1..4}.md` · `10_adversarial_review_gpt56sol.md` | reviewer prompts, the **four adversarial lanes**, and the **scored `/100` judge review** |
+| `11_adjudication_and_corrections.md` | the **adjudication** — every reviewer finding ACCEPT / PARTIAL / REJECT with evidence |
+| `fintwit_context.md` (+ `.json`) | Tier-4 FinTwit / X sentiment pull |
+| **`FINAL_REPORT.md`** + **`FINAL_REPORT.html`** | the **final report** — Markdown plus a styled, self-contained twin (Gauntlet-branded, metric dashboard) |
+| **`<TICKER>_Gauntlet_Model.xlsx`** | the **detailed, editable model** — per-scenario income-statement→FCF DCF, equity-value bridges, WACC, assumptions, and sensitivity tabs |
+| `VERIFICATION_LOG.md` | commands, recomputations, the external-review round(s), reviewer score, and disposition counts |
+
+On WSL the final `.md` / `.html` / `.xlsx` are also copied to a Windows-accessible Downloads folder and
+presented as native `C:\Users\…` paths, so they open with a double-click (raw `file:///home/…` Linux
+paths do not open from Windows).
 
 ## Cost & quota (read before running)
 
