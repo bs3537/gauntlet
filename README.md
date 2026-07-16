@@ -101,7 +101,7 @@ in the codex tree) and cross-checks the rNPV independently.
 
 ## Bundled companion skills (no separate install)
 
-Gauntlet orchestrates four other skills. **They ship inside this repo under
+Gauntlet orchestrates five other skills. **They ship inside this repo under
 [`companion-skills/`](companion-skills/)** — cloning gauntlet gets you every dependency in one
 go; there is nothing else to download or install separately.
 
@@ -110,6 +110,7 @@ go; there is nothing else to download or install separately.
 | **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Opus 4.8 xhigh lanes) | first pass |
 | **`search-as-code`** | deep-research's second-pass source-discovery harness | first pass |
 | **`valuation`** | Damodaran-grounded rNPV/DCF/SOTP engine (dev-stage biotech §4B) | first pass + reviewer |
+| **`fintwit`** | Stage-1 Tier-4 X/sentiment pull → the report's *FinTwit / X Sentiment* section (optional; skipped when no xAI key) | first pass |
 | **`hybrid-model-fusion`** | provides `scripts/run_codex.sh`, the hardened codex launcher | reviewer |
 
 > **Damodaran text (optional — standalone `valuation` deep-lookups only).** The bundled `valuation`
