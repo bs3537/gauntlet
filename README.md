@@ -47,6 +47,19 @@ perspective. Neither replaces the other.
 | Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | high | Codex deep-research worker contract; `codex exec` launched by Stage 2 |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | xhigh | `codex exec` (launched by Stage 2) |
 
+### How the routing is enforced
+
+- Stage 0 checks that the active Claude session is Opus 4.8 at `xhigh`; any session-model or effort
+  deviation is disclosed and recorded in `VERIFICATION_LOG.md`.
+- Claude deep-research pins every delegated Stage-1 research, audit, and gap worker to Sonnet 5
+  (`claude-sonnet-5`) at `xhigh` when per-agent overrides are supported.
+- `scripts/run_review.sh` defaults Stage 2 to GPT-5.6 Sol, reviewer lanes to `high`, and the
+  reviewer judge to `xhigh`; it also disables automatic alternate-model safety fallback. Explicit
+  environment overrides remain available and must be logged.
+- The Gauntlet contract requires reviewer lanes to remain leaf `codex exec` processes with no
+  nested subagents. Stage 1 also skips deep-research Phase 7.6 so no unplanned reviewer path
+  consumes quota.
+
 ---
 
 ## How it works, stage by stage

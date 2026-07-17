@@ -41,6 +41,28 @@ deep research in ultradeep mode: compare PostgreSQL vs Supabase for our stack
 | Deep | 8 core phases + Phases 0.5/4.5/7.5 | 10-20 min | Complex topics, critical decisions |
 | UltraDeep | 8 core phases + Phases 0.5/4.5/7.5 and optional 7.6 | 20-45 min | Comprehensive reports, maximum rigor |
 
+## Model, effort, and subagent routing
+
+Standalone Claude deep-research keeps the active Claude session as the lead. When per-agent
+overrides are supported, every delegated research, audit, and gap worker uses Sonnet 5
+(`claude-sonnet-5`) at `xhigh`. Delegated Deep and UltraDeep lane assignments are also recorded in
+`plan.json.execution_budget`.
+
+UltraDeep launches four non-overlapping workers concurrently when capacity allows; otherwise it
+uses waves until four total workers have run and discloses the fallback. If the runtime cannot
+apply a model or effort override, inherit the parent setting and record that deviation rather than
+silently claiming the pinned route.
+
+When Gauntlet is the parent workflow, its Stage-1 contract is:
+
+| Gauntlet Stage-1 role | Model | Effort |
+|---|---|---|
+| First-pass orchestrator and adjudicator | Opus 4.8 | `xhigh` |
+| Research, audit, and residual-gap subagents | Sonnet 5 (`claude-sonnet-5`) | `xhigh` |
+
+Gauntlet runs skip optional Phase 7.6 cross-model critique because Gauntlet Stage 2 is the sole
+external-review path.
+
 ## Pipeline
 
 Clarify/Brief &rarr; Scope &rarr; Plan &rarr; **Retrieve** (parallel search + agents) &rarr; Triangulate &rarr; Outline Refinement &rarr; Synthesize &rarr; Critique (with loop-back) &rarr; Refine &rarr; Audit &rarr; Optional Cross-Model Critique &rarr; Package
@@ -56,7 +78,7 @@ Key features:
 - **Data-analysis lane**: Quantitative local datasets get `data_profile.jsonl`, optional reproducible artifacts under `analysis/`, and computed claims cited back to source data plus calculation method
 - **Optional Deep Crawler**: Browser-automation subagent fallback for hard-target public pages after normal retrieval is exhausted, with no login/paywall/CAPTCHA bypass and evidence persisted back to ledgers
 - **Per-section package audit**: Phase 8 rejects draft-while-retrieving streaming and writes per-section CitationAuditor JSON before the final delivery gate
-- **Parallel retrieval**: 5-10 concurrent searches + 2-3 focused sub-agents returning structured evidence objects
+- **Parallel retrieval**: 5-10 concurrent searches plus mode-scaled subagent fan-out (Quick 0, Standard 1, Deep 2, UltraDeep up to 4) returning structured evidence objects
 - **Batch ledger imports**: `register-sources --jsonl` and `evidence_store.py add-batch --jsonl` ingest large retrieval waves idempotently while `ledger_index.json` caches duplicate checks
 - **Biotech/pharma investment controls**: Primary-source routing, Perplexity/BioMCP/scite/FMP layering, pipeline-sweep gates, source-lineage preservation, and claim-ledger fields
 - **First Finish Search**: Adaptive quality thresholds by mode
@@ -156,6 +178,7 @@ deep-research/
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.0.1 | 2026-07-17 | Documented Sonnet 5/xhigh worker routing, the four-worker UltraDeep default, and the Opus 4.8/xhigh Gauntlet parent contract |
 | 3.0.0 | 2026-07-05 | Fusion-report hardening: citation display maps, lexical/table/subagent support, delivery gate wiring, eval harness, plan checkpoint, phase metrics, role budgets, batch ledger index, phase-provider cleanup, adversarial gate tests, and consistency sweep |
 | 2.3.1 | 2026-03-19 | Template/validator harmonization, structured evidence, critique loop-back, multi-persona red teaming |
 | 2.3 | 2026-03-19 | Contract harmonization, search-cli integration, dynamic year detection, disk-persisted citations, validation loops |

@@ -231,6 +231,11 @@ class InstructionDocsTests(unittest.TestCase):
         self.assertIn('Gauntlet parent override', skill)
         self.assertIn('skip optional Phase 7.6 cross-model critique', skill)
         self.assertIn('Role effort budgets', readme)
+        self.assertIn('## Model, effort, and subagent routing', readme)
+        self.assertIn('every delegated research, audit, and gap worker uses Sonnet 5', readme)
+        self.assertIn('UltraDeep launches four non-overlapping workers', readme)
+        self.assertIn('| First-pass orchestrator and adjudicator | Opus 4.8 | `xhigh` |', readme)
+        self.assertIn('skip optional Phase 7.6 cross-model critique', readme)
 
     def test_batch_ledger_cli_and_index_cache_are_documented(self):
         methodology = (ROOT / 'reference' / 'methodology.md').read_text()
