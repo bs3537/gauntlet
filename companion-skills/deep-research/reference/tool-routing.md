@@ -12,7 +12,7 @@ For biotech/pharma equities, drug pipelines, clinical catalysts, FDA/regulatory 
 - Perplexity Search MCP: use as the targeted complementary follow-up layer after native search and Search-as-Code.
 - FinTwit command: `python3 ~/.claude/skills/fintwit/scripts/fintwit_engine.py --ticker <TICKER> --out <run_dir>`.
 - Scite access: Claude Code reaches Scite through the hosted `claude.ai Scite` connector (`mcp__claude_ai_Scite__*` tools, for example `mcp__claude_ai_Scite__search_literature`). It is authenticated through claude.ai; do not run the Codex local OAuth token-refresh helper in Claude Code. If Scite returns an auth error, reconnect via `/mcp` or claude.ai. If it remains unavailable, disclose the gap and continue with BioMCP + PubMed/PMC + Semantic Scholar fallbacks where defensible.
-- Subagents: use the Agent tool when available, leave workers on latest Sonnet by default, pass `model: "sonnet"` when model overrides are supported, and embed or paraphrase `templates/subagent_brief_template.md` in every research-worker prompt.
+- Subagents: use the Agent tool when available, pin workers to Sonnet 5 at xhigh by default, pass `model: "claude-sonnet-5"` and `effort: "xhigh"` when overrides are supported, and embed or paraphrase `templates/subagent_brief_template.md` in every research-worker prompt.
 - Optional auxiliary search: do not use search-cli in a run unless the user authorizes alternate web search. If `search-cli` is installed and configured, it is an explicit-override auxiliary path only, never the default or primary path for this skill.
 
 ---

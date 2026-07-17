@@ -50,7 +50,7 @@ Key features:
 - **Clarify-or-brief**: One batched clarification round when interactive; otherwise persists `research_brief.md` and `run_manifest.json.assumptions` before retrieval
 - **Editable plan checkpoint**: Interactive runs pause on `plan.json`, accept user edits, and require `run_trace.py approve-plan` before retrieval trace records can start
 - **Run trace, phase metrics, and coverage map**: Persists `plan.json`, `coverage_map.json`, provider/subagent execution trace, per-phase timing/token/cost metrics, and planned-vs-executed coverage checks
-- **Role effort budgets**: `plan.json` stores per-lane model/effort/timeout/tool-call hints so discovery lanes stay efficient and adversarial/audit lanes get higher reasoning
+- **Role effort budgets**: `plan.json` pins every Claude worker lane to Sonnet 5 (`claude-sonnet-5`) at `xhigh`; per-role timeout/tool-call hints still tune breadth versus adversarial depth
 - **DRY tool routing**: `reference/tool-routing.md` locks Native web search first, Search-as-Code second, Targeted direct Perplexity follow-ups third, and Primary documents before conclusions, then layers BioMCP/PubMed, Semantic Scholar, Scite, FMP, FinTwit, fetch/open, and alternate-provider rules
 - **Local artifact ingestion**: `file_ingest.py` registers local PDFs, text files, images, and CSV/TSV tables as sources, preserving `file_manifest.jsonl`, extraction status, hashes, table profiles, and non-fabricated follow-up flags
 - **Data-analysis lane**: Quantitative local datasets get `data_profile.jsonl`, optional reproducible artifacts under `analysis/`, and computed claims cited back to source data plus calculation method

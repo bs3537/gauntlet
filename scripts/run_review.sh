@@ -11,7 +11,8 @@
 #
 # Env:
 #   REVIEWER_MODEL      (default gpt-5.6-sol)
-#   REVIEWER_EFFORT     (default max)
+#   REVIEWER_EFFORT     explicit override; default is xhigh for judge and high for lane
+#   REVIEWER_WORKER_EFFORT  lane default (high)
 #   REVIEWER_TIMEOUT_S  (default 3600)
 #   QC_MIN_BYTES        (default 3000)
 #   PREFLIGHT=1         run a cheap codex auth/availability ping before the review
@@ -25,7 +26,8 @@
 # Load-bearing notes:
 # - Delegates to the HYBRID-model-fusion run_codex.sh (standard mode: danger-full-access sandbox,
 #   MCP connectors live, stdin prompt, -o final-message capture, deadline-bounded transient retry,
-#   gpt-5.5 structured-safety fallback, routing json). Do NOT use the model-council-fast runner:
+#   routing json). Gauntlet disables its cross-model safety fallback to preserve the requested
+#   GPT-5.6 Sol route. Do NOT use the model-council-fast runner:
 #   its _fusion_lib.sh hardcodes FUSION_FAST=1 (council is fast-only), which silently forces
 #   workspace-write + --ignore-user-config (no MCPs, no run-dir writes outside /tmp), a word-capped
 #   fast preamble, and effort=high. FUSION_FAST=0 is still pinned here defensively.
@@ -38,6 +40,24 @@
 #   QC prefers canonical; if only the capture is complete, it is promoted to canonical.
 
 set -uo pipefail
+
+REVIEWER_MODEL="${REVIEWER_MODEL:-gpt-5.6-sol}"
+QC_MODE="${QC_MODE:-judge}"   # judge = full scored-review gate; lane = size-only
+case "$QC_MODE" in
+  lane) REVIEWER_EFFORT="${REVIEWER_EFFORT:-${REVIEWER_WORKER_EFFORT:-high}}" ;;
+  judge) REVIEWER_EFFORT="${REVIEWER_EFFORT:-xhigh}" ;;
+  *) echo "[run_review] invalid QC_MODE: $QC_MODE (expected judge or lane)" >&2; exit 2 ;;
+esac
+REVIEWER_TIMEOUT_S="${REVIEWER_TIMEOUT_S:-3600}"
+QC_MIN_BYTES="${QC_MIN_BYTES:-3000}"
+GAUNTLET_CODEX_SAFETY_FALLBACK=0
+
+if [ "${1:-}" = "--show-routing" ]; then
+  printf 'model=%s effort=%s qc_mode=%s safety_fallback=%s\n' \
+    "$REVIEWER_MODEL" "$REVIEWER_EFFORT" "$QC_MODE" \
+    "$([ "$GAUNTLET_CODEX_SAFETY_FALLBACK" = "0" ] && printf disabled || printf enabled)"
+  exit 0
+fi
 
 qc_only=0
 if [ "${1:-}" = "--qc-only" ]; then qc_only=1; shift; fi
@@ -60,12 +80,6 @@ fi
 prompt_file="${PROMPT_FILE:-$prompt_file}"
 review_file="${REVIEW_FILE:-$review_file}"
 capture_file="${CAPTURE_FILE:-$capture_file}"
-
-REVIEWER_MODEL="${REVIEWER_MODEL:-gpt-5.6-sol}"
-REVIEWER_EFFORT="${REVIEWER_EFFORT:-max}"
-REVIEWER_TIMEOUT_S="${REVIEWER_TIMEOUT_S:-3600}"
-QC_MIN_BYTES="${QC_MIN_BYTES:-3000}"
-QC_MODE="${QC_MODE:-judge}"   # judge = full scored-review gate; lane = size-only
 
 qc_gate() {  # qc_gate <file>  -> 0 pass / 1 fail (prints reason)
   local f="$1"
@@ -120,7 +134,9 @@ rm -f "$capture_file"
 runner="$HOME/.claude/skills/hybrid-model-fusion/scripts/run_codex.sh"
 started=$(date +%s)
 if [ -f "$runner" ]; then
-  FUSION_FAST=0 FUSION_TIMEOUT="$REVIEWER_TIMEOUT_S" FUSION_CODEX_MODEL="$REVIEWER_MODEL" \
+  FUSION_FAST=0 FUSION_CODEX_SAFETY_FALLBACK="$GAUNTLET_CODEX_SAFETY_FALLBACK" \
+  FUSION_TIMEOUT="$REVIEWER_TIMEOUT_S" \
+  FUSION_CODEX_MODEL="$REVIEWER_MODEL" \
   FUSION_RUN_STAGE=gauntlet_review \
     bash "$runner" "$prompt_file" "$capture_file" "$REVIEWER_EFFORT"
   status=$?

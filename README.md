@@ -16,19 +16,19 @@ A bare ticker, "deep dive", or "analyze" does **not** trigger it.
 
 ```text
                     ┌──────────────────────── STAGE 1: FIRST PASS ────────────────────────┐
-                    │  Opus (latest) max  =  ORCHESTRATOR / REVIEWER / JUDGE               │
+                    │  Opus 4.8 · xhigh  =  ORCHESTRATOR / REVIEWER / JUDGE                │
                     │      │                                                               │
    /gauntlet TICKER │      ├── deep-research (ultradeep) → 4 concurrent lanes             │
-        │           │      │        Opus (latest) · xhigh   (+ Search-as-Code 2nd pass)   │
-        ▼           │      ├── extra Opus (latest) xhigh Agent subagents (gap-fill)       │
+        │           │      │        Sonnet 5 · xhigh   (+ Search-as-Code 2nd pass)         │
+        ▼           │      ├── extra Sonnet 5 xhigh Agent subagents (gap-fill)             │
    Stage 0 intake   │      └── QC + independent verify + synthesize → 08_preliminary_report│
    + codex preflight└──────────────────────────────────┬──────────────────────────────────┘
                                                         │  (draft + artifacts on disk)
                     ┌───────────────────────── STAGE 2: ADVERSARIAL REVIEW ───────────────┐
-                    │  GPT (latest) max  =  ORCHESTRATOR / JUDGE   (via codex CLI)         │
+                    │  GPT-5.6 Sol · xhigh  =  ORCHESTRATOR / JUDGE (via codex CLI)        │
                     │      ├── lane 1  D1 factual + rerun 04/05 models   ┐                 │
-                    │      ├── lane 2  D2 blind spots + missed signal    │ GPT (latest)    │
-                    │      ├── lane 3  D3–D4 counter-thesis + logic      │ xhigh ×4        │
+                    │      ├── lane 2  D2 blind spots + missed signal    │ GPT-5.6 Sol     │
+                    │      ├── lane 3  D3–D4 counter-thesis + logic      │ high ×4         │
                     │      ├── lane 4  D5–D6 sources + calibration       ┘                 │
                     │      └── JUDGE verifies + reconciles → 10_adversarial_review (/100)   │
                     └──────────────────────────────────┬──────────────────────────────────┘
@@ -42,10 +42,10 @@ perspective. Neither replaces the other.
 
 | Role | Model | Effort | Where |
 |---|---|---|---|
-| First-pass orchestrator + adjudicator | Opus (latest) | max | this Claude Code session |
-| First-pass research lanes / subagents (×4+) | Opus (latest) | xhigh | deep-research ultradeep + Agent subagents |
-| Reviewer research lanes (×4) | GPT (latest) | xhigh | `codex exec` (launched by Stage 2) |
-| Reviewer orchestrator / judge | GPT (latest) | max | `codex exec` (launched by Stage 2) |
+| First-pass orchestrator + adjudicator | Opus 4.8 | xhigh | this Claude Code session |
+| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | xhigh | Claude deep-research ultradeep + Agent subagents |
+| Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | high | Codex deep-research worker contract; `codex exec` launched by Stage 2 |
+| Reviewer orchestrator / judge | GPT-5.6 Sol | xhigh | `codex exec` (launched by Stage 2) |
 
 ---
 
@@ -55,17 +55,20 @@ perspective. Neither replaces the other.
   as-of date, price to verify, horizons, constraints), create the run directory
   `~/Documents/<TICKER>_Gauntlet_<YYYYMMDD>/`, and ping codex to fail fast if it is
   unauthenticated.
-- **Stage 1 — First-pass research (fan-out).** Opus (latest) max executes the universal master
+- **Stage 1 — First-pass research (fan-out).** Opus 4.8 xhigh executes the universal master
   research prompt (Phases 0–6: scope/archetype, proof-based foundation, competitive moat,
   catalyst probability-of-success ensembles, financials + valuation, synthesis/convexity). It
-  does **not** research alone: it drives **deep-research at `ultradeep`** (four Opus (latest) xhigh
-  lanes on non-overlapping evidence streams) plus targeted subagents, QCs every lane, verifies
+  does **not** research alone: it drives **Claude deep-research at `ultradeep`** (four Sonnet 5
+  xhigh lanes on non-overlapping evidence streams) plus targeted Sonnet 5 xhigh subagents, QCs
+  every lane, verifies
   load-bearing claims itself, locks an evidence ledger, and writes `08_preliminary_report.md`.
-- **Stage 2 — Adversarial review (panel).** The gauntlet session launches **four GPT (latest)
-  xhigh codex lanes** — each attacking a different rubric slice — then a **GPT (latest) max
-  judge** that treats the lane findings as claims to verify, reruns the Python models, does its
+- **Stage 2 — Adversarial review (panel).** The gauntlet session launches **four GPT-5.6 Sol
+  high codex lanes/subagents** — each attacking a different rubric slice under the Codex
+  deep-research worker contract — then a **GPT-5.6 Sol xhigh judge** that treats the lane findings
+  as claims to verify, reruns the Python models, does its
   own independent searches, reconciles disagreements, and emits one review scored `/100`. (A
-  `codex exec` process never spawns its own subagents; the session orchestrates all five calls.)
+  `codex exec` lane is a leaf and never spawns nested subagents; the session orchestrates all five
+  calls.)
 - **Stage 3 — Adjudication.** The first-pass model writes a pre-analysis, then dispositions
   **every** finding — ACCEPT / PARTIAL / REJECT — only after *independent* verification (open
   the reviewer's source, reopen its own ledger locator, rerun the disputed computation), and
@@ -107,7 +110,7 @@ go; there is nothing else to download or install separately.
 
 | Skill | Role in Gauntlet | Needed by |
 |---|---|---|
-| **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Opus (latest) xhigh lanes) | first pass |
+| **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Sonnet 5 xhigh lanes) | first pass |
 | **`search-as-code`** | deep-research's second-pass source-discovery harness | first pass |
 | **`valuation`** | Damodaran-grounded rNPV/DCF/SOTP engine (dev-stage biotech §4B) | first pass + reviewer |
 | **`fintwit`** | Stage-1 Tier-4 X/sentiment pull → the report's *FinTwit / X Sentiment* section (optional; skipped when no xAI key) | first pass |
@@ -242,20 +245,18 @@ paths do not open from Windows).
   **skipping the adversarial review, adjudication, and gate**. Delivers a quick (~1-hour) single-model
   report that carries a prominent "NOT adversarially reviewed" banner and LOW confidence. Use it when
   speed matters more than the extra rigor; the default is always full review.
-- **Reasoning effort — a separate speed lever (works in both modes).** Both sides default to their
-  highest reasoning tier, and **we recommend keeping `max`: max effort produces materially better,
-  more reliable reports.** If you need faster generation you can drop either model to `high`: the
-  **first-pass** side follows the session effort, so run `/effort high` before invoking; the
-  **reviewer** side reads `REVIEWER_EFFORT`, so pass `REVIEWER_EFFORT=high` (otherwise its four
-  research lanes run at `xhigh` and the judge at `max`). Lower effort trades depth of verification
-  and cross-checking for speed — keep `max` for high-stakes names.
+- **Reasoning effort — fixed role routing.** Gauntlet defaults the Opus 4.8 first-pass
+  orchestrator to `xhigh`, all Claude-side Sonnet 5 workers/subagents to `xhigh`, the GPT-5.6 Sol
+  reviewer judge to `xhigh`, and all reviewer workers/subagents to `high`. The judge reads
+  `REVIEWER_EFFORT` (default `xhigh`); reviewer lanes read `REVIEWER_WORKER_EFFORT` (default
+  `high`). Any lower-effort override must be explicit and recorded in `VERIFICATION_LOG.md`.
 
 ## Cost & quota (read before running)
 
-A full run is **deliberately heavy** — four Opus (latest) xhigh deep-research lanes plus a five-call
-GPT (latest) codex panel (4 xhigh lanes + 1 max judge), each 15–60 minutes. One run can consume a
+A full run is **deliberately heavy** — four Sonnet 5 xhigh deep-research lanes plus a five-call
+GPT-5.6 Sol codex panel (4 high lanes + 1 xhigh judge), each 15–60 minutes. One run can consume a
 large share of a ChatGPT plan's 5-hour/weekly limits. Use it for **high-stakes names, not routine
-screening**. Set `PANEL=0` to fall back to a single GPT (latest) max judge when quota is tight.
+screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol xhigh judge when quota is tight.
 
 ---
 
@@ -297,6 +298,9 @@ Two additive validation layers guard the money figures:
 ## Key design invariants (don't break these)
 
 - **`FUSION_FAST` stays 0** — fast mode switches codex to `workspace-write` + `--ignore-user-config`, killing MCP connectors and run-dir writes.
+- **`FUSION_CODEX_SAFETY_FALLBACK` stays 0** — every external panel call remains GPT-5.6 Sol; a failed bounded retry routes to Gauntlet's labeled self-review, not another GPT model.
 - **Never** swap in the `model-council-fast` runner (its lib hardcodes `FUSION_FAST=1`), and **never** pass `FUSION_RUN_STAGE=review` to the hybrid runner (attaches its peer-review `--output-schema`); gauntlet uses `gauntlet_review`.
 - **Absolute paths only** in codex payloads — the reviewer's cwd is a throwaway scratch dir.
-- The **judge never spawns subagents**; the gauntlet session orchestrates the lanes.
+- Stage 1 skips deep-research's optional Phase 7.6 cross-model critique; Stage 2 is the sole external reviewer path.
+- Reviewer-side subagents are the four GPT-5.6 Sol high lane processes orchestrated by the
+  gauntlet session; every lane is a leaf and never spawns nested subagents.

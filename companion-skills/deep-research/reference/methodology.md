@@ -215,7 +215,7 @@ Read `plan_quality.json`, `coverage_diagnostics.json`, `coverage_summary.md`, an
 
 **Step 2: Spawn parallel deep-dive subagents — mode-scaled fan-out**
 
-Use subagents (the Agent tool) whenever the active runtime permits subagent spawning. This skill and the active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work, so do not require the user to restate subagent authorization in each research task. Leave subagents on latest Sonnet by default and pass `model: "sonnet"` on Agent calls when model overrides are supported. If subagents are unavailable, keep the same role distribution as a main-thread coverage checklist and use parallel retrieval tools where possible.
+Use subagents (the Agent tool) whenever the active runtime permits subagent spawning. This skill and the active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work, so do not require the user to restate subagent authorization in each research task. Pin subagents to Sonnet 5 at xhigh by default and pass `model: "claude-sonnet-5"` and `effort: "xhigh"` on Agent calls when overrides are supported. If subagents are unavailable, keep the same role distribution as a main-thread coverage checklist and use parallel retrieval tools where possible.
 
 Subagent count and wave structure scale by mode:
 
@@ -226,9 +226,9 @@ Subagent count and wave structure scale by mode:
 | Deep | 2 | single wave, all parallel | 10-15 | 50-100 |
 | UltraDeep | 4 | single concurrent wave by default; fallback waves only if runtime limits prevent 4 at once | 12-18 | 100-300+ |
 
-**P2-4 effort/TTC budgeting per role:** Each planned lane in `plan.json` carries an `execution_budget` with `model_hint`, `reasoning_effort`, `timeout_seconds`, and `max_tool_calls`. Use these values when preparing Agent/subagent calls whenever the runtime supports model or effort overrides. Discovery, primary-source, and corroboration workers default to `medium` reasoning so they can cover breadth efficiently. Adversarial, gap-scout, CitationAuditor, and other hostile-review roles should use `high` or the highest supported effort because their job is to find hidden failure modes, contradictions, and unsupported claims. If the runtime cannot set effort/model parameters, keep the role assignment and disclose the fallback in the methodology appendix.
+**P2-4 effort/TTC budgeting per role:** Each planned lane in `plan.json` carries an `execution_budget` with `model_hint`, `reasoning_effort`, `timeout_seconds`, and `max_tool_calls`. Use these values when preparing Agent/subagent calls whenever the runtime supports model or effort overrides. Every Claude research worker and audit worker defaults to Sonnet 5 (`claude-sonnet-5`) at `xhigh`; role-specific timeout and tool-call budgets preserve breadth versus hostile-review depth. If the runtime cannot set effort/model parameters, keep the role assignment and disclose the fallback in the methodology appendix.
 
-**UltraDeep concurrency default:** For `ultradeep`, spawn up to 4 research subagents concurrently by default, even if the user's prompt did not mention subagents. Pass `model: "sonnet"` on every Agent call where supported. If runtime, quota, authentication, or tool limits prevent 4 concurrent workers, spawn the maximum available and continue in waves until 4 total research workers have run. Disclose any fallback in the Methodology section. Use later delta-retrieval workers only for critical audit gaps, not as a substitute for the 4-worker default.
+**UltraDeep concurrency default:** For `ultradeep`, spawn up to 4 research subagents concurrently by default, even if the user's prompt did not mention subagents. Pass `model: "claude-sonnet-5"` and `effort: "xhigh"` on every Agent call where supported. If runtime, quota, authentication, or tool limits prevent 4 concurrent workers, spawn the maximum available and continue in waves until 4 total research workers have run. Disclose any fallback in the Methodology section. Use later delta-retrieval workers only for critical audit gaps, not as a substitute for the 4-worker default.
 
 **Subagent role distribution (lead assigns from this menu; not all roles are needed every run):**
 - Discovery — native web search first for broad landscape mapping, recency, and primary-document targets
@@ -381,7 +381,7 @@ If a core biomedical claim appears only in discovery or structured biomedical so
 - **Deep mode:** 50+ retained sources, each planned lane has primary or high-quality secondary evidence where the source class exists, and unresolved gaps are marked in `coverage_map.json`
 - **UltraDeep mode:** 100+ retained sources after the 4-worker default run, each planned lane is `covered`, `bounded`, or `gap_disclosed`, and low-confidence sources are not load-bearing for material claims
 
-The UltraDeep floor of 100+ sources reflects what the orchestrator-worker pattern can produce with 4 Sonnet subagents, 12-18 tool calls each, and 2-3 retained sources per call. Higher source counts, including 200-300+, can be useful on long-running runs, but after roughly 150 unique primary-tier sources additional fan-out usually buys redundancy and dedup overhead more than new evidence.
+The UltraDeep floor of 100+ sources reflects what the orchestrator-worker pattern can produce with 4 Sonnet 5 xhigh subagents, 12-18 tool calls each, and 2-3 retained sources per call. Higher source counts, including 200-300+, can be useful on long-running runs, but after roughly 150 unique primary-tier sources additional fan-out usually buys redundancy and dedup overhead more than new evidence.
 
 **Countable retrieval budgets:** Use tool-call and source budgets the model can count, not hidden wall-clock gates:
 - **Quick:** main-thread retrieval, about 4-6 material provider/tool calls
@@ -649,9 +649,9 @@ If critique identifies a critical knowledge gap (not just a writing issue), retu
 
 **Step 1: Run two audit tracks in parallel**
 
-When subagents are permitted by the active runtime, spawn two read-only subagents (the Agent tool) in parallel and pass `model: "sonnet"` where supported. If subagents are unavailable, run the same two audit tracks in the main thread before Phase 8. Both tracks receive absolute paths to the current draft markdown, `sources.jsonl`, `evidence.jsonl`, `claims.jsonl`, and the Phase 2 `plan.json`. They must not modify any file; they read and report only.
+When subagents are permitted by the active runtime, spawn two read-only Sonnet 5 xhigh subagents (the Agent tool) in parallel and pass `model: "claude-sonnet-5"` and `effort: "xhigh"` where supported. If subagents are unavailable, run the same two audit tracks in the main thread before Phase 8. Both tracks receive absolute paths to the current draft markdown, `sources.jsonl`, `evidence.jsonl`, `claims.jsonl`, and the Phase 2 `plan.json`. They must not modify any file; they read and report only.
 
-Use high effort for CitationAuditor and GapAuditor when supported. These are adversarial verification roles, not broad discovery lanes; quality is more important than speed for this pass.
+Use xhigh effort for CitationAuditor and GapAuditor when supported. These are adversarial verification roles, not broad discovery lanes; quality is more important than speed for this pass.
 
 **Audit Track A — CitationAuditor:**
 - For every `[N]` citation marker in the draft body, confirm `[N]` resolves to a row in `sources.jsonl`, that row has a corresponding `evidence.jsonl` entry with a real `evidence_quote`, and the quote actually supports the sentence it is cited on.
@@ -799,7 +799,7 @@ When the runtime permits subagents, use subagents (the Agent tool) for:
 - Competing hypothesis evaluation
 - Specialized domain analysis
 
-Leave subagents on latest Sonnet by default, pass `model: "sonnet"` where supported, and include the deep-research subagent brief in every prompt.
+Pin subagents to Sonnet 5 at xhigh by default, pass `model: "claude-sonnet-5"` and `effort: "xhigh"` where supported, and include the deep-research subagent brief in every prompt.
 
 ### Adaptive Depth Control
 

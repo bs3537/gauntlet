@@ -56,8 +56,10 @@ class TestInitRun(unittest.TestCase):
             self.assertEqual(plan['checkpoint']['status'], 'skipped_headless')
             self.assertFalse(plan['checkpoint']['interactive'])
             budgets = {lane['role']: lane['execution_budget'] for lane in plan['lanes']}
-            self.assertEqual(budgets['primary_source']['reasoning_effort'], 'medium')
-            self.assertEqual(budgets['corroboration']['reasoning_effort'], 'medium')
+            self.assertEqual(budgets['primary_source']['model_hint'], 'claude-sonnet-5')
+            self.assertEqual(budgets['primary_source']['reasoning_effort'], 'xhigh')
+            self.assertEqual(budgets['corroboration']['model_hint'], 'claude-sonnet-5')
+            self.assertEqual(budgets['corroboration']['reasoning_effort'], 'xhigh')
 
             # Empty JSONL files exist
             for name in ('sources.jsonl', 'evidence.jsonl', 'claims.jsonl', 'file_manifest.jsonl', 'data_profile.jsonl'):
@@ -141,17 +143,16 @@ class TestInitRun(unittest.TestCase):
             self.assertEqual(trace['phase_metrics'], {})
             self.assertEqual(trace['events'][0]['phase'], 'finish_run')
 
-    def test_ultradeep_plan_assigns_higher_effort_to_adversarial_lanes(self):
+    def test_ultradeep_plan_assigns_sonnet5_xhigh_to_every_worker_lane(self):
         with tempfile.TemporaryDirectory() as d:
             run_cm('init-run', '--out-dir', d, '--query', 'test question', '--mode', 'ultradeep')
 
             with open(os.path.join(d, 'plan.json')) as f:
                 plan = json.load(f)
             budgets = {lane['role']: lane['execution_budget'] for lane in plan['lanes']}
-            self.assertEqual(budgets['primary_source']['reasoning_effort'], 'medium')
-            self.assertEqual(budgets['corroboration']['reasoning_effort'], 'medium')
-            self.assertEqual(budgets['adversarial']['reasoning_effort'], 'high')
-            self.assertEqual(budgets['gap_scout']['reasoning_effort'], 'high')
+            for role in ('primary_source', 'corroboration', 'adversarial', 'gap_scout'):
+                self.assertEqual(budgets[role]['model_hint'], 'claude-sonnet-5')
+                self.assertEqual(budgets[role]['reasoning_effort'], 'xhigh')
             self.assertGreaterEqual(budgets['adversarial']['timeout_seconds'], 900)
 
 

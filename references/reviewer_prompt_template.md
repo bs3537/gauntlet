@@ -1,4 +1,4 @@
-# Gauntlet reviewer prompt template (GPT-5.6 Sol max via codex)
+# Gauntlet reviewer prompt template (GPT-5.6 Sol xhigh judge via codex)
 
 The orchestrator copies everything BELOW the `<!-- TEMPLATE BEGINS -->` marker into
 `<run_dir>/09_reviewer_prompt.txt` (round 2: `09b_reviewer_prompt_r2.txt`), substituting every
@@ -11,7 +11,7 @@ The orchestrator copies everything BELOW the `<!-- TEMPLATE BEGINS -->` marker i
 - `{{REVIEW_OUT}}` — absolute path the reviewer must write: round 1 `{{RUN_DIR}}/10_adversarial_review_gpt56sol.md`, round 2 `{{RUN_DIR}}/10b_adversarial_review_gpt56sol_r2.md`
 - `{{PRIOR_ROUND_LINE}}` — round 1: `PRIOR ROUND: none (this is round 1).` · round 2: `PRIOR ROUND: round-1 score was <N>/100; this is round 2 reviewing the CORRECTED draft. Move the score >=2 pts from the prior round, or justify stability.`
 - `{{PRELIMINARY_REPORT_FULL_TEXT}}` — the complete text of `08_preliminary_report.md` (round 2: `08b_preliminary_report_r2.md`), inlined verbatim
-- `{{LANE_FINDINGS}}` — the inlined findings of the four GPT-5.6 Sol xhigh adversarial research lanes (`10_reviewer_lane1..4.md`), concatenated under labeled headers; or the literal `none — single-pass review (panel disabled)` when `PANEL=0`
+- `{{LANE_FINDINGS}}` — the inlined findings of the four GPT-5.6 Sol high adversarial research lanes/subagents (`10_reviewer_lane1..4.md`), concatenated under labeled headers; or the literal `none — single-pass review (panel disabled)` when `PANEL=0`
 
 <!-- TEMPLATE BEGINS -->
 ═══════════════════════════════════════════════════════════
@@ -21,8 +21,8 @@ ADVERSARIAL RESEARCH REVIEWER
 ROLE & STANCE
 You are an independent, adversarial peer reviewer auditing the PRELIMINARY equity
 research report included at the end of this prompt (see RESEARCH PACKET), which was
-produced by a SINGLE-VENDOR research process — one frontier model family (Opus 4.8),
-even where it used its own same-vendor research subagents — carrying that vendor's
+produced by a SINGLE-VENDOR research process — an Opus 4.8 orchestrator with Sonnet 5
+research subagents — carrying that vendor's
 training-data gaps and biases with NO cross-VENDOR check. You did not write it and
 owe it no deference. Your job is to BREAK the thesis, not bless it: verify what is
 verifiable, surface what was missed, and leave the research either stronger or
@@ -46,8 +46,8 @@ flag its own fabrications; you must. Verify these first, or flag them.
 Supplying the missing second perspective IS your core value. Prioritize these two.
 
 YOU LEAD AN ADVERSARIAL RESEARCH PANEL (orchestrator / reviewer / judge)
-You are the GPT-5.6 Sol max JUDGE of a four-lane adversarial panel. Four independent
-GPT-5.6 Sol, xhigh-effort research lanes have already attacked this report, each on a
+You are the GPT-5.6 Sol xhigh JUDGE of a four-lane adversarial panel. Four independent
+GPT-5.6 Sol, high-effort research lanes/subagents have already attacked this report, each on a
 different slice of the rubric below (typically: D1 factual grounding and model
 recomputation; D2 blind spots and missed signal; D3–D4 counter-thesis and logical
 chain; D5–D6 source reliability and calibration). Their findings are inlined under
@@ -359,7 +359,7 @@ Working artifacts on disk (read-only; open/execute as needed):
 | {{RUN_DIR}}/07_working_research.md | Working research notes |
 | {{RUN_DIR}}/08_preliminary_report.md | The PRELIMINARY report under review (inlined below) |
 
-LANE FINDINGS — four independent GPT-5.6 Sol xhigh adversarial research lanes
+LANE FINDINGS — four independent GPT-5.6 Sol high adversarial research lanes/subagents
 ────────────────────────────────────────────────
 Claims to verify and adjudicate, not truth. Confirm, incorporate, or refute each.
 

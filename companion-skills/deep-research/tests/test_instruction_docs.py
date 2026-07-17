@@ -72,7 +72,8 @@ class InstructionDocsTests(unittest.TestCase):
         self.assertIn('SHARED ROUTING CONTRACT BEGIN', tool_routing)
         self.assertIn('SHARED ROUTING CONTRACT END', tool_routing)
         self.assertIn('~/.claude/skills/search-as-code', tool_routing)
-        self.assertIn('model: "sonnet"', tool_routing)
+        self.assertIn('model: "claude-sonnet-5"', tool_routing)
+        self.assertIn('effort: "xhigh"', tool_routing)
         self.assertIn(
             'Load [tool-routing.md](./reference/tool-routing.md) before Phase 3 retrieval',
             load_block,
@@ -218,13 +219,17 @@ class InstructionDocsTests(unittest.TestCase):
 
         self.assertIn('effort/TTC budgeting per role', methodology)
         self.assertIn('execution_budget', methodology)
-        self.assertIn('Adversarial, gap-scout, CitationAuditor', methodology)
-        self.assertIn('Use high effort for CitationAuditor and GapAuditor', methodology)
+        self.assertIn('Every Claude research worker and audit worker defaults to Sonnet 5', methodology)
+        self.assertIn('Use xhigh effort for CitationAuditor and GapAuditor', methodology)
         self.assertIn('MODEL_HINT', brief)
         self.assertIn('REASONING_EFFORT', brief)
         self.assertIn('TIMEOUT_SECONDS', brief)
         self.assertIn('MAX_TOOL_CALLS', brief)
+        self.assertIn('MODEL_HINT: <claude-sonnet-5 by default', brief)
+        self.assertIn('REASONING_EFFORT: <xhigh by default', brief)
         self.assertIn('Role effort budgets', skill)
+        self.assertIn('Gauntlet parent override', skill)
+        self.assertIn('skip optional Phase 7.6 cross-model critique', skill)
         self.assertIn('Role effort budgets', readme)
 
     def test_batch_ledger_cli_and_index_cache_are_documented(self):

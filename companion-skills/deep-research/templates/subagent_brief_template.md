@@ -1,6 +1,6 @@
 # Deep Research Subagent Brief — Required Inclusions
 
-The lead agent must embed every section of this template into every research-subagent prompt when subagents are permitted by the active Claude Code runtime. For parent `ultradeep` runs, the default is up to 4 concurrent research subagents using latest Sonnet (`model: "sonnet"` where supported), with fallback waves only if runtime limits prevent full concurrency. The deep-research skill and active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work. Subagents should not be assumed to see the parent's AGENTS.md/CLAUDE.md, skill files, or conversation context; the only reliable channel from lead to worker is the prompt string. If a section is omitted from the brief, the subagent may not honor it.
+The lead agent must embed every section of this template into every research-subagent prompt when subagents are permitted by the active Claude Code runtime. For parent `ultradeep` runs, the default is up to 4 concurrent research subagents using Sonnet 5 at xhigh (`model: "claude-sonnet-5"` and `effort: "xhigh"` where supported), with fallback waves only if runtime limits prevent full concurrency. The deep-research skill and active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work. Subagents should not be assumed to see the parent's AGENTS.md/CLAUDE.md, skill files, or conversation context; the only reliable channel from lead to worker is the prompt string. If a section is omitted from the brief, the subagent may not honor it.
 
 ---
 
@@ -18,8 +18,8 @@ LANE_ID: <plan lane_id, e.g. lane_primary or lane_deep_crawler>
 QUERY_FAMILY_ID: <planned query family for this worker>
 SUBAGENT_ID: <lead-assigned or runtime subagent id when known>
 SUBAGENT_ROLE: <discovery|primary_source|adversarial|gap_scout|deep_crawler|...>
-MODEL_HINT: <runtime_default, sonnet, gpt-5.5, gemini, or other runtime-specific model>
-REASONING_EFFORT: <low|medium|high|xhigh|runtime_default>
+MODEL_HINT: <claude-sonnet-5 by default, or an explicit user/runtime override>
+REASONING_EFFORT: <xhigh by default, or an explicit user/runtime override>
 TIMEOUT_SECONDS: <integer budget from plan.json execution_budget>
 MAX_TOOL_CALLS: <integer budget from plan.json execution_budget>
 CRAWL_TARGETS: <for deep_crawler only: known target URLs or first-party site-search pages>
@@ -122,7 +122,7 @@ The full search context stays inside the subagent. Only the distilled summary re
 ## 6. Per-Turn Search Discipline
 
 - Run 3+ compatible native-search calls in parallel for the first pass when available and independent. Run Search-as-Code only after that pass, followed by targeted Perplexity deltas.
-- Aim for the `MAX_TOOL_CALLS` value from your lane brief. Discovery and corroboration lanes usually run medium effort; adversarial, gap-scout, and CitationAuditor-style lanes should run high or highest supported effort when the runtime permits it.
+- Aim for the `MAX_TOOL_CALLS` value from your lane brief. All Claude research and audit lanes default to Sonnet 5 at xhigh; role-specific timeout and tool-call budgets control breadth and depth.
 - Vary query forms: ticker, legal name, drug code, generic name, brand name, mechanism, NCT number, trial acronym, conference name.
 - Use absolute dates in queries, such as `"site:fda.gov 2025"` rather than `"recent FDA action"`.
 - Use Boolean operators and phrase quoting where supported.

@@ -10,6 +10,9 @@ SCEN="$SCRIPT_DIR/scenarios/planted-fraud-money-figures"
 FIXTURE="$SCEN/08_preliminary_report.md"
 GT="$SCEN/GROUND-TRUTH.md"
 TEMPLATE="$ROOT/references/reviewer_prompt_template.md"
+MASTER="$ROOT/references/master_research_prompt.md"
+SKILL="$ROOT/SKILL.md"
+RUNNER="$ROOT/scripts/run_review.sh"
 
 fails=0
 fail() { printf 'FAIL: %s\n' "$1"; fails=$((fails+1)); }
@@ -18,10 +21,18 @@ present() { # $1=needle $2=file $3=label — whitespace-normalized fixed-string 
             # so prose reflows/line wraps cannot silently break the gate
   tr -s '[:space:]' ' ' < "$2" | grep -qF -- "$1" || fail "$3 not found in ${2##*/}: $1"
 }
+absent() { # $1=needle $2=file $3=label
+  if tr -s '[:space:]' ' ' < "$2" | grep -qF -- "$1"; then
+    fail "$3 unexpectedly found in ${2##*/}: $1"
+  fi
+}
 
 need "$FIXTURE" || { echo "FAILED: fixture missing"; exit 1; }
 need "$GT" || { echo "FAILED: answer sheet missing"; exit 1; }
 need "$TEMPLATE" || { echo "FAILED: reviewer template missing"; exit 1; }
+need "$MASTER" || { echo "FAILED: master prompt missing"; exit 1; }
+need "$SKILL" || { echo "FAILED: skill instructions missing"; exit 1; }
+need "$RUNNER" || { echo "FAILED: reviewer runner missing"; exit 1; }
 
 # 1. Banners: the fixture declares itself fictional; the answer sheet declares secrecy.
 present "GAUNTLET EVAL FIXTURE — FICTIONAL COMPANY, PLANTED ERRORS" "$FIXTURE" "fixture banner"
@@ -77,8 +88,33 @@ for f in "$FIXTURE" "$GT"; do
   if grep -qF -- '{{' "$f"; then fail "'{{' placeholder found in ${f##*/}"; fi
 done
 
+# 6. Model/effort routing contract. This catches silent quota and quality regressions:
+#    Opus 4.8/xhigh lead -> Sonnet 5/xhigh workers; GPT-5.6 Sol/xhigh judge ->
+#    GPT-5.6 Sol/high workers.
+present "Opus 4.8 xhigh ORCHESTRATOR" "$SKILL" "first-pass lead route"
+present 'Sonnet 5 (`claude-sonnet-5`) xhigh' "$SKILL" "Claude worker route"
+present "GPT-5.6 Sol xhigh judge" "$SKILL" "reviewer judge route"
+present "GPT-5.6 Sol high research" "$SKILL" "reviewer worker route"
+present 'REVIEWER_EFFORT="${REVIEWER_EFFORT:-xhigh}"' "$RUNNER" "reviewer default effort"
+present 'Sonnet 5 (`claude-sonnet-5`), xhigh-effort' "$MASTER" "master-prompt Claude worker route"
+present "GPT-5.6 Sol xhigh JUDGE" "$TEMPLATE" "review-template judge route"
+present "GPT-5.6 Sol, high-effort research lanes/subagents" "$TEMPLATE" "review-template worker route"
+present "GAUNTLET_CODEX_SAFETY_FALLBACK=0" "$RUNNER" "reviewer cross-model fallback disable"
+present "Skip deep-research Phase 7.6 optional cross-model critique inside Gauntlet" "$SKILL" "bounded external-review topology"
+absent "Opus 4.8 max" "$SKILL" "stale first-pass lead route"
+absent "GPT-5.6 Sol max" "$SKILL" "stale reviewer judge route"
+
+lane_route="$(env -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT QC_MODE=lane \
+  "$RUNNER" --show-routing)" || fail "lane routing probe failed"
+judge_route="$(env -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT QC_MODE=judge \
+  "$RUNNER" --show-routing)" || fail "judge routing probe failed"
+[ "$lane_route" = "model=gpt-5.6-sol effort=high qc_mode=lane safety_fallback=disabled" ] ||
+  fail "lane executable route mismatch: $lane_route"
+[ "$judge_route" = "model=gpt-5.6-sol effort=xhigh qc_mode=judge safety_fallback=disabled" ] ||
+  fail "judge executable route mismatch: $judge_route"
+
 if [ "$fails" -eq 0 ]; then
-  echo "PASS: planted-fraud eval is structurally sound (6 frauds + 2 controls documented; screen in sync with the reviewer template)."
+  echo "PASS: planted-fraud eval and Gauntlet model/effort routing contract are structurally sound."
   exit 0
 else
   echo "FAILED: $fails assertion(s) — see lines above."
