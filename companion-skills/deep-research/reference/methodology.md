@@ -714,8 +714,8 @@ opposite-model reviewer by installed WSL surface:
 | Installed surface | Default reviewer | Default reviewer command |
 | --- | --- | --- |
 | Claude Code WSL (`~/.claude`) | `codex` | `codex exec --model gpt-5.5 -c 'model_reasoning_effort="xhigh"' --ephemeral --skip-git-repo-check -` |
-| Codex CLI WSL (`~/.codex`) | `claude` | `claude --print --model opus --effort max --no-session-persistence` |
-| AGY/Gemini WSL (`~/.gemini`) | `claude` | `claude --print --model opus --effort max --no-session-persistence` |
+| Codex CLI WSL (`~/.codex`) | `claude` | `claude --print --model opus --effort high --no-session-persistence` |
+| AGY/Gemini WSL (`~/.gemini`) | `claude` | `claude --print --model opus --effort high --no-session-persistence` |
 
 For Claude Code WSL runs, use the latest GPT model through Codex CLI at the highest supported effort
 (currently `gpt-5.5` with `model_reasoning_effort="xhigh"`):
@@ -729,7 +729,7 @@ python scripts/cross_model_critique.py run \
   --timeout 600
 ```
 
-For Codex CLI WSL or AGY/Gemini WSL runs, use the latest Opus model through Claude Code CLI at max
+For Codex CLI WSL or AGY/Gemini WSL runs, use the latest Opus model through Claude Code CLI at high
 effort:
 
 ```bash
@@ -737,7 +737,7 @@ python scripts/cross_model_critique.py run \
   --dir [run_folder] \
   --report [draft.md] \
   --reviewer claude \
-  --command "claude --print --model opus --effort max --no-session-persistence" \
+  --command "claude --print --model opus --effort high --no-session-persistence" \
   --timeout 600
 ```
 

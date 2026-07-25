@@ -116,7 +116,7 @@ Mode Selection
 - `python scripts/verify_claim_support_llm.py verify --dir [run_folder] --strict`
 - `python scripts/audit_manifest.py --dir [run_folder] --report [path] --strict`
 - `python scripts/delivery_gate.py --dir [run_folder] --report [path] --strict --semantic --require-section-citation-audits`
-- `python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --timeout 600` (uses the installed-surface opposite-model reviewer: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/max)
+- `python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --timeout 600` (uses the installed-surface opposite-model reviewer: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/high)
 - `python scripts/md_to_html.py [markdown_path] --out [html_path] --run-dir [run_folder]`
 - `python scripts/run_eval.py score-run --task evals/tasks/gold_tasks.json --task-id [task_id] --run-dir [run_folder] --judge-output [json] --judge-model [model] --judge-version [version] --strict`
 

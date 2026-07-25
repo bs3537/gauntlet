@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 prompt_file="${1:?usage: run_codex.sh <prompt_file> <output_file> [reasoning_effort]}"
 output_file="${2:?usage: run_codex.sh <prompt_file> <output_file> [reasoning_effort]}"
-primary_effort="${3:-max}"
+primary_effort="${3:-xhigh}"
 primary_model="${FUSION_CODEX_MODEL:-gpt-5.6-sol}"
 
 if [ ! -s "$prompt_file" ]; then

@@ -89,9 +89,9 @@ for f in "$FIXTURE" "$GT"; do
 done
 
 # 6. Model/effort routing contract. This catches silent quota and quality regressions:
-#    Opus 5/xhigh lead -> Sonnet 5/xhigh workers; GPT-5.6 Sol/xhigh judge ->
+#    Opus 5/high lead -> Sonnet 5/xhigh workers; GPT-5.6 Sol/xhigh judge ->
 #    GPT-5.6 Sol/high workers.
-present "Opus 5 xhigh ORCHESTRATOR" "$SKILL" "first-pass lead route"
+present "Opus 5 high ORCHESTRATOR" "$SKILL" "first-pass lead route"
 present 'Sonnet 5 (`claude-sonnet-5`) xhigh' "$SKILL" "Claude worker route"
 present "GPT-5.6 Sol xhigh judge" "$SKILL" "reviewer judge route"
 present "GPT-5.6 Sol high research" "$SKILL" "reviewer worker route"
@@ -102,6 +102,7 @@ present "GPT-5.6 Sol, high-effort research lanes/subagents" "$TEMPLATE" "review-
 present "GAUNTLET_CODEX_SAFETY_FALLBACK=0" "$RUNNER" "reviewer cross-model fallback disable"
 present "Skip deep-research Phase 7.6 optional cross-model critique inside Gauntlet" "$SKILL" "bounded external-review topology"
 absent "Opus 5 max" "$SKILL" "stale first-pass lead route"
+absent "Opus 5 xhigh" "$SKILL" "stale first-pass lead effort"
 absent "GPT-5.6 Sol max" "$SKILL" "stale reviewer judge route"
 
 lane_route="$(env -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT QC_MODE=lane \

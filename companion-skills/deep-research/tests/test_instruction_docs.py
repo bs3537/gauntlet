@@ -185,7 +185,7 @@ class InstructionDocsTests(unittest.TestCase):
         self.assertIn('cross_model_critique.py run', methodology)
         self.assertIn('codex exec --model gpt-5.5', methodology)
         self.assertIn('model_reasoning_effort="xhigh"', methodology)
-        self.assertIn('claude --print --model opus --effort max', methodology)
+        self.assertIn('claude --print --model opus --effort high', methodology)
         self.assertIn('Claude Code WSL (`~/.claude`) | `codex`', methodology)
         self.assertIn('Codex CLI WSL (`~/.codex`) | `claude`', methodology)
         self.assertIn('AGY/Gemini WSL (`~/.gemini`) | `claude`', methodology)

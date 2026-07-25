@@ -83,7 +83,7 @@ Key features:
 - **Biotech/pharma investment controls**: Primary-source routing, Perplexity/BioMCP/scite/FMP layering, pipeline-sweep gates, source-lineage preservation, and claim-ledger fields
 - **First Finish Search**: Adaptive quality thresholds by mode
 - **Critique loop-back**: Phase 6 can return to Phase 3 with delta-queries if critical gaps found
-- **Optional cross-model critique**: Phase 7.6 can shell the draft plus claims sample to the opposite model family for a time-boxed advisory rubric review: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/max
+- **Optional cross-model critique**: Phase 7.6 can shell the draft plus claims sample to the opposite model family for a time-boxed advisory rubric review: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/high
 - **Multi-persona red teaming**: Skeptical Practitioner, Adversarial Reviewer, Implementation Engineer (Deep/UltraDeep)
 - **Disk-persisted citations**: `sources.jsonl`, `evidence.jsonl`, and `claims.jsonl` survive context compaction and continuation agents
 

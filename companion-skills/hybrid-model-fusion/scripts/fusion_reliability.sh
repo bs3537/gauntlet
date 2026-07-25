@@ -2,11 +2,14 @@
 # Hybrid Model Fusion — reliability layer (2026-06-23).
 # Source this in the orchestration launcher. Provides:
 #   - PANEL: ALWAYS parallel — all panelists concurrent in both normal & deep modes (never sequential)
-#   - PANEL: guarantee all 3 panelist reports (validate -> single-pass retry -> escalate)
-#   - REVIEWS: quorum (default 2/3) with grace timeout; one fast-fail retry; reviewers are optional
+#   - PANEL: guarantee every configured panelist report (validate -> single-pass retry -> escalate)
+#   - REVIEWS: quorum with grace timeout; one fast-fail retry; reviewers are optional
 #   - agy output sanitizer (strips leaked [COGNITIVE MONOLOGUE]/"I will..."/process trailers)
 #   - orphan cleanup
 # Env knobs (all overridable):
+FUSION_OPUS_PANEL_EFFORT="${FUSION_OPUS_PANEL_EFFORT:-high}"
+FUSION_GROK_EFFORT="${FUSION_GROK_EFFORT:-high}"
+FUSION_CODEX_PANEL_EFFORT="${FUSION_CODEX_PANEL_EFFORT:-xhigh}"
 FUSION_MIN_REPORT_BYTES="${FUSION_MIN_REPORT_BYTES:-2500}"
 FUSION_MIN_REVIEW_BYTES="${FUSION_MIN_REVIEW_BYTES:-400}"
 FUSION_PANEL_RETRIES="${FUSION_PANEL_RETRIES:-2}"
@@ -35,7 +38,7 @@ fusion_cleanup_orphans() {
 }
 
 fusion_panel_models() {
-  python3 "$_FR_DIR/panel_config.py" models 2>/dev/null || printf '%s\n' opus5 grok4.5 gemini3.5flash gpt5.6sol
+  python3 "$_FR_DIR/panel_config.py" models 2>/dev/null || printf '%s\n' opus5 grok4.5 gemini3.6flash gpt5.6sol
 }
 
 # _fusion_kill_tree PID -> recursively TERM then KILL a process and all its descendants.
@@ -139,28 +142,43 @@ if len(body) > 200 and body != t:
 PY
 }
 
-# _fusion_run_one MODEL PROMPT OUT EFFORT [singlepass] [stage]
-# MODEL in {opus5,grok4.5,gemini3.5flash,gpt5.6sol}; singlepass=1 prepends a no-subagent directive (claude/grok/codex).
+# _fusion_role_effort MODEL REQUESTED_EFFORT -> pinned full-Hybrid panel/reviewer effort.
+# The shared requested effort is retained only for non-default experimental seats such as Fable.
+_fusion_role_effort() {
+  local model="$1" requested="${2:-xhigh}"
+  case "$model" in
+    opus5)        printf '%s\n' "$FUSION_OPUS_PANEL_EFFORT" ;;
+    grok4.5)        printf '%s\n' "$FUSION_GROK_EFFORT" ;;
+    gemini3.6flash) printf '%s\n' "high" ;;
+    gpt5.6sol)      printf '%s\n' "$FUSION_CODEX_PANEL_EFFORT" ;;
+    *)              printf '%s\n' "$requested" ;;
+  esac
+}
+
+# _fusion_run_one MODEL PROMPT OUT REQUESTED_EFFORT [singlepass] [stage]
+# MODEL in {opus5,grok4.5,gemini3.6flash,gpt5.6sol}; singlepass=1 prepends a no-subagent directive (claude/grok/codex).
 _fusion_run_one() {
-  local model="$1" prompt="$2" out="$3" effort="${4:-max}" sp="${5:-0}" stage="${6:-panel}"
+  local model="$1" prompt="$2" out="$3" requested_effort="${4:-xhigh}" sp="${5:-0}" stage="${6:-panel}"
+  local effort
+  effort="$(_fusion_role_effort "$model" "$requested_effort")"
   local runner p="$prompt" tmp_prompt="" codex_prompt_sha256=""
   case "$model" in
-	    opus5)        runner="$_FR_DIR/run_claude.sh" ;;                              # claude: "max" is valid
+	    opus5)        runner="$_FR_DIR/run_claude.sh" ;;                              # Opus 5: high
 	    fable5)         runner="$_FR_DIR/run_claude.sh" ;;                              # claude: FUSION_CLAUDE_MODEL overridden below
 	    grok4.5)        runner="$_FR_DIR/run_grok.sh" ;;                                # Grok 4.5 panelist via Grok Build CLI (high)
-    gpt5.6sol)      runner="$_FR_DIR/run_codex.sh" ;;                               # GPT-5.6 Sol panelist via Codex (max)
-    gemini3.5flash) runner="$_FR_DIR/run_gemini.sh" ;;                             # agy: effort ignored (model label = High)
+    gpt5.6sol)      runner="$_FR_DIR/run_codex.sh" ;;                               # GPT-5.6 Sol panelist via Codex (xhigh)
+    gemini3.6flash) runner="$_FR_DIR/run_gemini.sh" ;;                             # agy: effort ignored (model label = High)
     *) echo "[fusion] unknown model $model" >&2; return 2 ;;
   esac
   if [ "$model" = "gpt5.6sol" ]; then
     codex_prompt_sha256="$(sha256sum "$prompt" | awk '{print $1}')"
   fi
-  if [ "$sp" = "1" ] && [ "$model" != "gemini3.5flash" ]; then
+  if [ "$sp" = "1" ] && [ "$model" != "gemini3.6flash" ]; then
     p="$(mktemp)"; tmp_prompt="$p"; { printf 'OPERATIONAL: do a thorough SINGLE-PASS run; do NOT spawn parallel research subagents (resource safety). Emit the COMPLETE final report inline to stdout.\n\n'; cat "$prompt"; } > "$p"
   fi
   if [ "$model" = "fable5" ]; then
     FUSION_CLAUDE_MODEL="${FUSION_FABLE_MODEL:-claude-fable-5}" FUSION_RUN_STAGE="$stage" bash "$runner" "$p" "$out" "$effort"
-  elif [ "$model" = "gemini3.5flash" ]; then
+  elif [ "$model" = "gemini3.6flash" ]; then
     FUSION_RUN_STAGE="$stage" AGY_PRINT_TIMEOUT="${FUSION_AGY_PRINT_TIMEOUT}s" bash "$runner" "$p" "$out" "$effort"
   elif [ "$model" = "gpt5.6sol" ]; then
     FUSION_RUN_STAGE="$stage" FUSION_CODEX_PROMPT_SHA256="$codex_prompt_sha256" \
@@ -170,17 +188,17 @@ _fusion_run_one() {
   fi
   local rc=$?
   [ -n "$tmp_prompt" ] && rm -f "$tmp_prompt"
-  if [ "$model" = "gemini3.5flash" ]; then
+  if [ "$model" = "gemini3.6flash" ]; then
     _fusion_agy_recover_stub "$out"   # promote a brain-dir report BEFORE sanitize strips the monologue marker
     fusion_sanitize_agy "$out"
   fi
   return $rc
 }
 
-# fusion_run_panel MODE EFFORT RUN_DIR   (MODE: normal|deep) -> 0 if all 3 valid; 1 if escalation needed
+# fusion_run_panel MODE EFFORT RUN_DIR   (MODE: normal|deep) -> 0 if every configured report is valid
 # Expects $RUN_DIR/prompt_<model>.txt to exist; writes report_<model>.md.
 fusion_run_panel() {
-  local mode="$1" effort="${2:-max}" rd="$3"
+  local mode="$1" effort="${2:-xhigh}" rd="$3"
   local models=()
   mapfile -t models < <(fusion_panel_models)
   fusion_cleanup_orphans
@@ -194,14 +212,14 @@ fusion_run_panel() {
   local pids=()
   for m in "${models[@]}"; do _fusion_run_one "$m" "$rd/prompt_${m}.txt" "$rd/report_${m}.md" "$effort" 0 panel >"$rd/logs/panel_${m}.log" 2>&1 & pids+=("$!"); echo "$!" > "$rd/logs/panel_${m}.pid"; done
   for p in "${pids[@]}"; do wait "$p"; done
-  # validate + retry (PARALLEL, single-pass) — panel is MANDATORY, retry until all 3 or escalate
+  # validate + retry (PARALLEL, single-pass) — panel is MANDATORY, retry until all configured reports exist or escalate
   local attempt=0 failed
   while :; do
     failed=()
     for m in "${models[@]}"; do
       local reason; reason=$(fusion_validate_output "$rd/report_${m}.md") || failed+=("$m:$reason")
     done
-    [ ${#failed[@]} -eq 0 ] && { echo "[panel] all 3 reports valid"; return 0; }
+    [ ${#failed[@]} -eq 0 ] && { echo "[panel] all ${#models[@]} reports valid"; return 0; }
     attempt=$((attempt+1))
     if [ "$attempt" -gt "$FUSION_PANEL_RETRIES" ]; then
       echo "[panel] ESCALATE: still failing after ${FUSION_PANEL_RETRIES} retries: ${failed[*]}" >&2
@@ -245,7 +263,7 @@ fusion_retry_invalid_reviews() {
 # fusion_run_reviews EFFORT RUN_DIR -> 0 if >= quorum valid reviews (proceed); reviewers are optional
 # Expects $RUN_DIR/review_prompt_<model>.txt; writes review_<model>.md. Proceeds on quorum + grace.
 fusion_run_reviews() {
-  local effort="${1:-max}" rd="$2"
+  local effort="${1:-xhigh}" rd="$2"
   local models=()
   mapfile -t models < <(fusion_panel_models)
   fusion_cleanup_orphans

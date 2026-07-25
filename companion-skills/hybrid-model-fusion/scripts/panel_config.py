@@ -18,7 +18,8 @@ DEFAULT_PANELISTS = [
         "prompt_file": "prompt_opus5.txt",
         "review_file": "review_opus5.md",
         "review_prompt_file": "review_prompt_opus5.txt",
-        "html_title": "Opus 5 (max)",
+        "html_title": "Opus 5 (high)",
+        "effort": "high",
     },
     {
         "slug": "grok4.5",
@@ -28,15 +29,17 @@ DEFAULT_PANELISTS = [
         "review_file": "review_grok4.5.md",
         "review_prompt_file": "review_prompt_grok4.5.txt",
         "html_title": "Grok 4.5 (high)",
+        "effort": "high",
     },
     {
-        "slug": "gemini3.5flash",
-        "display": "Gemini 3.5 Flash",
-        "report_file": "report_gemini3.5flash.md",
-        "prompt_file": "prompt_gemini3.5flash.txt",
-        "review_file": "review_gemini3.5flash.md",
-        "review_prompt_file": "review_prompt_gemini3.5flash.txt",
-        "html_title": "Gemini 3.5 Flash (High)",
+        "slug": "gemini3.6flash",
+        "display": "Gemini 3.6 Flash",
+        "report_file": "report_gemini3.6flash.md",
+        "prompt_file": "prompt_gemini3.6flash.txt",
+        "review_file": "review_gemini3.6flash.md",
+        "review_prompt_file": "review_prompt_gemini3.6flash.txt",
+        "html_title": "Gemini 3.6 Flash (High)",
+        "effort": "high",
     },
     {
         "slug": "gpt5.6sol",
@@ -45,7 +48,8 @@ DEFAULT_PANELISTS = [
         "prompt_file": "prompt_gpt5.6sol.txt",
         "review_file": "review_gpt5.6sol.md",
         "review_prompt_file": "review_prompt_gpt5.6sol.txt",
-        "html_title": "GPT-5.6 Sol (max)",
+        "html_title": "GPT-5.6 Sol (xhigh)",
+        "effort": "xhigh",
     },
 ]
 
@@ -85,7 +89,7 @@ def load_panelists(skill_dir: Path | None = None) -> list[dict[str, str]]:
             selected.append(dict(catalog[slug]))
         if selected:
             return selected
-    return [dict(item) for item in panelists if item.get("slug") in {"opus5", "grok4.5", "gemini3.5flash", "gpt5.6sol"}]
+    return [dict(item) for item in panelists if item.get("slug") in {"opus5", "grok4.5", "gemini3.6flash", "gpt5.6sol"}]
 
 
 def main() -> int:

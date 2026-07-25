@@ -171,7 +171,7 @@ Apply only when browser automation was used:
 python scripts/cross_model_critique.py run --dir [run_folder] --report [path] --timeout 600
 ```
 
-This is an advisory Phase 7.6 review, not a hard delivery gate. By default it uses the opposite-model reviewer for the installed surface: Claude Code WSL drafts are reviewed by Codex GPT/xhigh, while Codex CLI WSL and AGY/Gemini WSL drafts are reviewed by Claude Opus/max. Use it to find blind spots and delta-retrieval targets before packaging. The script writes `[run_folder]/audit/cross_model/*` artifacts and records metadata in `run_manifest.json.cross_model_critiques`.
+This is an advisory Phase 7.6 review, not a hard delivery gate. By default it uses the opposite-model reviewer for the installed surface: Claude Code WSL drafts are reviewed by Codex GPT/xhigh, while Codex CLI WSL and AGY/Gemini WSL drafts are reviewed by Claude Opus/high. Use it to find blind spots and delta-retrieval targets before packaging. The script writes `[run_folder]/audit/cross_model/*` artifacts and records metadata in `run_manifest.json.cross_model_critiques`.
 
 ### Validation Loop Protocol
 

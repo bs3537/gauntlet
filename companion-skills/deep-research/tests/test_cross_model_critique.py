@@ -116,7 +116,7 @@ class CrossModelCritiqueTests(unittest.TestCase):
             manifest = json.load(f)
         self.assertEqual(manifest['cross_model_critiques'][-1]['reviewer'], expected)
 
-    def test_default_commands_use_opposite_model_with_highest_effort(self):
+    def test_default_commands_use_opposite_model_with_pinned_effort(self):
         module = load_script_module()
 
         codex_command = module.default_command('codex')
@@ -126,7 +126,10 @@ class CrossModelCritiqueTests(unittest.TestCase):
 
         claude_command = module.default_command('claude')
         self.assertIn('claude --print --model opus', claude_command)
-        self.assertIn('--effort max', claude_command)
+        # Opus seats default to high effort across the skills; an explicit
+        # effort= argument or DEEP_RESEARCH_CLAUDE_EFFORT still overrides it
+        # (covered by test_model_and_effort_overrides_...).
+        self.assertIn('--effort high', claude_command)
         self.assertIn('--no-session-persistence', claude_command)
 
     def test_model_and_effort_overrides_do_not_require_full_command_replacement(self):

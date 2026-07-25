@@ -16,7 +16,7 @@ A bare ticker, "deep dive", or "analyze" does **not** trigger it.
 
 ```text
                     ┌──────────────────────── STAGE 1: FIRST PASS ────────────────────────┐
-                    │  Opus 5 · xhigh  =  ORCHESTRATOR / REVIEWER / JUDGE                │
+                    │  Opus 5 · high   =  ORCHESTRATOR / REVIEWER / JUDGE                │
                     │      │                                                               │
    /gauntlet TICKER │      ├── deep-research (ultradeep) → 4 concurrent lanes             │
         │           │      │        Sonnet 5 · xhigh   (+ Search-as-Code 2nd pass)         │
@@ -42,14 +42,14 @@ perspective. Neither replaces the other.
 
 | Role | Model | Effort | Where |
 |---|---|---|---|
-| First-pass orchestrator + adjudicator | Opus 5 | xhigh | this Claude Code session |
+| First-pass orchestrator + adjudicator | Opus 5 | high | this Claude Code session |
 | First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | xhigh | Claude deep-research ultradeep + Agent subagents |
 | Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | high | Codex deep-research worker contract; `codex exec` launched by Stage 2 |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | xhigh | `codex exec` (launched by Stage 2) |
 
 ### How the routing is enforced
 
-- Stage 0 checks that the active Claude session is Opus 5 at `xhigh`; any session-model or effort
+- Stage 0 checks that the active Claude session is Opus 5 at `high`; any session-model or effort
   deviation is disclosed and recorded in `VERIFICATION_LOG.md`.
 - Claude deep-research pins every delegated Stage-1 research, audit, and gap worker to Sonnet 5
   (`claude-sonnet-5`) at `xhigh` when per-agent overrides are supported.
@@ -68,7 +68,7 @@ perspective. Neither replaces the other.
   as-of date, price to verify, horizons, constraints), create the run directory
   `~/Documents/<TICKER>_Gauntlet_<YYYYMMDD>/`, and ping codex to fail fast if it is
   unauthenticated.
-- **Stage 1 — First-pass research (fan-out).** Opus 5 xhigh executes the universal master
+- **Stage 1 — First-pass research (fan-out).** Opus 5 high executes the universal master
   research prompt (Phases 0–6: scope/archetype, proof-based foundation, competitive moat,
   catalyst probability-of-success ensembles, financials + valuation, synthesis/convexity). It
   does **not** research alone: it drives **Claude deep-research at `ultradeep`** (four Sonnet 5
@@ -259,7 +259,7 @@ paths do not open from Windows).
   report that carries a prominent "NOT adversarially reviewed" banner and LOW confidence. Use it when
   speed matters more than the extra rigor; the default is always full review.
 - **Reasoning effort — fixed role routing.** Gauntlet defaults the Opus 5 first-pass
-  orchestrator to `xhigh`, all Claude-side Sonnet 5 workers/subagents to `xhigh`, the GPT-5.6 Sol
+  orchestrator to `high`, all Claude-side Sonnet 5 workers/subagents to `xhigh`, the GPT-5.6 Sol
   reviewer judge to `xhigh`, and all reviewer workers/subagents to `high`. The judge reads
   `REVIEWER_EFFORT` (default `xhigh`); reviewer lanes read `REVIEWER_WORKER_EFFORT` (default
   `high`). Any lower-effort override must be explicit and recorded in `VERIFICATION_LOG.md`.

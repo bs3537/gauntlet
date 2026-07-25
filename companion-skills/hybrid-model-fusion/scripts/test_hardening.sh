@@ -51,7 +51,7 @@ pass "run_grok transient retry"
 # ── 3. run_gemini.sh: agy exit-0 + EMPTY stdout then real content ──
 cat > "$BIN/agy" <<'SH'
 #!/usr/bin/env bash
-case "${1:-}" in models) echo "Gemini 3.5 Flash (High)"; exit 0;; esac
+case "${1:-}" in models) echo "Gemini 3.6 Flash (High)"; exit 0;; esac
 c="$STATE/agy.count"; n=$(( $(cat "$c" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$c"
 [ "$n" -le 1 ] && exit 0                     # attempt 1: exit 0 with EMPTY stdout
 printf '# Gemini recovered\n'; for _ in $(seq 1 40); do printf 'body line here\n'; done
@@ -160,7 +160,7 @@ pass "run_codex transient-retry + safety-fallback compose"
 
 # ── 9. de-anon unit: blind Response labels -> model names (tables + prose + plural; stray capitals safe) ──
 cat > "$T/dmap.json" <<'JSON'
-{"A":{"display":"Opus 5"},"B":{"display":"GPT-5.6 Sol"},"C":{"display":"Gemini 3.5 Flash"},"D":{"display":"Grok 4.5"}}
+{"A":{"display":"Opus 5"},"B":{"display":"GPT-5.6 Sol"},"C":{"display":"Gemini 3.6 Flash"},"D":{"display":"Grok 4.5"}}
 JSON
 printf '| Response A | x |\nResponse A led; Responses A and D agreed; Panelists A, B and C converged. A grade of A stands.\n' > "$T/dr.md"
 python3 "$SKILL/scripts/deanonymize_report.py" "$T/dr.md" "$T/dmap.json" 2>/dev/null

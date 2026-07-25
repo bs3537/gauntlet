@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 prompt_file="${1:?usage: run_grok.sh <prompt_file> <output_file> [reasoning_effort]}"
 output_file="${2:?usage: run_grok.sh <prompt_file> <output_file> [reasoning_effort]}"
 # Grok panelist effort is pinned to `high` per policy (FUSION_GROK_EFFORT overrides). The positional
-# effort arg (arg 3, tuned for the max/xhigh Anthropic/Codex seats) is accepted for interface parity but ignored.
+# effort arg (arg 3, tuned for the xhigh Anthropic/Codex seats) is accepted for interface parity but ignored.
 effort="${FUSION_GROK_EFFORT:-high}"
 model="${FUSION_GROK_MODEL:-grok-4.5}"
 grok_bin="${FUSION_GROK_BIN:-$HOME/.grok/bin/grok}"

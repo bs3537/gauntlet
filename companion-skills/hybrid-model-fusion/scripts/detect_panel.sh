@@ -45,7 +45,7 @@ echo "Hybrid Model Fusion CLI preflight"
 check_cmd "Opus 5 panel/reviewer via Claude Code" "claude"
 check_cmd "Grok 4.5 panel/reviewer via Grok Build CLI" "grok"
 check_cmd "GPT-5.6 Sol panelist via Codex" "codex"
-check_cmd "Gemini 3.5 Flash panel/reviewer via Antigravity" "agy"
+check_cmd "Gemini 3.6 Flash panel/reviewer via Antigravity" "agy"
 
 if [ "$missing" -ne 0 ]; then
   echo "Hybrid mode needs all four CLIs (claude, grok, codex, agy) for the full 4-model workflow." >&2
@@ -64,7 +64,7 @@ if [ "${FUSION_AUTH_PREFLIGHT:-1}" = "1" ]; then
   # OAuth token first (up to 3x30s HTTP on expiry) — that must never fail this 10s probe of codex itself.
   # (run_hybrid.sh's MCP warmup refreshes the Scite token separately, with its own 60s budget.)
   _fusion_auth_probe "GPT-5.6 Sol (codex)"    "$_apt" env CODEX_SKIP_SCITE_REFRESH=1 codex login status || authfail=1
-  _fusion_auth_probe "Gemini 3.5 Flash (agy)" "$_apt" agy models                                     || authfail=1
+  _fusion_auth_probe "Gemini 3.6 Flash (agy)" "$_apt" agy models                                     || authfail=1
   if [ "$authfail" -ne 0 ]; then
     echo "Hybrid preflight: a CLI failed auth/reachability (see [auth-fail] above). Re-authenticate (claude /login, grok login, codex login, agy) or set FUSION_AUTH_PREFLIGHT=0 to skip." >&2
     exit 1
@@ -73,7 +73,7 @@ fi
 
 panel_models="$(python3 "$SCRIPT_DIR/panel_config.py" models 2>/dev/null | paste -sd- -)"
 preset="$(python3 "$SCRIPT_DIR/panel_config.py" preset 2>/dev/null || echo default)"
-echo "panel=${panel_models:-opus5-grok4.5-gemini3.5flash-gpt5.6sol} preset=${preset} grok_model=${FUSION_GROK_MODEL:-grok-4.5} grok_effort=high codex_model=${FUSION_CODEX_MODEL:-gpt-5.6-sol} codex_effort=max judge=${FUSION_JUDGE_MODEL:-claude-opus-5} judge_effort=max judge_blind=${FUSION_JUDGE_BLIND:-1}"
+echo "panel=${panel_models:-opus5-grok4.5-gemini3.6flash-gpt5.6sol} preset=${preset} opus_effort=${FUSION_OPUS_PANEL_EFFORT:-high} grok_model=${FUSION_GROK_MODEL:-grok-4.5} grok_effort=${FUSION_GROK_EFFORT:-high} gemini_effort=high codex_model=${FUSION_CODEX_MODEL:-gpt-5.6-sol} codex_effort=${FUSION_CODEX_PANEL_EFFORT:-xhigh} judge=${FUSION_JUDGE_MODEL:-claude-opus-5} judge_effort=${FUSION_JUDGE_EFFORT:-high} judge_blind=${FUSION_JUDGE_BLIND:-1}"
 
 if [ -n "${1:-}" ]; then
   run_dir="$1"
@@ -114,12 +114,14 @@ payload = {
     "auth_checks": auth_checks,
     "panel": os.environ.get("FUSION_PANEL_PRESET", "default"),
     "judge_model": os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-5"),
-    "judge_effort": "max",
+    "judge_effort": os.environ.get("FUSION_JUDGE_EFFORT", "high"),
     "judge_blind": os.environ.get("FUSION_JUDGE_BLIND", "1"),
+    "opus_effort": os.environ.get("FUSION_OPUS_PANEL_EFFORT", "high"),
     "grok_model": os.environ.get("FUSION_GROK_MODEL", "grok-4.5"),
     "grok_effort": os.environ.get("FUSION_GROK_EFFORT", "high"),
+    "gemini_effort": "high",
     "codex_model": os.environ.get("FUSION_CODEX_MODEL", "gpt-5.6-sol"),
-    "codex_effort": "max",
+    "codex_effort": os.environ.get("FUSION_CODEX_PANEL_EFFORT", "xhigh"),
 }
 path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 print(f"wrote {path}")

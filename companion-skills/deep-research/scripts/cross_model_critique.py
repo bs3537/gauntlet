@@ -165,7 +165,7 @@ def reviewer_profile(reviewer: str, *, model: Optional[str] = None, effort: Opti
                 effort
                 or os.environ.get('DEEP_RESEARCH_CLAUDE_EFFORT')
                 or os.environ.get('DEEP_RESEARCH_CLAUDE_REASONING_EFFORT')
-                or 'max'
+                or 'high'
             ),
         }
     if reviewer == 'agy':

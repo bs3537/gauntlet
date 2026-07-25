@@ -10,12 +10,12 @@ prompt_file=""
 topic="hybrid_fusion"
 run_dir=""
 mode="normal"
-effort="max"
+judge_effort="${FUSION_JUDGE_EFFORT:-high}"
 skip_fintwit=0
 
 usage() {
   cat >&2 <<'EOF'
-usage: run_hybrid.sh --prompt PROMPT_FILE [--topic TOPIC] [--run-dir RUN_DIR] [--mode normal|deep] [--effort max] [--skip-fintwit]
+usage: run_hybrid.sh --prompt PROMPT_FILE [--topic TOPIC] [--run-dir RUN_DIR] [--mode normal|deep] [--judge-effort high] [--skip-fintwit]
 EOF
 }
 
@@ -25,7 +25,7 @@ while [ $# -gt 0 ]; do
     --topic) topic="${2:?missing --topic value}"; shift 2 ;;
     --run-dir) run_dir="${2:?missing --run-dir value}"; shift 2 ;;
     --mode) mode="${2:?missing --mode value}"; shift 2 ;;
-    --effort) effort="${2:?missing --effort value}"; shift 2 ;;
+    --judge-effort|--effort) judge_effort="${2:?missing judge effort value}"; shift 2 ;;
     --skip-fintwit) skip_fintwit=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage; exit 2 ;;
@@ -121,17 +121,17 @@ for panelist in load_panelists(skill_dir):
 PY
 write_state "panel_prompts"
 
-bash "$SD/run_panel.sh" "$run_dir" "$mode" "$effort" || exit $?
+bash "$SD/run_panel.sh" "$run_dir" "$mode" xhigh || exit $?
 write_state "panel_complete"
 python3 "$SD/build_review_packets.py" "$run_dir" || exit $?
 write_state "review_packets"
-bash "$SD/run_reviews.sh" "$run_dir" "$effort" || exit $?
+bash "$SD/run_reviews.sh" "$run_dir" xhigh || exit $?
 write_state "reviews_complete"
 python3 "$SD/aggregate_reviews.py" "$run_dir" || exit $?
 write_state "aggregate_complete"
 python3 "$SD/build_judge_prompt.py" "$run_dir" || exit $?
 write_state "judge_prompt"
-bash "$SD/run_judge.sh" "$run_dir/judge_prompt.txt" "$run_dir/report_fusion.md" "$effort" || exit $?
+bash "$SD/run_judge.sh" "$run_dir/judge_prompt.txt" "$run_dir/report_fusion.md" "$judge_effort" || exit $?
 write_state "judge_complete"
 bash "$SD/render_html.sh" "$run_dir" "$topic" || exit $?
 write_state "html_complete"

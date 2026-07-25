@@ -8,7 +8,8 @@
       "prompt_file": "prompt_opus5.txt",
       "review_file": "review_opus5.md",
       "review_prompt_file": "review_prompt_opus5.txt",
-      "html_title": "Opus 5 (max)"
+      "html_title": "Opus 5 (high)",
+      "effort": "high"
     },
     {
       "slug": "grok4.5",
@@ -17,16 +18,18 @@
       "prompt_file": "prompt_grok4.5.txt",
       "review_file": "review_grok4.5.md",
       "review_prompt_file": "review_prompt_grok4.5.txt",
-      "html_title": "Grok 4.5 (high)"
+      "html_title": "Grok 4.5 (high)",
+      "effort": "high"
     },
     {
-      "slug": "gemini3.5flash",
-      "display": "Gemini 3.5 Flash",
-      "report_file": "report_gemini3.5flash.md",
-      "prompt_file": "prompt_gemini3.5flash.txt",
-      "review_file": "review_gemini3.5flash.md",
-      "review_prompt_file": "review_prompt_gemini3.5flash.txt",
-      "html_title": "Gemini 3.5 Flash (High)"
+      "slug": "gemini3.6flash",
+      "display": "Gemini 3.6 Flash",
+      "report_file": "report_gemini3.6flash.md",
+      "prompt_file": "prompt_gemini3.6flash.txt",
+      "review_file": "review_gemini3.6flash.md",
+      "review_prompt_file": "review_prompt_gemini3.6flash.txt",
+      "html_title": "Gemini 3.6 Flash (High)",
+      "effort": "high"
     },
     {
       "slug": "fable5",
@@ -35,7 +38,8 @@
       "prompt_file": "prompt_fable5.txt",
       "review_file": "review_fable5.md",
       "review_prompt_file": "review_prompt_fable5.txt",
-      "html_title": "Fable 5 (max)"
+      "html_title": "Fable 5 (max)",
+      "effort": "max"
     },
     {
       "slug": "gpt5.6sol",
@@ -44,16 +48,17 @@
       "prompt_file": "prompt_gpt5.6sol.txt",
       "review_file": "review_gpt5.6sol.md",
       "review_prompt_file": "review_prompt_gpt5.6sol.txt",
-      "html_title": "GPT-5.6 Sol (max)"
+      "html_title": "GPT-5.6 Sol (xhigh)",
+      "effort": "xhigh"
     }
   ],
   "presets": {
     "default": {
-      "panelists": ["opus5", "grok4.5", "gemini3.5flash", "gpt5.6sol"],
-      "description": "DRACO-validated default roster (4-model: Opus 5, Grok 4.5, Gemini 3.5 Flash, GPT-5.6 Sol)."
+      "panelists": ["opus5", "grok4.5", "gemini3.6flash", "gpt5.6sol"],
+      "description": "DRACO-validated default roster (4-model: Opus 5, Grok 4.5, Gemini 3.6 Flash, GPT-5.6 Sol)."
     },
     "fable-panelist": {
-      "panelists": ["fable5", "grok4.5", "gemini3.5flash"],
+      "panelists": ["fable5", "grok4.5", "gemini3.6flash"],
       "description": "Held-out Anthropic panelist variant for eval harness comparison."
     },
     "deweighted-gemini": {
@@ -61,13 +66,13 @@
       "description": "Gemini replacement variant for tasks where Gemini underperforms or flakes."
     },
     "budget": {
-      "panelists": ["grok4.5", "gemini3.5flash", "fable5"],
+      "panelists": ["grok4.5", "gemini3.6flash", "fable5"],
       "description": "Lower-cost variant that omits Opus as a panelist while preserving a 3-model panel."
     }
   },
   "judge": {
     "default_model": "claude-opus-5",
-    "default_effort": "max",
+    "default_effort": "high",
     "blind_default": true
   }
 }

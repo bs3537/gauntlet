@@ -1,7 +1,7 @@
 ---
 name: gauntlet
 description: >-
-  Explicit-invocation-only two-model adversarial equity research pipeline (Gauntlet): Opus 5 xhigh
+  Explicit-invocation-only two-model adversarial equity research pipeline (Gauntlet): Opus 5 high
   runs the universal institutional master research prompt (Phases 0-6: evidence ledger, competitive
   moat, catalyst PoS ensembles, Python valuation, convexity) and drafts a preliminary report; GPT-5.6
   Sol xhigh then attacks that draft as an external adversarial reviewer via the codex CLI (blind-spot
@@ -30,7 +30,7 @@ generator's unchallenged blind spots and confident-recall hallucinations.
 
 ```text
 Stage 0  Intake + codex preflight (fail fast)
-Stage 1  FIRST PASS — Opus 5 xhigh ORCHESTRATOR over a research panel: deep-research
+Stage 1  FIRST PASS — Opus 5 high ORCHESTRATOR over a research panel: deep-research
          ultradeep = 4 Sonnet 5 xhigh lanes (+ Sonnet 5 xhigh subagents); it QCs/verifies/
          synthesizes -> 01..07 artifacts + 08_preliminary_report.md (full draft)
 Stage 2  EXTERNAL ADVERSARIAL REVIEW — GPT-5.6 Sol PANEL: 4 GPT-5.6 Sol high research
@@ -44,19 +44,19 @@ Stage 5  FINAL REPORT — master prompt Phase 8 from corrected artifacts -> FINA
 
 | Role | Model | Where | Effort |
 |---|---|---|---|
-| First-pass orchestrator + adjudicator | Opus 5 (intended) | this Claude Code session | xhigh |
+| First-pass orchestrator + adjudicator | Opus 5 (intended) | this Claude Code session | high |
 | First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | Claude deep-research ultradeep + Agent subagents | xhigh |
 | Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | Codex deep-research worker contract; `codex exec` launched by Stage 2 | high |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | `codex exec` (launched by Stage 2) | xhigh |
 
-Both sides fan out, then judge: the Opus 5 xhigh orchestrator drives four Sonnet 5 xhigh
+Both sides fan out, then judge: the Opus 5 high orchestrator drives four Sonnet 5 xhigh
 deep-research lanes (plus targeted Sonnet 5 xhigh subagents) and admits only verified evidence; the
 GPT-5.6 Sol xhigh judge synthesizes four GPT-5.6 Sol high adversarial lanes into one scored review.
 The reviewer side gets native live web search, shell, and the scite/fmp/biomcp/perplexity MCPs from
 `~/.codex/config.toml`; it can open the run directory's artifacts and **execute the Python models**.
 
 **Session-model check (Stage 0):** this skill is designed for session model **Opus 5 at `/effort
-xhigh`**. If the live session model differs (e.g. Fable 5), tell the user in one line and proceed with
+high`**. If the live session model differs (e.g. Fable 5), tell the user in one line and proceed with
 the session model, recording the deviation in `VERIFICATION_LOG.md`. Do not silently substitute.
 
 ## Files

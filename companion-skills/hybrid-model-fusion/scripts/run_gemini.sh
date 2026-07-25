@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run Gemini 3.5 Flash (High) through Antigravity CLI for panelist or peer-review calls.
+# Run Gemini 3.6 Flash (High) through Antigravity CLI for panelist or peer-review calls.
 
 set -uo pipefail
 
@@ -26,10 +26,10 @@ FUSION_AGY_ARG_MAX_BYTES="${FUSION_AGY_ARG_MAX_BYTES:-120000}"
 
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/hybrid-fusion-gemini.XXXXXX")"
 trap 'rm -rf "$scratch"' EXIT
-agy_args=(--model "Gemini 3.5 Flash (High)" --dangerously-skip-permissions --print-timeout "$AGY_PRINT_TIMEOUT")
+agy_args=(--model "gemini-3.6-flash-high" --dangerously-skip-permissions --print-timeout "$AGY_PRINT_TIMEOUT")
 if [ "${FUSION_RUN_STAGE:-panel}" = "review" ] && [ "${FUSION_REVIEW_LEAST_PRIVILEGE:-0}" = "1" ]; then
   if agy --help 2>/dev/null | grep -q -- '--sandbox'; then
-    agy_args=(--model "Gemini 3.5 Flash (High)" --sandbox --print-timeout "$AGY_PRINT_TIMEOUT")
+    agy_args=(--model "gemini-3.6-flash-high" --sandbox --print-timeout "$AGY_PRINT_TIMEOUT")
   fi
 fi
 
