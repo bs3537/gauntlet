@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 prompt_file="${1:?usage: run_claude.sh <prompt_file> <output_file> [reasoning_effort]}"
 output_file="${2:?usage: run_claude.sh <prompt_file> <output_file> [reasoning_effort]}"
 effort="${3:-max}"
-model="${FUSION_CLAUDE_MODEL:-claude-opus-4-8}"
+model="${FUSION_CLAUDE_MODEL:-claude-opus-5}"
 permission_mode="${FUSION_CLAUDE_PERMISSION_MODE:-bypassPermissions}"
 if [ "${FUSION_RUN_STAGE:-panel}" = "review" ] && [ "${FUSION_REVIEW_LEAST_PRIVILEGE:-0}" = "1" ]; then
   permission_mode="${FUSION_CLAUDE_REVIEW_PERMISSION_MODE:-default}"

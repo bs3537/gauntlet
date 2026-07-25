@@ -35,7 +35,7 @@ fusion_cleanup_orphans() {
 }
 
 fusion_panel_models() {
-  python3 "$_FR_DIR/panel_config.py" models 2>/dev/null || printf '%s\n' opus4.8 grok4.5 gemini3.5flash gpt5.6sol
+  python3 "$_FR_DIR/panel_config.py" models 2>/dev/null || printf '%s\n' opus5 grok4.5 gemini3.5flash gpt5.6sol
 }
 
 # _fusion_kill_tree PID -> recursively TERM then KILL a process and all its descendants.
@@ -140,12 +140,12 @@ PY
 }
 
 # _fusion_run_one MODEL PROMPT OUT EFFORT [singlepass] [stage]
-# MODEL in {opus4.8,grok4.5,gemini3.5flash,gpt5.6sol}; singlepass=1 prepends a no-subagent directive (claude/grok/codex).
+# MODEL in {opus5,grok4.5,gemini3.5flash,gpt5.6sol}; singlepass=1 prepends a no-subagent directive (claude/grok/codex).
 _fusion_run_one() {
   local model="$1" prompt="$2" out="$3" effort="${4:-max}" sp="${5:-0}" stage="${6:-panel}"
   local runner p="$prompt" tmp_prompt="" codex_prompt_sha256=""
   case "$model" in
-	    opus4.8)        runner="$_FR_DIR/run_claude.sh" ;;                              # claude: "max" is valid
+	    opus5)        runner="$_FR_DIR/run_claude.sh" ;;                              # claude: "max" is valid
 	    fable5)         runner="$_FR_DIR/run_claude.sh" ;;                              # claude: FUSION_CLAUDE_MODEL overridden below
 	    grok4.5)        runner="$_FR_DIR/run_grok.sh" ;;                                # Grok 4.5 panelist via Grok Build CLI (high)
     gpt5.6sol)      runner="$_FR_DIR/run_codex.sh" ;;                               # GPT-5.6 Sol panelist via Codex (max)

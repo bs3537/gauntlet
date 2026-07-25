@@ -103,7 +103,7 @@ def main() -> int:
         raise SystemExit(f"Missing aggregate_scorecard.md in {run_dir}")
 
     blind_judge = env_truthy("FUSION_JUDGE_BLIND", "1")
-    judge_model = os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-4-8")
+    judge_model = os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-5")
 
     parts = [
         "# Hybrid Model Fusion Final Judge Prompt",

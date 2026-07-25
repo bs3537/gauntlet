@@ -12,13 +12,13 @@ from typing import Any
 
 DEFAULT_PANELISTS = [
     {
-        "slug": "opus4.8",
-        "display": "Opus 4.8",
-        "report_file": "report_opus4.8.md",
-        "prompt_file": "prompt_opus4.8.txt",
-        "review_file": "review_opus4.8.md",
-        "review_prompt_file": "review_prompt_opus4.8.txt",
-        "html_title": "Opus 4.8 (max)",
+        "slug": "opus5",
+        "display": "Opus 5",
+        "report_file": "report_opus5.md",
+        "prompt_file": "prompt_opus5.txt",
+        "review_file": "review_opus5.md",
+        "review_prompt_file": "review_prompt_opus5.txt",
+        "html_title": "Opus 5 (max)",
     },
     {
         "slug": "grok4.5",
@@ -85,7 +85,7 @@ def load_panelists(skill_dir: Path | None = None) -> list[dict[str, str]]:
             selected.append(dict(catalog[slug]))
         if selected:
             return selected
-    return [dict(item) for item in panelists if item.get("slug") in {"opus4.8", "grok4.5", "gemini3.5flash", "gpt5.6sol"}]
+    return [dict(item) for item in panelists if item.get("slug") in {"opus5", "grok4.5", "gemini3.5flash", "gpt5.6sol"}]
 
 
 def main() -> int:

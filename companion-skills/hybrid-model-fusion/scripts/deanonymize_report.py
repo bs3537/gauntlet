@@ -12,7 +12,7 @@ Usage:
   deanonymize_report.py <report_file> <response_mapping.json>
 
 response_mapping.json format (written by the judge-prompt / review-packet builder):
-  { "A": {"model": "opus4.8", "display": "Opus 4.8", ...}, "B": {...}, ... }
+  { "A": {"model": "opus5", "display": "Opus 5", ...}, "B": {...}, ... }
 Keys may be a bare letter ("A") or a full label ("Response A"); the last whitespace token is the letter.
 Only the word forms `Response X` / `Report X` / `Panelist X` are rewritten (the judge is instructed to
 always use the full label), so ordinary prose containing a stray capital letter is never touched.

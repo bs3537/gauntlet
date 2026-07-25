@@ -60,7 +60,7 @@ class P0IntegrityTests(unittest.TestCase):
             run_dir = Path(tmp) / "stable_topic_20260705_120000"
             run_dir.mkdir()
             (run_dir / "original_prompt.md").write_text("Compare the reports against this exact task.", encoding="utf-8")
-            for name in ["opus4.8", "grok4.5", "gemini3.5flash", "gpt5.6sol"]:
+            for name in ["opus5", "grok4.5", "gemini3.5flash", "gpt5.6sol"]:
                 (run_dir / f"report_{name}.md").write_text(f"# Report {name}\n\nSubstantial report body.", encoding="utf-8")
 
             subprocess.run(["python3", str(SCRIPTS / "build_review_packets.py"), str(run_dir)], check=True)
@@ -84,7 +84,7 @@ class P0IntegrityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="hybrid-test-aggregate-") as tmp:
             run_dir = Path(tmp)
             mapping = {
-                "A": {"model": "opus4.8", "display": "Opus 4.8", "file": "report_opus4.8.md"},
+                "A": {"model": "opus5", "display": "Opus 5", "file": "report_opus5.md"},
                 "B": {"model": "grok4.5", "display": "Grok 4.5", "file": "report_grok4.5.md"},
                 "C": {"model": "gemini3.5flash", "display": "Gemini 3.5 Flash", "file": "report_gemini3.5flash.md"},
                 "D": {"model": "gpt5.6sol", "display": "GPT-5.6 Sol", "file": "report_gpt5.6sol.md"},
@@ -92,7 +92,7 @@ class P0IntegrityTests(unittest.TestCase):
             (run_dir / "response_mapping.json").write_text(json.dumps(mapping), encoding="utf-8")
             manifest = {
                 "review_prompts": [
-                    {"reviewer": "opus4.8", "reviewed_responses": ["B", "C", "D"]},
+                    {"reviewer": "opus5", "reviewed_responses": ["B", "C", "D"]},
                     {"reviewer": "grok4.5", "reviewed_responses": ["A", "C", "D"]},
                     {"reviewer": "gemini3.5flash", "reviewed_responses": ["A", "B", "D"]},
                     {"reviewer": "gpt5.6sol", "reviewed_responses": ["A", "B", "C"]},
@@ -115,9 +115,9 @@ class P0IntegrityTests(unittest.TestCase):
                 """
             )
             write_review(
-                run_dir / "review_opus4.8.md",
+                run_dir / "review_opus5.md",
                 {
-                    "reviewer": "opus4.8",
+                    "reviewer": "opus5",
                     "reviewed_responses": ["A", "B", "C", "D"],
                     "ranked_order": ["A", "B", "C", "D"],
                     "scores": {"A": score(60), "B": score(48), "C": score(36), "D": score(30)},
@@ -166,7 +166,7 @@ class P0IntegrityTests(unittest.TestCase):
 
             subprocess.run(["python3", str(SCRIPTS / "aggregate_reviews.py"), str(run_dir)], check=True)
             scorecard = json.loads((run_dir / "aggregate_scorecard.json").read_text(encoding="utf-8"))
-            normalized_opus = json.loads((run_dir / "review_opus4.8.json").read_text(encoding="utf-8"))
+            normalized_opus = json.loads((run_dir / "review_opus5.json").read_text(encoding="utf-8"))
             normalized_gpt = json.loads((run_dir / "review_grok4.5.json").read_text(encoding="utf-8"))
 
             self.assertNotIn("A", normalized_opus["ranked_order"])
@@ -395,14 +395,14 @@ class P0IntegrityTests(unittest.TestCase):
             run_dir = Path(tmp)
             (run_dir / "original_prompt.md").write_text("Original task text", encoding="utf-8")
             mapping = {
-                "A": {"model": "opus4.8", "display": "Opus 4.8", "file": "report_opus4.8.md"},
+                "A": {"model": "opus5", "display": "Opus 5", "file": "report_opus5.md"},
                 "B": {"model": "grok4.5", "display": "Grok 4.5", "file": "report_grok4.5.md"},
             }
             (run_dir / "response_mapping.json").write_text(json.dumps(mapping), encoding="utf-8")
-            (run_dir / "report_opus4.8.md").write_text("Panel report one", encoding="utf-8")
+            (run_dir / "report_opus5.md").write_text("Panel report one", encoding="utf-8")
             (run_dir / "report_grok4.5.md").write_text("Panel report two", encoding="utf-8")
-            (run_dir / "review_opus4.8.md").write_text("Review one", encoding="utf-8")
-            (run_dir / "aggregate_scorecard.md").write_text("Scorecard with Opus 4.8 identity", encoding="utf-8")
+            (run_dir / "review_opus5.md").write_text("Review one", encoding="utf-8")
+            (run_dir / "aggregate_scorecard.md").write_text("Scorecard with Opus 5 identity", encoding="utf-8")
             (run_dir / "aggregate_scorecard.json").write_text(
                 json.dumps(
                     {
@@ -421,7 +421,7 @@ class P0IntegrityTests(unittest.TestCase):
                                 "score_stdev": 0,
                             }
                         ],
-                        "peer_rankings": [{"reviewer": "opus4.8", "ranked_order": ["A", "B"]}],
+                        "peer_rankings": [{"reviewer": "opus5", "ranked_order": ["A", "B"]}],
                     }
                 ),
                 encoding="utf-8",
@@ -434,7 +434,7 @@ class P0IntegrityTests(unittest.TestCase):
             self.assertIn("You are claude-fable-5 at max effort", prompt)
             self.assertIn("Judge blinding is ON", prompt)
             self.assertNotIn("## Response Mapping", prompt)
-            self.assertNotIn("Scorecard with Opus 4.8 identity", prompt)
+            self.assertNotIn("Scorecard with Opus 5 identity", prompt)
             self.assertIn("### Response A", prompt)
             self.assertIn("<untrusted_model_report>", prompt)
             self.assertIn("two-pass adjudication structure", prompt)
@@ -443,7 +443,7 @@ class P0IntegrityTests(unittest.TestCase):
             subprocess.run(["python3", str(SCRIPTS / "build_judge_prompt.py"), str(run_dir)], check=True, env=env)
             unblind_prompt = (run_dir / "judge_prompt.txt").read_text(encoding="utf-8")
             self.assertIn("## Response Mapping", unblind_prompt)
-            self.assertIn("Opus 4.8", unblind_prompt)
+            self.assertIn("Opus 5", unblind_prompt)
 
     def test_eval_harness_dry_run(self) -> None:
         with tempfile.TemporaryDirectory(prefix="hybrid-test-eval-") as tmp:
@@ -461,19 +461,19 @@ class P0IntegrityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="hybrid-test-review-validator-") as tmp:
             run_dir = Path(tmp)
             mapping = {
-                "A": {"model": "opus4.8", "display": "Opus 4.8", "file": "report_opus4.8.md"},
+                "A": {"model": "opus5", "display": "Opus 5", "file": "report_opus5.md"},
                 "B": {"model": "grok4.5", "display": "Grok 4.5", "file": "report_grok4.5.md"},
                 "C": {"model": "gemini3.5flash", "display": "Gemini 3.5 Flash", "file": "report_gemini3.5flash.md"},
             }
             (run_dir / "response_mapping.json").write_text(json.dumps(mapping), encoding="utf-8")
             (run_dir / "review_manifest.json").write_text(
-                json.dumps({"review_prompts": [{"reviewer": "opus4.8", "reviewed_responses": ["B", "C"]}]}),
+                json.dumps({"review_prompts": [{"reviewer": "opus5", "reviewed_responses": ["B", "C"]}]}),
                 encoding="utf-8",
             )
             write_review(
-                run_dir / "review_opus4.8.md",
+                run_dir / "review_opus5.md",
                 {
-                    "reviewer": "opus4.8",
+                    "reviewer": "opus5",
                     "reviewed_responses": ["B", "C"],
                     "ranked_order": ["B", "C"],
                     "scores": {"B": score(48), "C": score(36)},
@@ -485,8 +485,8 @@ class P0IntegrityTests(unittest.TestCase):
                     "python3",
                     str(SCRIPTS / "validate_review_json.py"),
                     str(run_dir),
-                    "opus4.8",
-                    str(run_dir / "review_opus4.8.md"),
+                    "opus5",
+                    str(run_dir / "review_opus5.md"),
                 ],
                 check=True,
             )
@@ -503,7 +503,7 @@ class P0IntegrityTests(unittest.TestCase):
             env_json = json.loads((Path(tmp) / "run_env.json").read_text(encoding="utf-8"))
             self.assertIn("commands", env_json)
             self.assertIn("auth_checks", env_json)
-            self.assertEqual(env_json["judge_model"], os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-4-8"))
+            self.assertEqual(env_json["judge_model"], os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-5"))
             self.assertEqual(env_json["grok_model"], os.environ.get("FUSION_GROK_MODEL", "grok-4.5"))
             self.assertEqual(env_json["grok_effort"], os.environ.get("FUSION_GROK_EFFORT", "high"))
 
@@ -536,7 +536,7 @@ class P0IntegrityTests(unittest.TestCase):
             text=True,
             stdout=subprocess.PIPE,
         ).stdout
-        self.assertIn("opus4.8", panel_json)
+        self.assertIn("opus5", panel_json)
 
         env = os.environ.copy()
         env["FUSION_PANEL_PRESET"] = "fable-panelist"
