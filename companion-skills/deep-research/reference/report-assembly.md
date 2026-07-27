@@ -36,6 +36,17 @@ mkdir -p ~/Documents/[folder_name]
 # Path: [folder]/research_report_[YYYYMMDD]_[slug].md
 ```
 
+### Mandatory run-status line
+
+Directly under the report title, before the executive summary, emit exactly one status line taken from `audit_manifest.json.run_status` -- never hand-authored:
+
+- `**Status: Verified**` when `run_status == "verified"`
+- `**Status: Partial - see Limitations**` when `run_status == "partial"`
+
+`run_status` is computed by `scripts/audit_manifest.py` and flips to `partial` on any lane that was bounded, below target, or shipped with a disclosed gap; any support waiver; any surviving semantic-gate warning; any failed research subagent lane; any CitationAuditor issue resolved by hedging rather than a fix; and any trigger declared through `--partial-reason` (for example a Quick-mode Search-as-Code skip, or a `verify_citations` warning-pass).
+
+A `partial` run is not a failed run: the strict delivery gate governs whether the report may ship at all, and `run_status` governs what the reader is told about it. Never write `**Status: Verified**` over a run whose manifest says `partial`, and when the status is `partial`, every reason in `run_status_reasons` must have a corresponding entry in Limitations.
+
 ### Phase 8.2: Section Generation Loop
 
 **Pattern:** Generate section -> Write/Edit to file -> Move to next section
@@ -107,6 +118,16 @@ Source identity is stable across edits and continuation. Display numbers are per
    - Save claim evidence in `evidence.jsonl` and `claims.jsonl`
    - Save per-section CitationAuditor outputs in `audit/section_citation_issues/`; use `[]` for sections with no issues
    - Do not append a full bibliography, full source list, or long "Sources Used" section to the main report unless the user explicitly requests it. Store full metadata in external ledgers; if useful, add only a 1-3 line "Evidence Artifacts" note pointing to `sources.jsonl`, `evidence.jsonl`, and `claims.jsonl`.
+
+### Dual-locator provenance (material claims)
+
+When a material claim carries independent verification (`verifier_quote` + `verifier_locator`, written by CitationAuditor per Phase 7.5) **and** the auditor's `verifier_source_url` or `verifier_locator` differs from the source that was originally cited, show that the check was independent rather than a re-read of the same page. In the Claims-Evidence table or the claim's supporting line, append:
+
+```
+(independently checked against "<verifier source title>" - <verifier_locator>)
+```
+
+Render this only on the difference. When the auditor re-opened the same URL at the same locator, the annotation adds noise and must be omitted -- the `verified_independently_at` timestamp in `claims.jsonl` already records that the check happened. This is display-only: it changes no gate, and `audit_manifest.py` decides materiality and sufficiency independently of whether the annotation was rendered.
 
 ---
 

@@ -200,6 +200,106 @@ class VerifyClaimSupportLlmTests(unittest.TestCase):
         self.assertEqual(out['selected'], 2)
         self.assertEqual(out['judged'], 2)
 
+    def test_extra_claim_id_fails_batch_without_applying_upgrades(self):
+        """A judge that returns an ID outside the selection has drifted: reject the batch."""
+        judgments = self.write_judgments([
+            {'claim_id': 'aaaaaaaaaaaaaaaa', 'verdict': 'entailed', 'rationale': 'Supported.'},
+            {'claim_id': 'zzzzzzzzzzzzzzzz', 'verdict': 'entailed', 'rationale': 'Not in selection.'},
+        ])
+
+        out = run_vcs_llm(
+            'verify',
+            '--dir', self.tmpdir,
+            '--judgments', judgments,
+            '--sample-supported-rate', '0',
+            '--strict',
+            expect_fail=True,
+        )
+
+        self.assertEqual(out['status'], 'fail')
+        self.assertEqual(out['extra_ids'], 1)
+        self.assertEqual(out['upgraded_to_supported'], 0)
+        claim = next(row for row in self.read_claims() if row['claim_id'] == 'aaaaaaaaaaaaaaaa')
+        self.assertEqual(claim['support_status'], 'partial')
+        self.assertNotIn('support_status_llm', claim)
+
+    def test_duplicate_claim_id_fails_batch_without_applying_upgrades(self):
+        """Conflicting duplicate verdicts must not silently resolve last-wins."""
+        judgments = self.write_judgments([
+            {'claim_id': 'aaaaaaaaaaaaaaaa', 'verdict': 'contradicted', 'rationale': 'First verdict.'},
+            {'claim_id': 'aaaaaaaaaaaaaaaa', 'verdict': 'entailed', 'rationale': 'Second, conflicting.'},
+        ])
+
+        out = run_vcs_llm(
+            'verify',
+            '--dir', self.tmpdir,
+            '--judgments', judgments,
+            '--sample-supported-rate', '0',
+            '--strict',
+            expect_fail=True,
+        )
+
+        self.assertEqual(out['status'], 'fail')
+        self.assertEqual(out['duplicate_ids'], 1)
+        self.assertEqual(out['upgraded_to_supported'], 0)
+        claim = next(row for row in self.read_claims() if row['claim_id'] == 'aaaaaaaaaaaaaaaa')
+        self.assertEqual(claim['support_status'], 'partial')
+
+    def test_invalid_verdict_fails_batch_without_applying_upgrades(self):
+        """An unrecognized verdict string is drift, not a row to skip."""
+        judgments = self.write_judgments([
+            {'claim_id': 'aaaaaaaaaaaaaaaa', 'verdict': 'probably_fine', 'rationale': 'Out of vocabulary.'},
+        ])
+
+        out = run_vcs_llm(
+            'verify',
+            '--dir', self.tmpdir,
+            '--judgments', judgments,
+            '--sample-supported-rate', '0',
+            '--strict',
+            expect_fail=True,
+        )
+
+        self.assertEqual(out['status'], 'fail')
+        self.assertEqual(out['invalid_verdicts'], 1)
+        self.assertEqual(out['upgraded_to_supported'], 0)
+        claim = next(row for row in self.read_claims() if row['claim_id'] == 'aaaaaaaaaaaaaaaa')
+        self.assertEqual(claim['support_status'], 'partial')
+
+    def test_clean_batch_reports_zero_integrity_violations(self):
+        judgments = self.write_judgments([
+            {'claim_id': 'aaaaaaaaaaaaaaaa', 'verdict': 'entailed', 'rationale': 'Supported.'},
+        ])
+
+        out = run_vcs_llm(
+            'verify',
+            '--dir', self.tmpdir,
+            '--judgments', judgments,
+            '--sample-supported-rate', '0',
+            '--strict',
+        )
+
+        self.assertEqual(out['status'], 'pass')
+        self.assertEqual(out['extra_ids'], 0)
+        self.assertEqual(out['duplicate_ids'], 0)
+        self.assertEqual(out['invalid_verdicts'], 0)
+        self.assertEqual(out['judge_batch_integrity'], 'ok')
+
+    def test_integrity_failure_is_non_blocking_without_strict(self):
+        judgments = self.write_judgments([
+            {'claim_id': 'zzzzzzzzzzzzzzzz', 'verdict': 'entailed', 'rationale': 'Not in selection.'},
+        ])
+
+        out = run_vcs_llm(
+            'verify',
+            '--dir', self.tmpdir,
+            '--judgments', judgments,
+            '--sample-supported-rate', '0',
+        )
+
+        self.assertEqual(out['status'], 'fail')
+        self.assertEqual(out['extra_ids'], 1)
+
     def test_write_prompt_does_not_require_live_judge_with_judgments(self):
         judgments = self.write_judgments([
             {'claim_id': 'aaaaaaaaaaaaaaaa', 'verdict': 'entailed', 'rationale': 'Supported.'},

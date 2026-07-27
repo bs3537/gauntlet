@@ -187,6 +187,10 @@ This is an advisory Phase 7.6 review, not a hard delivery gate. By default it us
 
 **Do NOT skip validation.** Every report must pass the strict delivery gate before HTML/PDF conversion, browser opening, or user-facing delivery.
 
+**Optional honest-partial artifact.** When the loop stops at step 4 with the gate still failing, the report does not ship. You may additionally offer the user a supplementary artifact of what did survive by adding `--emit-verified-findings [run_folder]/verified_findings.md` to the delivery-gate call. It renders a deterministic `**Status: Partial**` list of only the factual claims that reached `supported`, the claims excluded by verification with their statuses, and the run-level partial triggers. It never changes the gate decision, is never auto-delivered, and is never a substitute for the report -- offer it, name it as partial, and let the user decide whether they want it.
+
+**Run status is separate from gate status.** A passing strict gate does not mean a clean run. `audit_manifest.json.run_status` is computed independently and flips to `partial` on any bounded/below-target/gap-disclosed lane, support waiver, surviving semantic-gate warning, failed subagent lane, hedged CitationAuditor issue, or caller-declared `--partial-reason`. The report's mandatory status line comes from that field, never from the gate result.
+
 ### Internal Self-Evaluation Harness
 
 ```bash

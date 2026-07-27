@@ -135,7 +135,9 @@ class TestMergeSubagentEvidence(unittest.TestCase):
                 'evidence_quote': 'Valid evidence quote.',
             }) + '\n')
 
-        out = run_mse('--dir', self.tmpdir)
+        # Row-level behavior only: disable the lane-health floor so this test keeps
+        # asserting skip accounting rather than the P0-C usable-ratio gate.
+        out = run_mse('--dir', self.tmpdir, '--min-usable-ratio', '0')
         self.assertEqual(out['status'], 'partial')
         self.assertEqual(out['rows_read'], 2)
         self.assertEqual(out['rows_skipped'], 2)
@@ -150,8 +152,88 @@ class TestMergeSubagentEvidence(unittest.TestCase):
             f.write(json.dumps({'claim': 'Claim-only row is not evidence.'}) + '\n')
 
         out = run_mse('--dir', self.tmpdir, '--strict', expect_fail=True)
-        self.assertEqual(out['status'], 'partial')
+        # Zero valid rows always fails the file under P0-C, so status is 'fail'
+        # rather than 'partial'; the strict exit-code contract is unchanged.
+        self.assertEqual(out['status'], 'fail')
         self.assertEqual(out['rows_skipped'], 1)
+
+    def test_per_file_usable_ratio_is_reported(self):
+        with open(self.input_path, 'w') as f:
+            for i in range(7):
+                f.write(json.dumps({
+                    'source_url': f'https://example.com/ok{i}',
+                    'evidence_quote': f'Valid evidence quote number {i}.',
+                }) + '\n')
+            for i in range(3):
+                f.write(json.dumps({'claim': f'No evidence quote {i}.'}) + '\n')
+
+        out = run_mse('--dir', self.tmpdir)
+        self.assertEqual(len(out['per_file']), 1)
+        stats = out['per_file'][0]
+        self.assertEqual(stats['rows_read'], 10)
+        self.assertEqual(stats['rows_ok'], 7)
+        self.assertEqual(stats['rows_skipped'], 3)
+        self.assertAlmostEqual(stats['usable_ratio'], 0.7, places=4)
+
+    def test_usable_ratio_below_threshold_fails_strict(self):
+        with open(self.input_path, 'w') as f:
+            for i in range(7):
+                f.write(json.dumps({
+                    'source_url': f'https://example.com/ok{i}',
+                    'evidence_quote': f'Valid evidence quote number {i}.',
+                }) + '\n')
+            for i in range(3):
+                f.write(json.dumps({'claim': f'No evidence quote {i}.'}) + '\n')
+
+        out = run_mse('--dir', self.tmpdir, '--strict', expect_fail=True)
+        self.assertEqual(out['status'], 'fail')
+        self.assertEqual(out['files_below_threshold'], 1)
+        self.assertTrue(out['per_file'][0]['below_min_usable_ratio'])
+        self.assertEqual(out['min_usable_ratio'], 0.8)
+
+    def test_usable_ratio_above_threshold_passes_strict(self):
+        with open(self.input_path, 'w') as f:
+            for i in range(9):
+                f.write(json.dumps({
+                    'source_url': f'https://example.com/ok{i}',
+                    'evidence_quote': f'Valid evidence quote number {i}.',
+                }) + '\n')
+            f.write(json.dumps({'claim': 'Only one bad row.'}) + '\n')
+
+        out = run_mse('--dir', self.tmpdir, '--strict', '--min-usable-ratio', '0.8', expect_fail=True)
+        # Rows are still skipped, so --strict still trips on errors; the ratio itself is fine.
+        self.assertEqual(out['files_below_threshold'], 0)
+        self.assertFalse(out['per_file'][0]['below_min_usable_ratio'])
+        self.assertAlmostEqual(out['per_file'][0]['usable_ratio'], 0.9, places=4)
+
+    def test_zero_valid_rows_always_fails_the_file(self):
+        write_jsonl(self.input_path, [
+            {'claim': 'No evidence quote at all.'},
+            {'claim': 'Still nothing usable.'},
+        ])
+
+        out = run_mse('--dir', self.tmpdir)
+        self.assertEqual(out['status'], 'fail')
+        self.assertTrue(out['per_file'][0]['zero_valid_rows'])
+        self.assertEqual(out['files_below_threshold'], 1)
+
+    def test_empty_input_file_fails(self):
+        open(self.input_path, 'w').close()
+
+        out = run_mse('--dir', self.tmpdir)
+        self.assertEqual(out['status'], 'fail')
+        self.assertTrue(out['per_file'][0]['zero_valid_rows'])
+
+    def test_fully_valid_file_reports_ratio_one_and_passes_strict(self):
+        write_jsonl(self.input_path, [
+            {'source_url': 'https://example.com/a', 'evidence_quote': 'Quote A is valid.'},
+            {'source_url': 'https://example.com/b', 'evidence_quote': 'Quote B is valid.'},
+        ])
+
+        out = run_mse('--dir', self.tmpdir, '--strict')
+        self.assertEqual(out['status'], 'ok')
+        self.assertEqual(out['files_below_threshold'], 0)
+        self.assertAlmostEqual(out['per_file'][0]['usable_ratio'], 1.0, places=4)
 
     def test_missing_source_url_is_rejected_unless_existing_source_id_is_valid(self):
         write_jsonl(os.path.join(self.tmpdir, 'sources.jsonl'), [
@@ -170,7 +252,8 @@ class TestMergeSubagentEvidence(unittest.TestCase):
             {'source_id': 'src_existing', 'evidence_quote': 'Existing source evidence.'},
         ])
 
-        out = run_mse('--dir', self.tmpdir)
+        # Row-level behavior only; see note in the malformed-rows test above.
+        out = run_mse('--dir', self.tmpdir, '--min-usable-ratio', '0')
         self.assertEqual(out['status'], 'partial')
         self.assertEqual(out['rows_skipped'], 1)
         self.assertEqual(out['sources_reused'], 1)

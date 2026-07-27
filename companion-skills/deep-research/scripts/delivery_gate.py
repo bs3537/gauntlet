@@ -137,6 +137,73 @@ def read_manifest(run_dir: Path) -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def write_verified_findings(run_dir: Path, out_path: Path, manifest: dict[str, Any]) -> None:
+    """Render the opt-in honest-partial artifact.
+
+    Deterministic by construction: it lists the factual claims that actually
+    reached `supported`, names the ones that did not, and is always stamped
+    Partial. It is a supplementary artifact for a run that cannot pass the
+    strict gate -- never auto-delivered, and never a replacement for the report.
+    """
+    claims: list[dict[str, Any]] = []
+    claims_path = run_dir / 'claims.jsonl'
+    if claims_path.exists():
+        with open(claims_path, encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        claims.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+
+    factual = [c for c in claims if (c.get('claim_type') or 'factual') == 'factual']
+    supported = [c for c in factual if c.get('support_status') == 'supported']
+    excluded = [c for c in factual if c.get('support_status') != 'supported']
+
+    lines = [
+        '# Verified findings (supplementary artifact)',
+        '',
+        '**Status: Partial**',
+        '',
+        'This artifact is not the research report. It lists only the factual claims that '
+        'reached `supported` in the delivery gate, so that a run which could not pass strict '
+        'delivery still hands back what survived verification. Claims excluded below were not '
+        'verified and must not be treated as findings.',
+        '',
+        '## Findings',
+        '',
+    ]
+    if supported:
+        for claim in supported:
+            label = ' '.join(f'[{sid}]' for sid in (claim.get('cited_source_ids') or []))
+            text = str(claim.get('text') or claim.get('claim') or '').strip()
+            lines.append(f'- {text}{(" " + label) if label else ""}')
+    else:
+        lines.append('No factual claim survived verification.')
+
+    lines += ['', '## Excluded by verification', '']
+    if excluded:
+        for claim in excluded:
+            text = str(claim.get('text') or claim.get('claim') or '').strip()
+            lines.append(
+                f'- `{claim.get("claim_id")}` ({claim.get("support_status")}): {text}'
+            )
+    else:
+        lines.append('No factual claim was excluded.')
+
+    reasons = manifest.get('run_status_reasons') or []
+    lines += ['', '## Coverage and uncertainty', '']
+    if reasons:
+        for reason in reasons:
+            lines.append(f'- {reason.get("code")}: {reason.get("message")}')
+    else:
+        lines.append('- No run-level partial triggers were recorded.')
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
 def normalize_issue_rows(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         return [row for row in payload if isinstance(row, dict)]
@@ -379,6 +446,16 @@ def main() -> int:
     parser.add_argument('--report', required=True, help='Markdown report path to validate and audit')
     parser.add_argument('--strict', action='store_true', help='Exit 1 if any required delivery gate fails')
     parser.add_argument(
+        '--emit-verified-findings',
+        metavar='PATH',
+        help=(
+            'Opt-in: write a deterministic Status: Partial artifact listing only the '
+            'claims that reached supported, plus what was excluded. Supplementary to '
+            'the report, never a substitute, and never auto-delivered. Does not change '
+            'the gate decision.'
+        ),
+    )
+    parser.add_argument(
         '--strict-citations',
         action='store_true',
         help='Pass --strict to verify_citations.py; useful when DOI/URL verification should be blocking',
@@ -443,6 +520,9 @@ def main() -> int:
     manifest = read_manifest(run_dir)
     manifest_status = manifest.get('status')
 
+    if args.emit_verified_findings:
+        write_verified_findings(run_dir, Path(args.emit_verified_findings), manifest)
+
     failed_steps = [step['name'] for step in steps if step['returncode'] != 0]
     if manifest and manifest_status != 'pass' and 'global_audit' not in failed_steps:
         failed_steps.append('global_audit')
@@ -457,6 +537,10 @@ def main() -> int:
         'report_path': str(report_path),
         'audit_manifest_path': str(run_dir / 'audit_manifest.json'),
         'audit_manifest_status': manifest_status,
+        # run_status is orthogonal to pass/fail: a passing gate can still be a
+        # partial run, and the report headline must say so.
+        'run_status': manifest.get('run_status', 'unknown') if manifest else 'unknown',
+        'run_status_reasons': manifest.get('run_status_reasons', []) if manifest else [],
         'failed_steps': failed_steps,
         'steps': steps,
     }
