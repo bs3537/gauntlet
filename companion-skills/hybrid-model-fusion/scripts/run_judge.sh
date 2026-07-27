@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Final Hybrid Model Fusion judge runner. Defaults to Opus 4.8 at max effort (run via `claude`).
+# Final Hybrid Model Fusion judge runner. Defaults to Opus 5 at high effort (run via `claude`).
 # A gpt-*/codex FUSION_JUDGE_MODEL override runs via run_codex.sh; a claude-* value runs via `claude`.
 
 set -uo pipefail
@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 prompt_file="${1:?usage: run_judge.sh <judge_prompt_file> <output_file> [reasoning_effort]}"
 output_file="${2:?usage: run_judge.sh <judge_prompt_file> <output_file> [reasoning_effort]}"
-effort="${3:-max}"
-judge_model="${FUSION_JUDGE_MODEL:-claude-opus-4-8}"
+effort="${3:-high}"
+judge_model="${FUSION_JUDGE_MODEL:-claude-opus-5}"
 # The judge now does tool-based ultradeep verification (native WebSearch/WebFetch first, Perplexity
 # second, plus FMP/Scite/BioMCP as relevant and up to 4 subagents) BEFORE adjudicating.
 # Tools are available via the inherited claude.ai/local MCP config + bypassPermissions (no extra flag).

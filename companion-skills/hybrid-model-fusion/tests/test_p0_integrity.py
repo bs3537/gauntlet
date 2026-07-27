@@ -60,7 +60,7 @@ class P0IntegrityTests(unittest.TestCase):
             run_dir = Path(tmp) / "stable_topic_20260705_120000"
             run_dir.mkdir()
             (run_dir / "original_prompt.md").write_text("Compare the reports against this exact task.", encoding="utf-8")
-            for name in ["opus4.8", "grok4.5", "gemini3.5flash", "gpt5.6sol"]:
+            for name in ["opus5", "grok4.5", "gemini3.6flash", "gpt5.6sol"]:
                 (run_dir / f"report_{name}.md").write_text(f"# Report {name}\n\nSubstantial report body.", encoding="utf-8")
 
             subprocess.run(["python3", str(SCRIPTS / "build_review_packets.py"), str(run_dir)], check=True)
@@ -84,17 +84,17 @@ class P0IntegrityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="hybrid-test-aggregate-") as tmp:
             run_dir = Path(tmp)
             mapping = {
-                "A": {"model": "opus4.8", "display": "Opus 4.8", "file": "report_opus4.8.md"},
+                "A": {"model": "opus5", "display": "Opus 5", "file": "report_opus5.md"},
                 "B": {"model": "grok4.5", "display": "Grok 4.5", "file": "report_grok4.5.md"},
-                "C": {"model": "gemini3.5flash", "display": "Gemini 3.5 Flash", "file": "report_gemini3.5flash.md"},
+                "C": {"model": "gemini3.6flash", "display": "Gemini 3.6 Flash", "file": "report_gemini3.6flash.md"},
                 "D": {"model": "gpt5.6sol", "display": "GPT-5.6 Sol", "file": "report_gpt5.6sol.md"},
             }
             (run_dir / "response_mapping.json").write_text(json.dumps(mapping), encoding="utf-8")
             manifest = {
                 "review_prompts": [
-                    {"reviewer": "opus4.8", "reviewed_responses": ["B", "C", "D"]},
+                    {"reviewer": "opus5", "reviewed_responses": ["B", "C", "D"]},
                     {"reviewer": "grok4.5", "reviewed_responses": ["A", "C", "D"]},
-                    {"reviewer": "gemini3.5flash", "reviewed_responses": ["A", "B", "D"]},
+                    {"reviewer": "gemini3.6flash", "reviewed_responses": ["A", "B", "D"]},
                     {"reviewer": "gpt5.6sol", "reviewed_responses": ["A", "B", "C"]},
                 ]
             }
@@ -115,9 +115,9 @@ class P0IntegrityTests(unittest.TestCase):
                 """
             )
             write_review(
-                run_dir / "review_opus4.8.md",
+                run_dir / "review_opus5.md",
                 {
-                    "reviewer": "opus4.8",
+                    "reviewer": "opus5",
                     "reviewed_responses": ["A", "B", "C", "D"],
                     "ranked_order": ["A", "B", "C", "D"],
                     "scores": {"A": score(60), "B": score(48), "C": score(36), "D": score(30)},
@@ -144,9 +144,9 @@ class P0IntegrityTests(unittest.TestCase):
                 },
             )
             write_review(
-                run_dir / "review_gemini3.5flash.md",
+                run_dir / "review_gemini3.6flash.md",
                 {
-                    "reviewer": "gemini3.5flash",
+                    "reviewer": "gemini3.6flash",
                     "reviewed_responses": ["A", "B", "D"],
                     "ranked_order": ["A", "B", "D"],
                     "scores": {"A": score(60), "B": score(48), "D": score(30)},
@@ -166,7 +166,7 @@ class P0IntegrityTests(unittest.TestCase):
 
             subprocess.run(["python3", str(SCRIPTS / "aggregate_reviews.py"), str(run_dir)], check=True)
             scorecard = json.loads((run_dir / "aggregate_scorecard.json").read_text(encoding="utf-8"))
-            normalized_opus = json.loads((run_dir / "review_opus4.8.json").read_text(encoding="utf-8"))
+            normalized_opus = json.loads((run_dir / "review_opus5.json").read_text(encoding="utf-8"))
             normalized_gpt = json.loads((run_dir / "review_grok4.5.json").read_text(encoding="utf-8"))
 
             self.assertNotIn("A", normalized_opus["ranked_order"])
@@ -184,7 +184,7 @@ class P0IntegrityTests(unittest.TestCase):
     def test_runner_scripts_pin_codex_and_file_handoff_large_agy_prompts(self) -> None:
         run_codex = (SCRIPTS / "run_codex.sh").read_text(encoding="utf-8")
         self.assertIn('FUSION_CODEX_MODEL:-gpt-5.6-sol', run_codex)
-        self.assertIn('effort="${3:-max}"', run_codex)
+        self.assertIn('primary_effort="${3:-xhigh}"', run_codex)
         self.assertIn('-m "$attempt_model"', run_codex)
         self.assertIn("--json", run_codex)
 
@@ -244,7 +244,7 @@ class P0IntegrityTests(unittest.TestCase):
             )
             codex_args = codex_args_file.read_text(encoding="utf-8")
             self.assertIn("gpt-5.6-sol", codex_args)
-            self.assertIn("model_reasoning_effort=max", codex_args)
+            self.assertIn("model_reasoning_effort=xhigh", codex_args)
 
             codex_args_file.write_text("", encoding="utf-8")
             codex_env["CODEX_FAKE_MODE"] = "safety"
@@ -255,7 +255,7 @@ class P0IntegrityTests(unittest.TestCase):
             )
             safety_args = codex_args_file.read_text(encoding="utf-8")
             self.assertIn("gpt-5.6-sol", safety_args)
-            self.assertIn("model_reasoning_effort=max", safety_args)
+            self.assertIn("model_reasoning_effort=xhigh", safety_args)
             self.assertIn("gpt-5.5", safety_args)
             self.assertIn("model_reasoning_effort=xhigh", safety_args)
             routing = json.loads(
@@ -285,7 +285,6 @@ class P0IntegrityTests(unittest.TestCase):
             self.assertGreaterEqual(review_args.count("read-only"), 2)
             self.assertIn("gpt-5.6-sol", review_args)
             self.assertIn("gpt-5.5", review_args)
-            self.assertIn("model_reasoning_effort=max", review_args)
             self.assertIn("model_reasoning_effort=xhigh", review_args)
             review_routing = json.loads(
                 review_output.with_suffix(review_output.suffix + ".routing.json").read_text(encoding="utf-8")
@@ -317,8 +316,8 @@ class P0IntegrityTests(unittest.TestCase):
             self.assertIn("gpt-5.6-sol", nested_args)
             self.assertNotIn("gpt-5.5", nested_args)
 
-            # Grok 4.5 panelist dispatch: fusion_reliability routes grok4.5 -> run_grok.sh,
-            # which invokes the Grok Build CLI with -m grok-4.5 and the requested effort.
+            # Full Hybrid panel efforts are role-pinned. A conflicting shared "max" request must
+            # not raise the Grok seat above high, the Opus seat above high, or the GPT seat above xhigh.
             codex_env.pop("CODEX_FAKE_MODE", None)
             grok_args_file = tmp_path / "grok_args.txt"
             fake_grok = fake_bin / "grok"
@@ -345,7 +344,7 @@ class P0IntegrityTests(unittest.TestCase):
                 [
                     "bash",
                     "-c",
-                    '. "$1"; _fusion_run_one grok4.5 "$2" "$3" high 0 panel',
+                    '. "$1"; _fusion_run_one grok4.5 "$2" "$3" max 0 panel',
                     "hybrid-grok-test",
                     str(SCRIPTS / "fusion_reliability.sh"),
                     str(grok_prompt),
@@ -361,6 +360,68 @@ class P0IntegrityTests(unittest.TestCase):
             self.assertIn("high", grok_args)
             self.assertIn("--prompt-file", grok_args)
 
+            claude_args_file = tmp_path / "claude_args.txt"
+            fake_claude = fake_bin / "claude"
+            fake_claude.write_text(
+                "#!/usr/bin/env bash\n"
+                "printf '%s\\n' \"$@\" > \"$CLAUDE_ARGS_FILE\"\n"
+                "cat >/dev/null\n"
+                "printf 'fake opus output with enough content to be non-empty\\n'\n",
+                encoding="utf-8",
+            )
+            fake_claude.chmod(0o755)
+            opus_prompt = tmp_path / "prompt_opus_dispatch.txt"
+            opus_prompt.write_text("Verify the configured Opus runner arguments.", encoding="utf-8")
+            opus_output = tmp_path / "report_opus_dispatch.md"
+            opus_env = os.environ.copy()
+            opus_env.update(
+                {
+                    "PATH": f"{fake_bin}:{opus_env['PATH']}",
+                    "CLAUDE_ARGS_FILE": str(claude_args_file),
+                    "FUSION_TIMEOUT": "5",
+                }
+            )
+            subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    '. "$1"; _fusion_run_one opus5 "$2" "$3" max 0 panel',
+                    "hybrid-opus-test",
+                    str(SCRIPTS / "fusion_reliability.sh"),
+                    str(opus_prompt),
+                    str(opus_output),
+                ],
+                check=True,
+                env=opus_env,
+            )
+            opus_args = claude_args_file.read_text(encoding="utf-8").splitlines()
+            self.assertIn("claude-opus-5", opus_args)
+            # Opus seats are pinned to high effort in this skill: a shared "max"
+            # request must be capped down, and must not resolve to xhigh either.
+            self.assertIn("high", opus_args)
+            self.assertNotIn("max", opus_args)
+            self.assertNotIn("xhigh", opus_args)
+
+            codex_args_file.write_text("", encoding="utf-8")
+            codex_output.unlink(missing_ok=True)
+            codex_env.pop("CODEX_FAKE_MODE", None)
+            subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    '. "$1"; _fusion_run_one gpt5.6sol "$2" "$3" max 0 panel',
+                    "hybrid-sol-test",
+                    str(SCRIPTS / "fusion_reliability.sh"),
+                    str(codex_prompt),
+                    str(codex_output),
+                ],
+                check=True,
+                env=codex_env,
+            )
+            pinned_codex_args = codex_args_file.read_text(encoding="utf-8")
+            self.assertIn("model_reasoning_effort=xhigh", pinned_codex_args)
+            self.assertNotIn("model_reasoning_effort=max", pinned_codex_args)
+
             args_file = tmp_path / "agy_args.txt"
             fake_agy = fake_bin / "agy"
             fake_agy.write_text(
@@ -370,9 +431,9 @@ class P0IntegrityTests(unittest.TestCase):
                 encoding="utf-8",
             )
             fake_agy.chmod(0o755)
-            prompt = tmp_path / "review_prompt_gemini3.5flash.txt"
+            prompt = tmp_path / "review_prompt_gemini3.6flash.txt"
             prompt.write_text("X" * 256, encoding="utf-8")
-            output = tmp_path / "review_gemini3.5flash.md"
+            output = tmp_path / "review_gemini3.6flash.md"
             env = os.environ.copy()
             env.update(
                 {
@@ -389,20 +450,21 @@ class P0IntegrityTests(unittest.TestCase):
             self.assertIn(str(tmp_path), args)
             self.assertIn("Read the full prompt", args)
             self.assertNotIn("X" * 128, args)
+            self.assertIn("gemini-3.6-flash-high", args)
 
     def test_judge_prompt_is_blind_by_default_and_parameterized(self) -> None:
         with tempfile.TemporaryDirectory(prefix="hybrid-test-judge-") as tmp:
             run_dir = Path(tmp)
             (run_dir / "original_prompt.md").write_text("Original task text", encoding="utf-8")
             mapping = {
-                "A": {"model": "opus4.8", "display": "Opus 4.8", "file": "report_opus4.8.md"},
+                "A": {"model": "opus5", "display": "Opus 5", "file": "report_opus5.md"},
                 "B": {"model": "grok4.5", "display": "Grok 4.5", "file": "report_grok4.5.md"},
             }
             (run_dir / "response_mapping.json").write_text(json.dumps(mapping), encoding="utf-8")
-            (run_dir / "report_opus4.8.md").write_text("Panel report one", encoding="utf-8")
+            (run_dir / "report_opus5.md").write_text("Panel report one", encoding="utf-8")
             (run_dir / "report_grok4.5.md").write_text("Panel report two", encoding="utf-8")
-            (run_dir / "review_opus4.8.md").write_text("Review one", encoding="utf-8")
-            (run_dir / "aggregate_scorecard.md").write_text("Scorecard with Opus 4.8 identity", encoding="utf-8")
+            (run_dir / "review_opus5.md").write_text("Review one", encoding="utf-8")
+            (run_dir / "aggregate_scorecard.md").write_text("Scorecard with Opus 5 identity", encoding="utf-8")
             (run_dir / "aggregate_scorecard.json").write_text(
                 json.dumps(
                     {
@@ -421,7 +483,7 @@ class P0IntegrityTests(unittest.TestCase):
                                 "score_stdev": 0,
                             }
                         ],
-                        "peer_rankings": [{"reviewer": "opus4.8", "ranked_order": ["A", "B"]}],
+                        "peer_rankings": [{"reviewer": "opus5", "ranked_order": ["A", "B"]}],
                     }
                 ),
                 encoding="utf-8",
@@ -429,12 +491,25 @@ class P0IntegrityTests(unittest.TestCase):
 
             env = os.environ.copy()
             env["FUSION_JUDGE_MODEL"] = "claude-fable-5"
+            env.pop("FUSION_JUDGE_EFFORT", None)
             subprocess.run(["python3", str(SCRIPTS / "build_judge_prompt.py"), str(run_dir)], check=True, env=env)
             prompt = (run_dir / "judge_prompt.txt").read_text(encoding="utf-8")
-            self.assertIn("You are claude-fable-5 at max effort", prompt)
+            # The header states the effort the judge is actually invoked with (default
+            # high for this skill's Opus seats) instead of hard-coding "max effort".
+            self.assertIn("You are claude-fable-5 at high effort", prompt)
             self.assertIn("Judge blinding is ON", prompt)
+            # an explicit FUSION_JUDGE_EFFORT override must be reflected verbatim
+            env_max = env.copy()
+            env_max["FUSION_JUDGE_EFFORT"] = "max"
+            subprocess.run(["python3", str(SCRIPTS / "build_judge_prompt.py"), str(run_dir)], check=True, env=env_max)
+            self.assertIn(
+                "You are claude-fable-5 at max effort",
+                (run_dir / "judge_prompt.txt").read_text(encoding="utf-8"),
+            )
+            subprocess.run(["python3", str(SCRIPTS / "build_judge_prompt.py"), str(run_dir)], check=True, env=env)
+            prompt = (run_dir / "judge_prompt.txt").read_text(encoding="utf-8")
             self.assertNotIn("## Response Mapping", prompt)
-            self.assertNotIn("Scorecard with Opus 4.8 identity", prompt)
+            self.assertNotIn("Scorecard with Opus 5 identity", prompt)
             self.assertIn("### Response A", prompt)
             self.assertIn("<untrusted_model_report>", prompt)
             self.assertIn("two-pass adjudication structure", prompt)
@@ -443,7 +518,7 @@ class P0IntegrityTests(unittest.TestCase):
             subprocess.run(["python3", str(SCRIPTS / "build_judge_prompt.py"), str(run_dir)], check=True, env=env)
             unblind_prompt = (run_dir / "judge_prompt.txt").read_text(encoding="utf-8")
             self.assertIn("## Response Mapping", unblind_prompt)
-            self.assertIn("Opus 4.8", unblind_prompt)
+            self.assertIn("Opus 5", unblind_prompt)
 
     def test_eval_harness_dry_run(self) -> None:
         with tempfile.TemporaryDirectory(prefix="hybrid-test-eval-") as tmp:
@@ -461,19 +536,19 @@ class P0IntegrityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="hybrid-test-review-validator-") as tmp:
             run_dir = Path(tmp)
             mapping = {
-                "A": {"model": "opus4.8", "display": "Opus 4.8", "file": "report_opus4.8.md"},
+                "A": {"model": "opus5", "display": "Opus 5", "file": "report_opus5.md"},
                 "B": {"model": "grok4.5", "display": "Grok 4.5", "file": "report_grok4.5.md"},
-                "C": {"model": "gemini3.5flash", "display": "Gemini 3.5 Flash", "file": "report_gemini3.5flash.md"},
+                "C": {"model": "gemini3.6flash", "display": "Gemini 3.6 Flash", "file": "report_gemini3.6flash.md"},
             }
             (run_dir / "response_mapping.json").write_text(json.dumps(mapping), encoding="utf-8")
             (run_dir / "review_manifest.json").write_text(
-                json.dumps({"review_prompts": [{"reviewer": "opus4.8", "reviewed_responses": ["B", "C"]}]}),
+                json.dumps({"review_prompts": [{"reviewer": "opus5", "reviewed_responses": ["B", "C"]}]}),
                 encoding="utf-8",
             )
             write_review(
-                run_dir / "review_opus4.8.md",
+                run_dir / "review_opus5.md",
                 {
-                    "reviewer": "opus4.8",
+                    "reviewer": "opus5",
                     "reviewed_responses": ["B", "C"],
                     "ranked_order": ["B", "C"],
                     "scores": {"B": score(48), "C": score(36)},
@@ -485,8 +560,8 @@ class P0IntegrityTests(unittest.TestCase):
                     "python3",
                     str(SCRIPTS / "validate_review_json.py"),
                     str(run_dir),
-                    "opus4.8",
-                    str(run_dir / "review_opus4.8.md"),
+                    "opus5",
+                    str(run_dir / "review_opus5.md"),
                 ],
                 check=True,
             )
@@ -503,9 +578,13 @@ class P0IntegrityTests(unittest.TestCase):
             env_json = json.loads((Path(tmp) / "run_env.json").read_text(encoding="utf-8"))
             self.assertIn("commands", env_json)
             self.assertIn("auth_checks", env_json)
-            self.assertEqual(env_json["judge_model"], os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-4-8"))
+            self.assertEqual(env_json["judge_model"], os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-5"))
+            self.assertEqual(env_json["judge_effort"], "high")
+            self.assertEqual(env_json["opus_effort"], os.environ.get("FUSION_OPUS_PANEL_EFFORT", "high"))
             self.assertEqual(env_json["grok_model"], os.environ.get("FUSION_GROK_MODEL", "grok-4.5"))
             self.assertEqual(env_json["grok_effort"], os.environ.get("FUSION_GROK_EFFORT", "high"))
+            self.assertEqual(env_json["gemini_effort"], "high")
+            self.assertEqual(env_json["codex_effort"], os.environ.get("FUSION_CODEX_PANEL_EFFORT", "xhigh"))
 
     def test_report_recommendation_matrix_is_wired(self) -> None:
         tasks = [
@@ -519,6 +598,20 @@ class P0IntegrityTests(unittest.TestCase):
         panel_config = json.loads((SKILL_DIR / "config" / "panel.json").read_text(encoding="utf-8"))
         for preset in ["default", "fable-panelist", "deweighted-gemini", "budget"]:
             self.assertIn(preset, panel_config["presets"])
+        default_efforts = {
+            item["slug"]: item["effort"]
+            for item in panel_config["panelists"]
+            if item["slug"] in {"opus5", "grok4.5", "gemini3.6flash", "gpt5.6sol"}
+        }
+        self.assertEqual(
+            default_efforts,
+            {
+                "opus5": "high",
+                "grok4.5": "high",
+                "gemini3.6flash": "high",
+                "gpt5.6sol": "xhigh",
+            },
+        )
 
         schema = json.loads((SKILL_DIR / "config" / "review_output_schema.json").read_text(encoding="utf-8"))
         self.assertIn("ranked_order", schema["required"])
@@ -526,6 +619,7 @@ class P0IntegrityTests(unittest.TestCase):
         run_claude = (SCRIPTS / "run_claude.sh").read_text(encoding="utf-8")
         self.assertIn("--setting-sources", run_claude)
         self.assertIn("FUSION_CLAUDE_PANEL_SETTING_SOURCES:-project", run_claude)
+        self.assertIn('effort="${3:-high}"', run_claude)
 
         run_codex = (SCRIPTS / "run_codex.sh").read_text(encoding="utf-8")
         self.assertIn("--output-schema", run_codex)
@@ -536,7 +630,7 @@ class P0IntegrityTests(unittest.TestCase):
             text=True,
             stdout=subprocess.PIPE,
         ).stdout
-        self.assertIn("opus4.8", panel_json)
+        self.assertIn("opus5", panel_json)
 
         env = os.environ.copy()
         env["FUSION_PANEL_PRESET"] = "fable-panelist"
@@ -547,7 +641,7 @@ class P0IntegrityTests(unittest.TestCase):
             stdout=subprocess.PIPE,
             env=env,
         ).stdout.splitlines()
-        self.assertEqual(models, ["fable5", "grok4.5", "gemini3.5flash"])
+        self.assertEqual(models, ["fable5", "grok4.5", "gemini3.6flash"])
 
 
 class HardeningSuiteTest(unittest.TestCase):

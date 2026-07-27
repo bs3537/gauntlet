@@ -197,7 +197,15 @@ def discover_inputs(run_dir: str, subagent_dir: str | None, inputs: list[str]) -
     return sorted({os.path.abspath(path) for path in paths if os.path.exists(path)})
 
 
-def merge(run_dir: str, inputs: list[str], subagent_dir: str | None = None) -> dict:
+DEFAULT_MIN_USABLE_RATIO = 0.8
+
+
+def merge(
+    run_dir: str,
+    inputs: list[str],
+    subagent_dir: str | None = None,
+    min_usable_ratio: float = DEFAULT_MIN_USABLE_RATIO,
+) -> dict:
     os.makedirs(run_dir, exist_ok=True)
     sources_path = os.path.join(run_dir, 'sources.jsonl')
     evidence_path = os.path.join(run_dir, 'evidence.jsonl')
@@ -220,6 +228,9 @@ def merge(run_dir: str, inputs: list[str], subagent_dir: str | None = None) -> d
         'evidence_added': 0,
         'evidence_reused': 0,
         'rows_skipped': 0,
+        'min_usable_ratio': min_usable_ratio,
+        'files_below_threshold': 0,
+        'per_file': [],
         'lane_source_counts': {},
         'query_family_source_counts': {},
         'errors': [],
@@ -234,11 +245,21 @@ def merge(run_dir: str, inputs: list[str], subagent_dir: str | None = None) -> d
         summary['errors'].extend(errors)
         summary['rows_skipped'] += len(errors)
 
+        # Per-file acceptance accounting. A lane that hands back mostly unusable
+        # rows has not done the work, regardless of its own self-report, so the
+        # caller must be able to see the ratio rather than a global total that a
+        # healthy sibling lane can mask.
+        file_rows_read = len(errors)
+        file_rows_skipped = len(errors)
+        file_rows_ok = 0
+
         for row in rows:
             summary['rows_read'] += 1
+            file_rows_read += 1
             source_id, source, source_error = source_id_for_row(row, sources_by_id, now)
             if source_error:
                 summary['rows_skipped'] += 1
+                file_rows_skipped += 1
                 summary['errors'].append({'file': path, 'error': source_error, 'row': row})
                 continue
 
@@ -252,9 +273,11 @@ def merge(run_dir: str, inputs: list[str], subagent_dir: str | None = None) -> d
             evidence, evidence_error = build_evidence_row(row, source_id, now)
             if evidence_error:
                 summary['rows_skipped'] += 1
+                file_rows_skipped += 1
                 summary['errors'].append({'file': path, 'error': evidence_error, 'row': row})
                 continue
 
+            file_rows_ok += 1
             if evidence['evidence_id'] in evidence_by_id:
                 summary['evidence_reused'] += 1
                 continue
@@ -267,7 +290,27 @@ def merge(run_dir: str, inputs: list[str], subagent_dir: str | None = None) -> d
             if evidence.get('query_family_id'):
                 query_family_source_counts[evidence['query_family_id']] += 1
 
-    if summary['errors']:
+        usable_ratio = (file_rows_ok / file_rows_read) if file_rows_read else 0.0
+        zero_valid_rows = file_rows_ok == 0
+        below_threshold = zero_valid_rows or usable_ratio < min_usable_ratio
+        if below_threshold:
+            summary['files_below_threshold'] += 1
+        summary['per_file'].append({
+            'file': path,
+            'rows_read': file_rows_read,
+            'rows_ok': file_rows_ok,
+            'rows_skipped': file_rows_skipped,
+            'usable_ratio': round(usable_ratio, 4),
+            'zero_valid_rows': zero_valid_rows,
+            'below_min_usable_ratio': below_threshold,
+        })
+
+    # A lane below the usable-row floor is a mechanical failure, not a judgment
+    # call: the lead must record it as below_target/gap_disclosed rather than
+    # covered. Row-level skips alone remain 'partial'.
+    if summary['files_below_threshold']:
+        summary['status'] = 'fail'
+    elif summary['errors']:
         summary['status'] = 'partial'
     summary['lane_source_counts'] = dict(lane_source_counts)
     summary['query_family_source_counts'] = dict(query_family_source_counts)
@@ -283,11 +326,21 @@ def main() -> None:
     parser.add_argument('--input', action='append', default=[], help='Subagent evidence JSONL file or glob; may be repeated')
     parser.add_argument('--subagent-dir', default=None, help='Directory containing *.evidence.jsonl files; defaults to DIR/subagent_outputs')
     parser.add_argument('--strict', action='store_true', help='Exit nonzero if any row is malformed or skipped')
+    parser.add_argument(
+        '--min-usable-ratio',
+        type=float,
+        default=DEFAULT_MIN_USABLE_RATIO,
+        help=(
+            'Minimum accepted rows / read rows per input file before the lane counts as '
+            f'a failed handoff (default {DEFAULT_MIN_USABLE_RATIO}). A file with zero valid '
+            'rows always fails regardless of this value.'
+        ),
+    )
     args = parser.parse_args()
 
-    summary = merge(os.path.abspath(args.dir), args.input, args.subagent_dir)
+    summary = merge(os.path.abspath(args.dir), args.input, args.subagent_dir, args.min_usable_ratio)
     print(json.dumps(summary, indent=2, ensure_ascii=False))
-    if args.strict and summary['errors']:
+    if args.strict and (summary['errors'] or summary['files_below_threshold']):
         sys.exit(1)
 
 

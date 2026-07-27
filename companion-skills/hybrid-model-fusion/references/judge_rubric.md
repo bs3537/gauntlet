@@ -1,6 +1,6 @@
 # Hybrid Judge Rubric
 
-You are the final judge, run as a fresh CLI process after all panel reports and blind peer reviews are complete. The default judge model is Opus 4.8 at max effort (run via Claude Code); set `FUSION_JUDGE_MODEL` to a `gpt-*`/`codex` value to use a Codex judge instead for bias-sensitive tasks. Judge blinding is on by default; set `FUSION_JUDGE_BLIND=0` only when the judge must see model identities during adjudication.
+You are the final judge, run as a fresh CLI process after all panel reports and blind peer reviews are complete. The default judge model is Opus 5 at high effort (run via Claude Code); set `FUSION_JUDGE_MODEL` to a `gpt-*`/`codex` value to use a Codex judge instead for bias-sensitive tasks. Judge blinding is on by default; set `FUSION_JUDGE_BLIND=0` only when the judge must see model identities during adjudication.
 
 ## Independent Verification (MANDATORY — do this BEFORE adjudicating)
 

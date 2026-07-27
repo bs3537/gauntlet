@@ -1,7 +1,7 @@
 ---
 name: hybrid-model-fusion
 description: >-
-  Explicit-invocation-only hybrid Model Fusion workflow: independent Opus 4.8, Grok 4.5, Gemini 3.5 Flash, and GPT-5.6 Sol reports, blind peer ranking, deterministic aggregate scorecard, and an Opus 4.8 max final report. Use only when the user affirmatively asks to use or run hybrid-model-fusion. Never auto-trigger from research, analysis, investment work, technical decisions, consensus, blind-spot checks, complexity, or inferred usefulness.
+  Explicit-invocation-only hybrid Model Fusion workflow: independent Opus 5, Grok 4.5, Gemini 3.6 Flash, and GPT-5.6 Sol reports, blind peer ranking, deterministic aggregate scorecard, and an Opus 5 max final report. Use only when the user affirmatively asks to use or run hybrid-model-fusion. Never auto-trigger from research, analysis, investment work, technical decisions, consensus, blind-spot checks, complexity, or inferred usefulness.
 ---
 
 # Hybrid Model Fusion
@@ -13,7 +13,7 @@ This skill is opt-in only. Run it only when the active user request affirmativel
 Hybrid Model Fusion is a separate skill from `model-fusion`. Use it when the user wants the hybrid workflow:
 
 ```text
-independent model reports -> blind cross-rank/scoring -> aggregate scorecard -> Opus 4.8 final judge
+independent model reports -> blind cross-rank/scoring -> aggregate scorecard -> Opus 5 final judge
 ```
 
 The required output is file-based: individual model reports, each model's blind ranking/critique of the other outputs, an aggregate scorecard, and the final judge report — each report saved as Markdown **and** a styled HTML copy (see Step 6). Do not create any other UI or dashboard unless the user explicitly asks.
@@ -24,16 +24,21 @@ Keep Stage 1 independent. Panelists must not see each other's reports until all 
 
 ## Model Roles
 
-- `Opus 4.8`: panelist and peer reviewer through Claude Code CLI, and the **default final judge** (see below).
+- `Opus 5`: panelist and peer reviewer through Claude Code CLI at `high`, and the **default final judge** (see below).
 - `Grok 4.5`: panelist and peer reviewer through Grok Build CLI (`grok`) at `high` effort. Its full tool suite (Perplexity/FMP/Scite/BioMCP MCP + web) comes from `~/.grok/config.toml` and `~/.claude.json`; `~/.grok/AGENTS.md` supplies the single-pass panelist doctrine. `FUSION_GROK_MODEL` overrides the model id.
-- `Gemini 3.5 Flash`: panelist and peer reviewer through Antigravity `agy` at High.
-- `GPT-5.6 Sol`: panelist and peer reviewer through Codex CLI at `max` effort. An allowlisted structured Codex safety error triggers one `gpt-5.5`/`xhigh` retry (`FUSION_CODEX_SAFETY_FALLBACK=0` disables it).
+- `Gemini 3.6 Flash`: panelist and peer reviewer through Antigravity `agy` at High.
+- `GPT-5.6 Sol`: panelist and peer reviewer through Codex CLI at `xhigh` effort. An allowlisted structured Codex safety error triggers one `gpt-5.5`/`xhigh` retry (`FUSION_CODEX_SAFETY_FALLBACK=0` disables it).
 
-Artifact stems match their models: `report_opus4.8.md`, `report_grok4.5.md`, `report_gemini3.5flash.md`, `report_gpt5.6sol.md` — used across run folders, review manifests, and eval fixtures. The `grok4.5` stem runs the Grok Build CLI panelist (`grok-4.5`); the `gpt5.6sol` stem runs the Codex panelist (`gpt-5.6-sol`, safety fallback `gpt-5.5`).
+These panel/reviewer efforts are role-pinned by the reliability launcher. Override only with
+`FUSION_OPUS_PANEL_EFFORT`, `FUSION_GROK_EFFORT`, or `FUSION_CODEX_PANEL_EFFORT`; Gemini remains
+on the fixed Antigravity High model. The skill does not change the invoking orchestrator session's effort;
+the user controls that separately with `/effort`.
+
+Artifact stems match their models: `report_opus5.md`, `report_grok4.5.md`, `report_gemini3.6flash.md`, `report_gpt5.6sol.md` — used across run folders, review manifests, and eval fixtures. The `grok4.5` stem runs the Grok Build CLI panelist (`grok-4.5`); the `gpt5.6sol` stem runs the Codex panelist (`gpt-5.6-sol`, safety fallback `gpt-5.5`).
 
 The Grok panelist has no safety-fallback path; the Codex (GPT-5.6 Sol) panelist does — one allowlisted structured-safety retry with `gpt-5.5`/`xhigh`, recorded in `report_gpt5.6sol.md.routing.json` and propagated into the blind response mapping.
 
-The final judge defaults to Opus 4.8 with max effort (run via Claude Code); `run_judge.sh` dispatches on the judge model family, so a `gpt-*`/`codex` `FUSION_JUDGE_MODEL` override runs the judge through Codex instead. Judge blinding is on by default: the judge sees anonymous, run-randomized `Response A/B/C/D` labels and no response mapping, so it cannot favor its own manufacturer's report (the self-preference / same-vendor bias). `run_judge.sh` then **de-anonymizes the finished report** back to real model names (via `response_mapping.json`) so the agree / disagree / unique-insight tables show which model said what. Set `FUSION_JUDGE_BLIND=0` only when model identities must be disclosed during adjudication (this also skips de-anon, since the report is already named). Residual caveat: blinding removes the *labeled* bias, not any style-fingerprint the judge might infer. If the final judge cannot be run through `scripts/run_judge.sh`, disclose the fallback.
+The final judge defaults to Opus 5 with high effort (run via Claude Code); `run_judge.sh` dispatches on the judge model family, so a `gpt-*`/`codex` `FUSION_JUDGE_MODEL` override runs the judge through Codex instead. Judge blinding is on by default: the judge sees anonymous, run-randomized `Response A/B/C/D` labels and no response mapping, so it cannot favor its own manufacturer's report (the self-preference / same-vendor bias). `run_judge.sh` then **de-anonymizes the finished report** back to real model names (via `response_mapping.json`) so the agree / disagree / unique-insight tables show which model said what. Set `FUSION_JUDGE_BLIND=0` only when model identities must be disclosed during adjudication (this also skips de-anon, since the report is already named). Residual caveat: blinding removes the *labeled* bias, not any style-fingerprint the judge might infer. If the final judge cannot be run through `scripts/run_judge.sh`, disclose the fallback.
 
 ## Standard Run Folder
 
@@ -113,11 +118,11 @@ it also sanitizes agy output and prevents orphaned processes.
 
 ```bash
 # mode "normal"|"deep": BOTH run ALL panelists in PARALLEL, always (RAM-based sequential downgrade removed 2026-06-25). "deep" only tunes agy/retry timeouts for heavier deep-research panels.
-bash <skill_dir>/scripts/run_panel.sh "$RUN_DIR" normal max
+bash <skill_dir>/scripts/run_panel.sh "$RUN_DIR" normal xhigh
 ```
 
 If `run_panel.sh` returns non-zero, a panelist could not produce a valid report after retries —
-surface that and do NOT proceed with fewer than 3 panel reports. (Low-level fallback to drive one
+surface that and do NOT proceed without every configured panel report. (Low-level fallback to drive one
 panelist manually: `bash <skill_dir>/scripts/run_{claude,grok,codex,gemini}.sh PROMPT OUT EFFORT`.)
 Tunables via env: `FUSION_PANEL_RETRIES`, `FUSION_PANEL_TIMEOUT`, `FUSION_DEEP_PARALLEL_RAM_GB`,
 `FUSION_AGY_PRINT_TIMEOUT` (see `scripts/fusion_reliability.sh`).
@@ -125,9 +130,9 @@ Tunables via env: `FUSION_PANEL_RETRIES`, `FUSION_PANEL_TIMEOUT`, `FUSION_DEEP_P
 Expected primary reports:
 
 ```text
-report_opus4.8.md
+report_opus5.md
 report_grok4.5.md
-report_gemini3.5flash.md
+report_gemini3.6flash.md
 report_gpt5.6sol.md
 ```
 
@@ -143,13 +148,13 @@ This creates:
 
 ```text
 response_mapping.json
-review_prompt_opus4.8.txt
+review_prompt_opus5.txt
 review_prompt_grok4.5.txt
-review_prompt_gemini3.5flash.txt
+review_prompt_gemini3.6flash.txt
 review_manifest.json
 ```
 
-The review prompts use anonymous `Response A/B/C` labels and exclude counted self-review.
+The review prompts use anonymous `Response A/B/C/D` labels and exclude counted self-review.
 
 ## Step 3: Blind Peer Reviews
 
@@ -157,10 +162,10 @@ Run the blind reviews via the reliability launcher (DEFAULT). Reviewer inputs ar
 proceeds on QUORUM (default 2 valid reviews) plus a short grace, so a slow/flaky panelist can never stall the run:
 
 ```bash
-bash <skill_dir>/scripts/run_reviews.sh "$RUN_DIR" max
+bash <skill_dir>/scripts/run_reviews.sh "$RUN_DIR" xhigh
 ```
 
-2 of 3 reviews is fine — `aggregate_reviews.py` handles a missing review, and empty outputs are set
+Two valid reviews satisfy the default quorum — `aggregate_reviews.py` handles missing reviews, and empty outputs are set
 aside as `review_<model>.md.empty`. Tunables: `FUSION_REVIEW_TIMEOUT`, `FUSION_REVIEW_QUORUM`,
 `FUSION_REVIEW_GRACE`.
 
@@ -175,9 +180,9 @@ python3 <skill_dir>/scripts/aggregate_reviews.py "$RUN_DIR"
 This parses the review outputs and writes:
 
 ```text
-review_opus4.8.json
+review_opus5.json
 review_grok4.5.json
-review_gemini3.5flash.json
+review_gemini3.6flash.json
 review_gpt5.6sol.json
 aggregate_scorecard.json
 aggregate_scorecard.md
@@ -187,7 +192,7 @@ contested_claims.md
 
 Use the scorecard as an audit surface, not as an automatic winner.
 
-## Step 5: Final Judge (Opus 4.8, max)
+## Step 5: Final Judge (Opus 5, high)
 
 Read `references/judge_rubric.md`, then assemble the final judge prompt:
 
@@ -201,7 +206,7 @@ Run the final judge:
 bash <skill_dir>/scripts/run_judge.sh "$RUN_DIR/judge_prompt.txt" "$RUN_DIR/report_fusion.md" max
 ```
 
-**Before adjudicating, the judge independently verifies the panel's load-bearing, contested, and time-sensitive claims with its runtime's live tools (the default Opus 4.8 judge uses native WebSearch/WebFetch, Perplexity, FMP / Scite / BioMCP, and up to 4 verification subagents; a `gpt-*`/`codex` override judge instead uses Codex `web_search` + its FMP / Scite / Perplexity connectors) and records them in a `§2 Independent Verification Log`** — it must not disclaim a training cutoff when a tool can resolve a figure. The prompt uses untrusted-content delimiters around panel/review text, withholds `response_mapping.json` by default, and requires a two-pass adjudication: structured consensus/contradiction/unique-insight/blind-spot table first, synthesis second. Because of this the judge stage runs longer than a pure-synthesis pass; tune with `FUSION_JUDGE_TIMEOUT` (default 3000s).
+**Before adjudicating, the judge independently verifies the panel's load-bearing, contested, and time-sensitive claims with its runtime's live tools (the default Opus 5 judge uses native WebSearch/WebFetch, Perplexity, FMP / Scite / BioMCP, and up to 4 verification subagents; a `gpt-*`/`codex` override judge instead uses Codex `web_search` + its FMP / Scite / Perplexity connectors) and records them in a `§2 Independent Verification Log`** — it must not disclaim a training cutoff when a tool can resolve a figure. The prompt uses untrusted-content delimiters around panel/review text, withholds `response_mapping.json` by default, and requires a two-pass adjudication: structured consensus/contradiction/unique-insight/blind-spot table first, synthesis second. Because of this the judge stage runs longer than a pure-synthesis pass; tune with `FUSION_JUDGE_TIMEOUT` (default 3000s).
 
 The final report must keep the Model Fusion style: where models agree, where they disagree, unique insights, comprehensive analysis, final recommendations, and follow-up questions. Hybrid mode adds a dedicated section: `How the Models Ranked Each Other`.
 
@@ -215,7 +220,7 @@ Render styled HTML copies of every report (panelists + fusion), **in addition to
 bash <skill_dir>/scripts/render_html.sh "$RUN_DIR" "<short-topic>"
 ```
 
-This writes `report_opus4.8.html`, `report_grok4.5.html`, `report_gemini3.5flash.html`, `report_gpt5.6sol.html`, and `report_fusion.html`
+This writes `report_opus5.html`, `report_grok4.5.html`, `report_gemini3.6flash.html`, `report_gpt5.6sol.html`, and `report_fusion.html`
 next to the `.md` files, plus HTML copies for the aggregate scorecard, peer reviews, and contested claims when present (a dropped panelist's report is simply skipped).
 
 ## Required Output Contract
@@ -224,21 +229,21 @@ A complete run folder should contain:
 
 ```text
 original_prompt.md
-report_opus4.8.md
-report_opus4.8.html
+report_opus5.md
+report_opus5.html
 report_grok4.5.md
 report_grok4.5.html
-report_gemini3.5flash.md
-report_gemini3.5flash.html
+report_gemini3.6flash.md
+report_gemini3.6flash.html
 report_gpt5.6sol.md
 report_gpt5.6sol.html
 response_mapping.json
-review_opus4.8.md
-review_opus4.8.json
+review_opus5.md
+review_opus5.json
 review_grok4.5.md
 review_grok4.5.json
-review_gemini3.5flash.md
-review_gemini3.5flash.json
+review_gemini3.6flash.md
+review_gemini3.6flash.json
 review_gpt5.6sol.md
 review_gpt5.6sol.json
 aggregate_scorecard.json

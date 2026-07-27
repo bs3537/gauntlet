@@ -51,7 +51,7 @@ pass "run_grok transient retry"
 # ── 3. run_gemini.sh: agy exit-0 + EMPTY stdout then real content ──
 cat > "$BIN/agy" <<'SH'
 #!/usr/bin/env bash
-case "${1:-}" in models) echo "Gemini 3.5 Flash (High)"; exit 0;; esac
+case "${1:-}" in models) echo "Gemini 3.6 Flash (High)"; exit 0;; esac
 c="$STATE/agy.count"; n=$(( $(cat "$c" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$c"
 [ "$n" -le 1 ] && exit 0                     # attempt 1: exit 0 with EMPTY stdout
 printf '# Gemini recovered\n'; for _ in $(seq 1 40); do printf 'body line here\n'; done
@@ -160,11 +160,11 @@ pass "run_codex transient-retry + safety-fallback compose"
 
 # ── 9. de-anon unit: blind Response labels -> model names (tables + prose + plural; stray capitals safe) ──
 cat > "$T/dmap.json" <<'JSON'
-{"A":{"display":"Opus 4.8"},"B":{"display":"GPT-5.6 Sol"},"C":{"display":"Gemini 3.5 Flash"},"D":{"display":"Grok 4.5"}}
+{"A":{"display":"Opus 5"},"B":{"display":"GPT-5.6 Sol"},"C":{"display":"Gemini 3.6 Flash"},"D":{"display":"Grok 4.5"}}
 JSON
 printf '| Response A | x |\nResponse A led; Responses A and D agreed; Panelists A, B and C converged. A grade of A stands.\n' > "$T/dr.md"
 python3 "$SKILL/scripts/deanonymize_report.py" "$T/dr.md" "$T/dmap.json" 2>/dev/null
-grep -q 'Opus 4.8 and Grok 4.5 agreed' "$T/dr.md" || fail "de-anon plural list"
+grep -q 'Opus 5 and Grok 4.5 agreed' "$T/dr.md" || fail "de-anon plural list"
 grep -q 'grade of A stands' "$T/dr.md"            || fail "de-anon touched a stray capital"
 grep -qE 'Response [A-D]\b' "$T/dr.md"             && fail "de-anon left Response labels" || true
 pass "deanonymize_report labels->model names"
@@ -172,7 +172,7 @@ pass "deanonymize_report labels->model names"
 # ── 10. run_judge de-anon wiring: a BLIND judge report is restored to model names in the final report ──
 jrd="$T/jrun"; mkdir -p "$jrd"
 cat > "$jrd/response_mapping.json" <<'JSON'
-{"A":{"display":"Opus 4.8","model":"opus4.8"},"B":{"display":"Grok 4.5","model":"grok4.5"}}
+{"A":{"display":"Opus 5","model":"opus5"},"B":{"display":"Grok 4.5","model":"grok4.5"}}
 JSON
 printf 'Synthesize.\n' > "$jrd/judge_prompt.txt"
 cat > "$BIN/claude" <<'SH'
@@ -185,7 +185,7 @@ PATH="$BIN:$PATH" FUSION_JUDGE_TIMEOUT=10 \
   bash "$SKILL/scripts/run_judge.sh" "$jrd/judge_prompt.txt" "$jrd/report_fusion.md" high 2> "$T/judge.log" || fail "run_judge failed"
 grep -q 'de-anonymized' "$T/judge.log"                || fail "run_judge did not de-anon"
 grep -qE 'Response [A-B]\b' "$jrd/report_fusion.md"   && fail "run_judge left Response labels" || true
-grep -q 'Opus 4.8 was strongest' "$jrd/report_fusion.md" || fail "run_judge de-anon prose failed"
+grep -q 'Opus 5 was strongest' "$jrd/report_fusion.md" || fail "run_judge de-anon prose failed"
 pass "run_judge de-anon wiring (blind judge -> named report)"
 
 echo "[test_hardening] passed"

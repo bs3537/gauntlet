@@ -69,6 +69,8 @@ Mode Selection
 
 **Subagent fan-out per mode:** Quick 0 subagents (main thread inline); Standard 1 in a single wave; Deep 2 in a single wave; UltraDeep up to 4 research subagents spawned concurrently by default, using Sonnet 5 via `model: "claude-sonnet-5"` and `effort: "xhigh"` on each Agent call where supported. If runtime limits, quotas, or tooling prevent 4 concurrent workers, spawn the maximum available and continue in waves until 4 total research workers have run, then disclose the fallback. Source-volume targets: Quick 10+, Standard 25+, Deep 50+, UltraDeep 100-300+ unique sources.
 
+**Depth-mode constants:** [modes.json](./modes.json) at the skill root is the single mechanical source of truth for per-mode lane counts, source floors, semantic-judge candidate caps, judge packet counts, and subagent counts. The prose tables here and in [methodology.md](./reference/methodology.md) are views of that file, not independent definitions. `citation_manager.py init-run` reads it and records the active tuple as `run_manifest.mode_budget`; `tests/test_modes_config.py` fails if the file drifts from the constants the scripts enforce. Change a depth-mode number in `modes.json` first, then reconcile the enforcing constants and the prose in the same commit.
+
 **Role effort budgets:** Use `plan.json` lane `execution_budget` values when spawning workers. Every Claude research or audit worker defaults to Sonnet 5 (`claude-sonnet-5`) at `xhigh`; role-specific timeout and tool-call budgets still vary by lane.
 
 **Gauntlet parent override:** When this skill runs inside Gauntlet Stage 1, skip optional Phase 7.6 cross-model critique. Gauntlet Stage 2 is the sole external reviewer path.
@@ -110,19 +112,21 @@ Mode Selection
 - `python scripts/run_trace.py approve-plan --dir [run_folder] --approved-by user --note "Plan reviewed."`
 - `python scripts/run_trace.py phase --dir [run_folder] --phase [name] --duration-seconds [n] --input-tokens [n] --output-tokens [n] --cost-usd [amount]`
 - `python scripts/run_trace.py coverage --dir [run_folder]`
-- `python scripts/merge_subagent_evidence.py --dir [run_folder] --subagent-dir [run_folder]/subagent_outputs`
+- `python scripts/merge_subagent_evidence.py --dir [run_folder] --subagent-dir [run_folder]/subagent_outputs --strict`
 - `python scripts/extract_claims.py extract --report [path] --dir [run_folder]`
 - `python scripts/verify_claim_support.py verify --dir [run_folder] --strict`
 - `python scripts/verify_claim_support_llm.py verify --dir [run_folder] --strict`
 - `python scripts/audit_manifest.py --dir [run_folder] --report [path] --strict`
 - `python scripts/delivery_gate.py --dir [run_folder] --report [path] --strict --semantic --require-section-citation-audits`
-- `python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --timeout 600` (uses the installed-surface opposite-model reviewer: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/max)
+- `python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --timeout 600` (uses the installed-surface opposite-model reviewer: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/high)
 - `python scripts/md_to_html.py [markdown_path] --out [html_path] --run-dir [run_folder]`
 - `python scripts/run_eval.py score-run --task evals/tasks/gold_tasks.json --task-id [task_id] --run-dir [run_folder] --judge-output [json] --judge-model [model] --judge-version [version] --strict`
 
 ---
 
 ## Output Contract
+
+**Mandatory run-status line:** Immediately under the report title, emit `**Status: Verified**` or `**Status: Partial - see Limitations**`, copied from `audit_manifest.json.run_status`. Never hand-author it, and never write Verified over a manifest that says partial. `run_status` flips to `partial` on any bounded/below-target/gap-disclosed lane, support waiver, surviving semantic-gate warning, failed subagent lane, hedged CitationAuditor issue, or `--partial-reason` declared by the caller. It is a disclosure layer on top of the strict gate, never a substitute for it. Every reason in `run_status_reasons` needs a matching Limitations entry. See [report-assembly.md](./reference/report-assembly.md).
 
 **Required sections:**
 - Executive Summary (200-400 words)

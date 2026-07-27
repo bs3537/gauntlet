@@ -384,6 +384,143 @@ def audit_plan_coverage(run_dir: str, sources: list[dict], warnings: list[dict],
     }
 
 
+INCOMPLETE_LANE_STATUSES = frozenset(['bounded', 'gap_disclosed', 'below_target'])
+
+# Status-precision language: claims that pin a regulatory, trial, or filing
+# state are load-bearing even when the ledger carries no investment_relevance.
+STATUS_PRECISION_RE = re.compile(
+    r'\b('
+    r'approved|approval|cleared|clearance|authorized|authorisation|authorization'
+    r'|phase\s*(?:1|2|3|i{1,3})\b|topline|top-line|primary endpoint|met its endpoint'
+    r'|filed|filing|submitted|accepted for review|complete response letter|crl'
+    r'|breakthrough therapy|fast track|orphan drug|pdufa'
+    r'|recalled|withdrawn|discontinued|terminated'
+    r')\b',
+    re.IGNORECASE,
+)
+
+
+def is_material_claim(claim: dict) -> bool:
+    """Materiality decided mechanically, never by the writer's judgment."""
+    if claim.get('material') is True:
+        return True
+    if str(claim.get('investment_relevance') or '').lower() == 'high':
+        return True
+    text = str(claim.get('text') or claim.get('claim') or '')
+    return bool(STATUS_PRECISION_RE.search(text))
+
+
+def has_independent_verification(claim: dict) -> bool:
+    """Both a fresh quote and a fresh locator are required.
+
+    A quote with no locator cannot be re-checked by the next reader, and a
+    locator with no quote records only that someone visited the page.
+    """
+    quote = str(claim.get('verifier_quote') or '').strip()
+    locator = str(claim.get('verifier_locator') or '').strip()
+    return bool(quote and locator)
+
+
+def compute_run_status(
+    run_dir: str,
+    claims: list[dict],
+    critical: list[dict],
+    citation_auditor_summary: dict,
+    declared_reasons: list[str] | None = None,
+) -> tuple[str, list[dict]]:
+    """Compute the run-level Verified/Partial stamp.
+
+    This is a disclosure layer on top of the strict gate, never a substitute for
+    it: a run can pass every critical check and still be `partial` because it
+    shipped with disclosed coverage gaps, support waivers, surviving semantic
+    warnings, or a failed research lane. The reader must be able to see that
+    from the report headline rather than by reading Limitations closely.
+    """
+    reasons: list[dict] = []
+
+    coverage = read_json(os.path.join(run_dir, 'coverage_map.json'))
+    incomplete_lanes = [
+        lane.get('lane_id')
+        for lane in (coverage.get('lane_coverage') or [])
+        if lane.get('status') in INCOMPLETE_LANE_STATUSES
+    ]
+    if incomplete_lanes:
+        reasons.append({
+            'code': 'lane_not_fully_covered',
+            'count': len(incomplete_lanes),
+            'lane_ids': incomplete_lanes[:10],
+            'message': 'One or more lanes were bounded, below target, or shipped with a disclosed gap',
+        })
+
+    waived = [
+        claim.get('claim_id') for claim in claims
+        if has_support_waiver(claim)
+    ]
+    if waived:
+        reasons.append({
+            'code': 'support_waivers_present',
+            'count': len(waived),
+            'claim_ids': waived[:10],
+            'message': 'Claims were delivered under a support waiver rather than full evidence support',
+        })
+
+    semantic_warnings = [
+        claim.get('claim_id') for claim in claims
+        if claim.get('semantic_gate') == 'warning'
+    ]
+    if semantic_warnings:
+        reasons.append({
+            'code': 'semantic_gate_warnings',
+            'count': len(semantic_warnings),
+            'claim_ids': semantic_warnings[:10],
+            'message': 'Claims carry a surviving semantic-gate warning',
+        })
+
+    run_manifest = read_json(os.path.join(run_dir, 'run_manifest.json'))
+    trace = run_manifest.get('execution_trace') or {}
+    failed_subagents = [
+        entry.get('subagent_id')
+        for entry in (trace.get('subagents') or [])
+        if str(entry.get('status') or '').lower() in {'failed', 'error', 'timeout', 'below_target'}
+    ]
+    if failed_subagents:
+        reasons.append({
+            'code': 'subagent_lane_failed',
+            'count': len(failed_subagents),
+            'subagent_ids': failed_subagents[:10],
+            'message': 'A recorded research subagent lane failed, timed out, or landed below target',
+        })
+
+    noncritical_auditor_issues = (
+        citation_auditor_summary.get('global_issues', 0)
+        + citation_auditor_summary.get('section_issues', 0)
+        - citation_auditor_summary.get('critical_issues', 0)
+    )
+    if noncritical_auditor_issues > 0:
+        reasons.append({
+            'code': 'citation_auditor_issues_hedged',
+            'count': noncritical_auditor_issues,
+            'message': 'CitationAuditor issues were resolved by hedging or disclosure rather than by a fix',
+        })
+
+    for declared in declared_reasons or []:
+        text = str(declared).strip()
+        if text:
+            reasons.append({
+                'code': 'declared_by_caller',
+                'message': text,
+            })
+
+    if critical:
+        reasons.append({
+            'code': 'critical_findings_present',
+            'count': len(critical),
+            'message': 'The audit recorded critical findings; the run cannot be stamped verified',
+        })
+
+    return ('partial' if reasons else 'verified'), reasons
+
+
 def audit_citation_auditor_issues(run_dir: str, warnings: list[dict], critical: list[dict]) -> dict:
     audit_dir = os.path.join(run_dir, 'audit')
     global_issue_path = os.path.join(audit_dir, 'citation_issues.json')
@@ -469,7 +606,12 @@ def audit_citation_auditor_issues(run_dir: str, warnings: list[dict], critical: 
     return summary
 
 
-def build_manifest(run_dir: str, report_path: str | None = None, strict: bool = False) -> dict:
+def build_manifest(
+    run_dir: str,
+    report_path: str | None = None,
+    strict: bool = False,
+    partial_reasons: list[str] | None = None,
+) -> dict:
     sources_path = os.path.join(run_dir, 'sources.jsonl')
     evidence_path = os.path.join(run_dir, 'evidence.jsonl')
     claims_path = os.path.join(run_dir, 'claims.jsonl')
@@ -657,9 +799,48 @@ def build_manifest(run_dir: str, report_path: str | None = None, strict: bool = 
     coverage_summary = audit_plan_coverage(run_dir, sources, warnings, critical, strict)
     citation_auditor_summary = audit_citation_auditor_issues(run_dir, warnings, critical)
 
+    # P1-D: verification must be independent of generation. Escalated to
+    # critical only under ultradeep+strict, matching the coverage-finding
+    # policy, so legacy and lighter-mode runs surface it as a warning instead
+    # of failing outright.
+    run_manifest_for_mode = read_json(os.path.join(run_dir, 'run_manifest.json'))
+    audit_mode = run_manifest_for_mode.get('mode')
+    unverified_material = [
+        {
+            'claim_id': claim.get('claim_id'),
+            'text': str(claim.get('text') or claim.get('claim') or '')[:180],
+            'investment_relevance': claim.get('investment_relevance'),
+        }
+        for claim in claims
+        if claim_role(claim) == 'factual'
+        and is_material_claim(claim)
+        and not has_independent_verification(claim)
+    ]
+    if unverified_material:
+        add_coverage_finding(
+            warnings,
+            critical,
+            mode=audit_mode,
+            strict=strict,
+            finding={
+                'code': 'material_claim_no_independent_evidence',
+                'count': len(unverified_material),
+                'examples': unverified_material[:10],
+                'message': (
+                    'Material claims lack an auditor-supplied verifier_quote and '
+                    'verifier_locator obtained by re-opening the source'
+                ),
+            },
+        )
+
     status = 'fail' if critical else 'pass'
+    run_status, run_status_reasons = compute_run_status(
+        run_dir, claims, critical, citation_auditor_summary, partial_reasons,
+    )
     return {
         'status': status,
+        'run_status': run_status,
+        'run_status_reasons': run_status_reasons,
         'generated_at': utc_now(),
         'run_dir': run_dir,
         'report_path': report_path,
@@ -675,6 +856,7 @@ def build_manifest(run_dir: str, report_path: str | None = None, strict: bool = 
             'semantic_contradictions': len(semantic_contradictions),
             'missing_report_citations': len(missing_report_citations),
             'coverage_findings': coverage_summary.get('coverage_findings', 0),
+            'material_claims_without_independent_evidence': len(unverified_material),
             'scite_editorial_notice_missing': len(missing_editorial_checks),
             'scite_editorial_notice_blocking': len(retracted_or_concern_sources),
             'citation_auditor_global_issues': citation_auditor_summary.get('global_issues', 0),
@@ -697,9 +879,20 @@ def main() -> int:
     parser.add_argument('--dir', required=True, help='Run directory containing sources/evidence/claims ledgers')
     parser.add_argument('--report', help='Optional markdown report path to audit citation labels')
     parser.add_argument('--strict', action='store_true', help='Exit 1 if the manifest contains critical findings')
+    parser.add_argument(
+        '--partial-reason',
+        action='append',
+        default=[],
+        dest='partial_reasons',
+        help=(
+            'Declare a run-level partial trigger the ledgers cannot express '
+            '(e.g. a Quick-mode Search-as-Code skip, or a verify_citations '
+            'warning-pass). Repeatable. Never downgrades a partial to verified.'
+        ),
+    )
     args = parser.parse_args()
 
-    manifest = build_manifest(args.dir, args.report, strict=args.strict)
+    manifest = build_manifest(args.dir, args.report, strict=args.strict, partial_reasons=args.partial_reasons)
     output_path = os.path.join(args.dir, 'audit_manifest.json')
     write_json(output_path, manifest)
     print(json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False))

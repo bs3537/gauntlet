@@ -32,7 +32,13 @@ def run_gate(*args: str, expect_fail: bool = False) -> dict:
     return json.loads(result.stdout)
 
 
-class DeliveryGateTests(unittest.TestCase):
+class DeliveryGateFixtureMixin:
+    """Run-directory fixture builders shared by the delivery-gate test classes.
+
+    Kept free of test methods so subclasses do not re-execute the whole parent
+    suite just to reuse the helpers.
+    """
+
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
         self.report_path = os.path.join(self.tmpdir, 'report.md')
@@ -98,6 +104,8 @@ class DeliveryGateTests(unittest.TestCase):
         with open(os.path.join(self.tmpdir, 'audit_manifest.json')) as f:
             return json.load(f)
 
+
+class DeliveryGateTests(DeliveryGateFixtureMixin, unittest.TestCase):
     def test_strict_delivery_gate_passes_supported_package(self):
         out = run_gate('--dir', self.tmpdir, '--report', self.report_path, '--strict')
 
@@ -370,6 +378,128 @@ class DeliveryGateTests(unittest.TestCase):
         manifest = self.read_manifest()
         self.assertTrue(any(item['code'] == 'missing_plan' for item in manifest['warnings']))
         self.assertFalse(any(item['code'] == 'missing_plan' for item in manifest['critical']))
+
+
+class VerifiedFindingsArtifactTests(DeliveryGateFixtureMixin, unittest.TestCase):
+    """P2-H: an opt-in honest-partial artifact.
+
+    Never auto-delivered and never a substitute for the report. It exists so a
+    run that cannot pass the strict gate after three fix cycles can still hand
+    the user the claims that did survive, stamped Partial, instead of nothing.
+    """
+
+    def artifact_path(self) -> str:
+        return os.path.join(self.tmpdir, 'verified_findings.md')
+
+    def test_artifact_is_not_written_unless_requested(self):
+        run_gate('--dir', self.tmpdir, '--report', self.report_path, '--strict')
+        self.assertFalse(os.path.exists(self.artifact_path()))
+
+    def test_artifact_is_written_when_requested(self):
+        run_gate(
+            '--dir', self.tmpdir,
+            '--report', self.report_path,
+            '--emit-verified-findings', self.artifact_path(),
+        )
+        self.assertTrue(os.path.exists(self.artifact_path()))
+        with open(self.artifact_path()) as f:
+            self.assertIn('**Status: Partial**', f.read())
+
+    def test_emitting_the_artifact_does_not_change_the_gate_decision(self):
+        without = run_gate('--dir', self.tmpdir, '--report', self.report_path, '--strict')
+        with_artifact = run_gate(
+            '--dir', self.tmpdir,
+            '--report', self.report_path,
+            '--strict',
+            '--emit-verified-findings', self.artifact_path(),
+        )
+        self.assertEqual(without['status'], with_artifact['status'])
+        self.assertEqual(without['failed_steps'], with_artifact['failed_steps'])
+
+
+class VerifiedFindingsRenderingTests(unittest.TestCase):
+    """Unit-level rendering contract for the P2-H artifact.
+
+    Exercised directly rather than through the CLI because the delivery gate
+    rebuilds claims.jsonl during claim extraction, so a pre-seeded ledger would
+    never reach the renderer.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, SCRIPTS_DIR)
+        from delivery_gate import write_verified_findings
+        cls.render = staticmethod(write_verified_findings)
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.addCleanup(lambda: shutil.rmtree(self.tmpdir, ignore_errors=True))
+        self.out = os.path.join(self.tmpdir, 'verified_findings.md')
+
+    def render_with(self, claims: list[dict], manifest: dict | None = None) -> str:
+        from pathlib import Path
+        write_jsonl(os.path.join(self.tmpdir, 'claims.jsonl'), claims)
+        self.render(Path(self.tmpdir), Path(self.out), manifest or {})
+        with open(self.out) as f:
+            return f.read()
+
+    def test_lists_only_supported_claims(self):
+        text = self.render_with([
+            {
+                'claim_id': 'clm_ok', 'claim_type': 'factual', 'support_status': 'supported',
+                'text': 'This claim survived verification.', 'cited_source_ids': ['src_001'],
+            },
+            {
+                'claim_id': 'clm_bad', 'claim_type': 'factual', 'support_status': 'needs_review',
+                'text': 'This claim did not survive verification.', 'cited_source_ids': ['src_001'],
+            },
+        ])
+
+        findings, excluded = text.split('## Excluded by verification')
+        self.assertIn('This claim survived verification.', findings)
+        self.assertNotIn('This claim did not survive verification.', findings)
+        self.assertIn('clm_bad', excluded)
+
+    def test_is_always_stamped_partial(self):
+        text = self.render_with([
+            {
+                'claim_id': 'clm_ok', 'claim_type': 'factual', 'support_status': 'supported',
+                'text': 'Everything here is supported.', 'cited_source_ids': ['src_001'],
+            },
+        ])
+        self.assertIn('**Status: Partial**', text)
+
+    def test_reports_when_nothing_survived(self):
+        text = self.render_with([
+            {
+                'claim_id': 'clm_bad', 'claim_type': 'factual', 'support_status': 'unsupported',
+                'text': 'Nothing here is supported.', 'cited_source_ids': ['src_001'],
+            },
+        ])
+        self.assertIn('No factual claim survived verification', text)
+
+    def test_carries_run_status_reasons_into_coverage_section(self):
+        text = self.render_with(
+            [
+                {
+                    'claim_id': 'clm_ok', 'claim_type': 'factual', 'support_status': 'supported',
+                    'text': 'A supported claim.', 'cited_source_ids': ['src_001'],
+                },
+            ],
+            manifest={'run_status_reasons': [
+                {'code': 'lane_not_fully_covered', 'message': 'One lane shipped with a disclosed gap'},
+            ]},
+        )
+        self.assertIn('lane_not_fully_covered', text)
+        self.assertIn('One lane shipped with a disclosed gap', text)
+
+    def test_missing_claims_ledger_still_renders_an_honest_artifact(self):
+        from pathlib import Path
+        self.render(Path(self.tmpdir), Path(self.out), {})
+        with open(self.out) as f:
+            text = f.read()
+        self.assertIn('**Status: Partial**', text)
+        self.assertIn('No factual claim survived verification', text)
 
 
 if __name__ == '__main__':

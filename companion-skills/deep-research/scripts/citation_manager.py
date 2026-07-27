@@ -382,6 +382,24 @@ def execution_budget_for_role(role: str) -> dict:
     return dict(ROLE_EXECUTION_BUDGETS.get(role, ROLE_EXECUTION_BUDGETS['main_thread']))
 
 
+MODES_CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'modes.json')
+
+
+def load_mode_budget(mode: str) -> dict:
+    """Read the depth-mode constants for `mode` from modes.json.
+
+    modes.json is the single source of truth for depth-mode numbers; the prose
+    tables in SKILL.md and methodology.md are views of it. Missing or malformed
+    config is non-fatal here -- init-run still produces a valid run -- but the
+    manifest then records no budget, and tests/test_modes_config.py fails loudly.
+    """
+    try:
+        with open(MODES_CONFIG_PATH, encoding='utf-8') as f:
+            return (json.load(f).get('modes') or {}).get(mode) or {}
+    except (OSError, ValueError):
+        return {}
+
+
 def default_plan_for_mode(mode: str, query: str = '') -> dict:
     """Create a conservative pre-retrieval plan skeleton for a run mode."""
     lanes = []
@@ -519,6 +537,7 @@ def cmd_init_run(args: argparse.Namespace) -> None:
         'version': '3.0.0',
         'query': args.query or '',
         'mode': args.mode,
+        'mode_budget': load_mode_budget(args.mode),
         'started_at': started_at,
         'finished_at': None,
         'assumptions': [],
@@ -750,10 +769,23 @@ def cmd_finish_run(args: argparse.Namespace) -> None:
     if args.report:
         event['report'] = args.report
     events.append(event)
+
+    # Carry the computed run status onto the manifest so the delivery artifact
+    # and any downstream reader see the same Verified/Partial stamp the audit
+    # derived. Absent an audit_manifest.json this stays unknown rather than
+    # defaulting to verified.
+    audit = read_json(os.path.join(args.dir, 'audit_manifest.json'))
+    run_status = audit.get('run_status') if audit else None
+    manifest['run_status'] = run_status or 'unknown'
+    manifest['run_status_reasons'] = audit.get('run_status_reasons', []) if audit else []
+    event['run_status'] = manifest['run_status']
+
     write_json(manifest_path, manifest)
     print(json.dumps({
         'status': 'ok',
         'finished_at': finished_at,
+        'run_status': manifest['run_status'],
+        'run_status_reasons': manifest['run_status_reasons'],
         'manifest': manifest_path,
     }))
 

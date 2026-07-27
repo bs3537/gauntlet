@@ -168,8 +168,8 @@ limitation and use the best authoritative fallback. Do not loop indefinitely.
 
 ### Research execution model — Gauntlet fan-out (first pass)
 
-When this prompt runs as the Gauntlet Stage-1 first pass, you (Opus 4.8 at `/effort
-xhigh`) are the ORCHESTRATOR, REVIEWER, and JUDGE of a research panel — not a solo
+When this prompt runs as the Gauntlet Stage-1 first pass, you (Opus 5 at `/effort
+high`) are the ORCHESTRATOR, REVIEWER, and JUDGE of a research panel — not a solo
 researcher. The exhaustive evidence bar above is met by fan-out and then verified by
 you before anything enters the report.
 

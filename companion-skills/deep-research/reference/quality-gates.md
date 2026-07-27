@@ -171,7 +171,7 @@ Apply only when browser automation was used:
 python scripts/cross_model_critique.py run --dir [run_folder] --report [path] --timeout 600
 ```
 
-This is an advisory Phase 7.6 review, not a hard delivery gate. By default it uses the opposite-model reviewer for the installed surface: Claude Code WSL drafts are reviewed by Codex GPT/xhigh, while Codex CLI WSL and AGY/Gemini WSL drafts are reviewed by Claude Opus/max. Use it to find blind spots and delta-retrieval targets before packaging. The script writes `[run_folder]/audit/cross_model/*` artifacts and records metadata in `run_manifest.json.cross_model_critiques`.
+This is an advisory Phase 7.6 review, not a hard delivery gate. By default it uses the opposite-model reviewer for the installed surface: Claude Code WSL drafts are reviewed by Codex GPT/xhigh, while Codex CLI WSL and AGY/Gemini WSL drafts are reviewed by Claude Opus/high. Use it to find blind spots and delta-retrieval targets before packaging. The script writes `[run_folder]/audit/cross_model/*` artifacts and records metadata in `run_manifest.json.cross_model_critiques`.
 
 ### Validation Loop Protocol
 
@@ -186,6 +186,10 @@ This is an advisory Phase 7.6 review, not a hard delivery gate. By default it us
 4. Maximum 3 retry cycles. If still failing after 3 cycles: STOP and report issues to user.
 
 **Do NOT skip validation.** Every report must pass the strict delivery gate before HTML/PDF conversion, browser opening, or user-facing delivery.
+
+**Optional honest-partial artifact.** When the loop stops at step 4 with the gate still failing, the report does not ship. You may additionally offer the user a supplementary artifact of what did survive by adding `--emit-verified-findings [run_folder]/verified_findings.md` to the delivery-gate call. It renders a deterministic `**Status: Partial**` list of only the factual claims that reached `supported`, the claims excluded by verification with their statuses, and the run-level partial triggers. It never changes the gate decision, is never auto-delivered, and is never a substitute for the report -- offer it, name it as partial, and let the user decide whether they want it.
+
+**Run status is separate from gate status.** A passing strict gate does not mean a clean run. `audit_manifest.json.run_status` is computed independently and flips to `partial` on any bounded/below-target/gap-disclosed lane, support waiver, surviving semantic-gate warning, failed subagent lane, hedged CitationAuditor issue, or caller-declared `--partial-reason`. The report's mandatory status line comes from that field, never from the gate result.
 
 ### Internal Self-Evaluation Harness
 

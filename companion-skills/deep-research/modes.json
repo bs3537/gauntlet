@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "description": "Single mechanical source of truth for deep-research depth-mode constants. The prose tables in SKILL.md and reference/methodology.md are views of this file, not independent definitions. scripts/citation_manager.py reads it at init-run; tests/test_modes_config.py fails if it drifts from the constants the scripts enforce.",
+  "field_notes": {
+    "research_lanes": "Planned retrieval lanes emitted into plan.json. Must equal MODE_LANE_TARGETS in audit_manifest.py and len(MODE_LANE_DEFAULTS[mode]) in citation_manager.py.",
+    "query_families_per_lane": "Guidance range for distinct query families per lane; not mechanically enforced.",
+    "material_claim_target_per_lane": "Guidance target for material claims a lane should land; not mechanically enforced.",
+    "judge_candidate_cap": "Upper bound on the semantic-judge selection per run. Bounds the P0-A packet accounting only; it never caps extract_claims.py, which must stay exhaustive for the deterministic gate. Overflow is prioritized material-first and recorded as a run_status partial trigger.",
+    "judge_packets": "Round-robin verifier shards the judge selection is split across, each validated for exact claim-ID coverage (P0-A).",
+    "research_subagents": "Concurrent research subagents. ultradeep is pinned at exactly 4 by CLAUDE.md.",
+    "source_floor": "Minimum unique retained sources. Must equal MODE_SOURCE_TARGETS in audit_manifest.py.",
+    "worker_model_hint": "Per-tree value. The Claude tree pins Sonnet 5; the Codex tree pins gpt-5.6-sol. Authoritative routing stays in citation_manager.py ROLE_EXECUTION_BUDGETS.",
+    "worker_reasoning_effort": "Per-tree value; see worker_model_hint."
+  },
+  "modes": {
+    "quick": {
+      "research_lanes": 1,
+      "query_families_per_lane": 3,
+      "material_claim_target_per_lane": 6,
+      "judge_candidate_cap": 16,
+      "judge_packets": 1,
+      "research_subagents": 0,
+      "source_floor": 10,
+      "worker_model_hint": "runtime_default",
+      "worker_reasoning_effort": "medium"
+    },
+    "standard": {
+      "research_lanes": 1,
+      "query_families_per_lane": 4,
+      "material_claim_target_per_lane": 8,
+      "judge_candidate_cap": 40,
+      "judge_packets": 2,
+      "research_subagents": 1,
+      "source_floor": 25,
+      "worker_model_hint": "claude-sonnet-5",
+      "worker_reasoning_effort": "xhigh"
+    },
+    "deep": {
+      "research_lanes": 2,
+      "query_families_per_lane": 6,
+      "material_claim_target_per_lane": 10,
+      "judge_candidate_cap": 72,
+      "judge_packets": 2,
+      "research_subagents": 2,
+      "source_floor": 50,
+      "worker_model_hint": "claude-sonnet-5",
+      "worker_reasoning_effort": "xhigh"
+    },
+    "ultradeep": {
+      "research_lanes": 4,
+      "query_families_per_lane": 8,
+      "material_claim_target_per_lane": 15,
+      "judge_candidate_cap": 120,
+      "judge_packets": 4,
+      "research_subagents": 4,
+      "source_floor": 100,
+      "worker_model_hint": "claude-sonnet-5",
+      "worker_reasoning_effort": "xhigh"
+    }
+  }
+}

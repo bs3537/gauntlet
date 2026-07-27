@@ -57,7 +57,7 @@ When Gauntlet is the parent workflow, its Stage-1 contract is:
 
 | Gauntlet Stage-1 role | Model | Effort |
 |---|---|---|
-| First-pass orchestrator and adjudicator | Opus 4.8 | `xhigh` |
+| First-pass orchestrator and adjudicator | Opus 5 | `xhigh` |
 | Research, audit, and residual-gap subagents | Sonnet 5 (`claude-sonnet-5`) | `xhigh` |
 
 Gauntlet runs skip optional Phase 7.6 cross-model critique because Gauntlet Stage 2 is the sole
@@ -83,7 +83,7 @@ Key features:
 - **Biotech/pharma investment controls**: Primary-source routing, Perplexity/BioMCP/scite/FMP layering, pipeline-sweep gates, source-lineage preservation, and claim-ledger fields
 - **First Finish Search**: Adaptive quality thresholds by mode
 - **Critique loop-back**: Phase 6 can return to Phase 3 with delta-queries if critical gaps found
-- **Optional cross-model critique**: Phase 7.6 can shell the draft plus claims sample to the opposite model family for a time-boxed advisory rubric review: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/max
+- **Optional cross-model critique**: Phase 7.6 can shell the draft plus claims sample to the opposite model family for a time-boxed advisory rubric review: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/high
 - **Multi-persona red teaming**: Skeptical Practitioner, Adversarial Reviewer, Implementation Engineer (Deep/UltraDeep)
 - **Disk-persisted citations**: `sources.jsonl`, `evidence.jsonl`, and `claims.jsonl` survive context compaction and continuation agents
 
@@ -178,7 +178,7 @@ deep-research/
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 3.0.1 | 2026-07-17 | Documented Sonnet 5/xhigh worker routing, the four-worker UltraDeep default, and the Opus 4.8/xhigh Gauntlet parent contract |
+| 3.0.1 | 2026-07-17 | Documented Sonnet 5/xhigh worker routing, the four-worker UltraDeep default, and the Opus 5/xhigh Gauntlet parent contract |
 | 3.0.0 | 2026-07-05 | Fusion-report hardening: citation display maps, lexical/table/subagent support, delivery gate wiring, eval harness, plan checkpoint, phase metrics, role budgets, batch ledger index, phase-provider cleanup, adversarial gate tests, and consistency sweep |
 | 2.3.1 | 2026-03-19 | Template/validator harmonization, structured evidence, critique loop-back, multi-persona red teaming |
 | 2.3 | 2026-03-19 | Contract harmonization, search-cli integration, dynamic year detection, disk-persisted citations, validation loops |

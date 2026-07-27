@@ -103,12 +103,12 @@ def main() -> int:
         raise SystemExit(f"Missing aggregate_scorecard.md in {run_dir}")
 
     blind_judge = env_truthy("FUSION_JUDGE_BLIND", "1")
-    judge_model = os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-4-8")
+    judge_model = os.environ.get("FUSION_JUDGE_MODEL", "claude-opus-5")
 
     parts = [
         "# Hybrid Model Fusion Final Judge Prompt",
         "",
-        f"You are {judge_model} at max effort, acting as the final judge.",
+        f"You are {judge_model} at {os.environ.get('FUSION_JUDGE_EFFORT', 'high')} effort, acting as the final judge.",
         (
             "Judge blinding is ON: adjudicate by anonymous, run-randomized Response labels ONLY. Do NOT guess, "
             "infer, or state any real model identity, vendor, or 'my own answer' anywhere — refer to panelists "

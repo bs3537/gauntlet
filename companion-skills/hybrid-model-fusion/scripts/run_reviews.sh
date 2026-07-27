@@ -11,6 +11,6 @@ set -uo pipefail
 SD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SD/fusion_reliability.sh"
 rd="${1:?usage: run_reviews.sh RUN_DIR [effort]}"
-effort="${2:-max}"
+effort="${2:-xhigh}"
 mkdir -p "$rd/logs"
 fusion_run_reviews "$effort" "$rd"

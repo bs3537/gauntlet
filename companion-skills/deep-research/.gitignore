@@ -23,6 +23,7 @@ Thumbs.db
 
 # Research output (kept local)
 *.json
+!modes.json
 !schemas/*.json
 !evals/*.json
 !evals/tasks/*.json
