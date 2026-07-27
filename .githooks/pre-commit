@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Gauntlet pre-commit hook — runs the deterministic gate before every commit.
+# Enable with: make hooks   (sets core.hooksPath=.githooks)
+#
+# Deterministic only: no LLM, no network, no codex, no quota. If it is slow enough to
+# annoy you, that is a signal the gate grew a dependency it should not have.
+#
+# Bypass for a genuine work-in-progress commit: git commit --no-verify
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+
+echo "[pre-commit] running the Gauntlet deterministic gate (make check)…"
+if ! bash eval/check.sh; then
+  echo
+  echo "[pre-commit] BLOCKED: the gate failed. Fix it, or commit with --no-verify if this"
+  echo "             is a deliberate work-in-progress commit."
+  exit 1
+fi

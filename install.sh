@@ -42,8 +42,11 @@ install_dir() {
 install_gauntlet() {
   local dst="$1"
   mkdir -p "$dst"
+  # config/ is REQUIRED, not optional: scripts/run_review.sh and scripts/render_prompt.sh
+  # read config/routing.env for the model IDs and effort tiers. Installing scripts without
+  # it silently falls back to the literal defaults baked into the scripts.
   cp -R "$REPO_DIR/SKILL.md" "$REPO_DIR/README.md" \
-        "$REPO_DIR/scripts" "$REPO_DIR/references" "$dst/"
+        "$REPO_DIR/scripts" "$REPO_DIR/references" "$REPO_DIR/config" "$dst/"
   [ -d "$REPO_DIR/docs" ] && cp -R "$REPO_DIR/docs" "$dst/"
 }
 

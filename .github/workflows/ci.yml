@@ -1,0 +1,34 @@
+name: gauntlet-gate
+
+# The deterministic gate, fired on every push and PR. Nothing here calls an LLM, the
+# network, or codex — so it is free to run, and a routing drift or a QC/scorer regression
+# fails loudly here instead of waiting for someone to remember to run eval/check.sh.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show the routing single source of truth
+        run: bash scripts/render_prompt.sh --list
+
+      - name: Deterministic gate (structural sync + routing contract + behavioral tiers)
+        run: bash eval/check.sh
+
+      # Reported separately from the gate so a model bump shows the exact file:line list
+      # in the job log rather than a single aggregated failure.
+      - name: Routing drift lint
+        if: always()
+        run: bash scripts/routing_lint.sh
+
+      - name: Launcher contract against the bundled fusion launcher
+        if: always()
+        run: |
+          GAUNTLET_CODEX_RUNNER="companion-skills/hybrid-model-fusion/scripts/run_codex.sh" \
+            bash scripts/run_review.sh --contract-check

@@ -1,0 +1,103 @@
+{
+  "scenario": "planted-fraud-money-figures",
+  "company": "Exemplar Grid Industries",
+  "ticker": "XGRD",
+  "asof": "2026-07-15",
+  "price": "$24.80",
+  "_comment": [
+    "Machine-readable form of GROUND-TRUTH.md, so a returned review can be SCORED by a",
+    "script instead of by eye. eval/check.sh asserts planted_text/control_text here stay",
+    "verbatim-identical to the fixture and the answer sheet, so this file cannot drift into",
+    "scoring something the fixture no longer contains.",
+    "A catch requires BOTH an anchor (the review is talking about the planted figure) AND a",
+    "mechanism (it says WHY it is wrong) within `window_chars` of each other — proximity is",
+    "what stops an unrelated 'stale' or 'forecast' elsewhere in the review from scoring."
+  ],
+  "window_chars": 800,
+  "pass_threshold": 5,
+  "marginal_threshold": 4,
+  "frauds": [
+    {
+      "id": "F1",
+      "pattern": "Stale figure",
+      "section": "§5 Valuation",
+      "planted_text": "$31.20, the March 2025 52-week high",
+      "anchor_any": ["31\\.20", "\\$?3,120"],
+      "mechanism_any": [
+        "stale", "out.?dated", "16.month", "52.week high", "march 2025",
+        "not the (current|verified) price", "24\\.80", "2,480"
+      ]
+    },
+    {
+      "id": "F2",
+      "pattern": "Headline-number omission",
+      "section": "§5 Valuation",
+      "planted_text": "$2,480M market capitalization ÷ $465M",
+      "anchor_any": ["ev/ebitda", "enterprise value", "5\\.3x"],
+      "mechanism_any": ["net debt", "\\$?410", "6\\.2x", "omit", "excludes? debt", "market cap"]
+    },
+    {
+      "id": "F3",
+      "pattern": "Guarantee language",
+      "section": "§4 Balance sheet",
+      "planted_text": "guaranteed to clear at a sub-7% coupon",
+      "anchor_any": ["guarantee", "sub.7%", "risk.free"],
+      "mechanism_any": [
+        "no (stated )?basis", "unsupported", "no evidence", "cannot be guaranteed",
+        "refinanc", "overconfiden", "certaint", "\\$?620"
+      ]
+    },
+    {
+      "id": "F4",
+      "pattern": "Base-rate / denominator abuse",
+      "section": "§2 Variant view",
+      "planted_text": "net income of $216M against gross profit of $790M",
+      "anchor_any": ["27\\.3", "net margin"],
+      "mechanism_any": ["gross profit", "denominator", "11\\.6", "1,860", "wrong base"]
+    },
+    {
+      "id": "F5",
+      "pattern": "Cherry-picked window",
+      "section": "§1 Executive summary",
+      "planted_text": "revenue CAGR of 30.0% (FY2023–FY2025)",
+      "anchor_any": ["30\\.0%", "cagr"],
+      "mechanism_any": [
+        "trough", "plant fire", "cherry.pick", "fy2021", "3\\.8", "window",
+        "base year", "depressed"
+      ]
+    },
+    {
+      "id": "F6",
+      "pattern": "Projection as fact",
+      "section": "§1 Executive summary",
+      "planted_text": "will reach $980M by FY2030",
+      "anchor_any": ["\\$?980m", "fy2030"],
+      "mechanism_any": [
+        "forecast", "projection", "assumption", "unlabel", "as fact",
+        "no (stated )?driver", "33%", "unsupported"
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "id": "A",
+      "section": "§4 Capital returns",
+      "control_text": "a 5.0% yield on the current $24.80 price",
+      "anchor_any": ["5\\.0% yield", "\\$?1\\.24"],
+      "accusation_any": [
+        "refuted", "unsupported", "incorrect", "wrong", "error", "misleading",
+        "fraud", "overstate", "misstate"
+      ]
+    },
+    {
+      "id": "B",
+      "section": "§5 Valuation",
+      "control_text": "[FORECAST] FY2027 revenue of $1,953M",
+      "anchor_any": ["1,953"],
+      "accusation_any": [
+        "refuted", "unsupported", "incorrect", "wrong", "error", "misleading",
+        "fraud", "overstate", "unlabel", "as fact"
+      ]
+    }
+  ]
+}

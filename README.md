@@ -53,8 +53,12 @@ perspective. Neither replaces the other.
   deviation is disclosed and recorded in `VERIFICATION_LOG.md`.
 - Claude deep-research pins every delegated Stage-1 research, audit, and gap worker to Sonnet 5
   (`claude-sonnet-5`) at `xhigh` when per-agent overrides are supported.
-- `scripts/run_review.sh` defaults Stage 2 to GPT-5.6 Sol, reviewer lanes to `high`, and the
-  reviewer judge to `xhigh`; it also disables automatic alternate-model safety fallback. Explicit
+- **`config/routing.env` is the single source of truth** for every model ID, display name and
+  effort tier. `scripts/run_review.sh` reads it for the Stage-2 route (reviewer model, lanes
+  `high`, judge `xhigh`) and disables automatic alternate-model safety fallback;
+  `scripts/render_prompt.sh` substitutes it into the reviewer prompt at assembly time so no model
+  name is hand-copied into a template; `scripts/routing_lint.sh` fails the build on any stale copy
+  left in prose. A model bump is a one-line edit plus whatever the lint lists. Explicit
   environment overrides remain available and must be logged.
 - The Gauntlet contract requires reviewer lanes to remain leaf `codex exec` processes with no
   nested subagents. Stage 1 also skips deep-research Phase 7.6 so no unplanned reviewer path
@@ -287,11 +291,17 @@ Two additive validation layers guard the money figures:
 - **Planted-fraud eval (`eval/`, off the runtime path).** A fictional, clearly-bannered
   doctored `08_preliminary_report.md` (Exemplar Grid Industries, "XGRD") carrying exactly
   six planted frauds — one per pattern — plus two clean controls, with a `GROUND-TRUTH.md`
-  answer sheet the model under test never sees. `bash eval/check.sh` is the cheap
-  deterministic gate (fixture ⇄ answer sheet ⇄ reviewer template kept in sync; no LLM, no
-  network); the full test feeds the fixture through a real `PANEL=0` Stage-2 review and
-  scores it against the answer sheet (**pass ≥ 5/6**). Smoke-grade by design — it validates
-  that the screen exists and its patterns are catchable; it does not benchmark the reviewer.
+  answer sheet the model under test never sees, plus `detection.json` — the same answer sheet
+  in machine-readable form, so a returned review is **scored by a script, not by eye**.
+  `make check` (`bash eval/check.sh`) is the deterministic gate — structural sync, the routing
+  contract against `config/routing.env`, and four behavioral self-tests that exercise real code
+  (QC gate · codex preflight · launcher contract & artifact equivalence · the review scorer).
+  It fires automatically: `make hooks` installs a pre-commit hook and `.github/workflows/ci.yml`
+  runs it on every push. `make eval-live` is the real test — it feeds the fixture through a
+  genuine `PANEL=0` Stage-2 review and scores it automatically against the answer sheet
+  (**pass ≥ 5/6**, clean-control false positives reported as precision misses).
+  Smoke-grade by design — one fixture: it answers "does the reviewer catch planted money-figure
+  frauds at all?", it does not benchmark reviewer quality.
 
 ---
 
@@ -300,19 +310,23 @@ Two additive validation layers guard the money figures:
 - `SKILL.md` — the orchestrator: Stages 0–5, gates, gotchas, env tuning (the operational contract).
 - `references/master_research_prompt.md` — the universal institutional research prompt (Phases 0–6 + 8, the Stage-1 fan-out model, §4B valuation-engine delegation, degraded-mode self-review appendix).
 - `references/reviewer_prompt_template.md` — the GPT (latest) adversarial **judge** prompt (panel mode, rubric D1–D7, delivery contract, placeholders incl. `{{LANE_FINDINGS}}`).
-- `scripts/run_review.sh` — hardened codex launcher + QC gate; reused per research lane (`QC_MODE=lane`, path overrides) and for the judge (`QC_MODE=judge`).
+- `config/routing.env` — the single source of truth for model IDs, display names and effort tiers (scripts read it; the reviewer template is filled from it; the lint enforces it).
+- `scripts/run_review.sh` — preflight (reachability + quota) + launcher-contract check + hardened codex launcher (with an artifact-equivalent Gauntlet-owned fallback) + QC gate; reused per research lane (`QC_MODE=lane`, path overrides) and for the judge (`QC_MODE=judge`).
+- `scripts/render_prompt.sh` — resolves the reviewer template's routing tokens from `config/routing.env` at assembly time (`--body` emits just what Stage 2 sends).
+- `scripts/routing_lint.sh` — reports every stale model name in the tree with `file:line`.
 - `scripts/render_report.sh` — renders `FINAL_REPORT.md` → styled `FINAL_REPORT.html` (+ optional PDF) via the bundled deep-research `md_to_html.py`; prints the HTML path.
 - `references/gauntlet_report_template.html` — the Gauntlet-branded HTML template (McKinsey-style, metric dashboard) `render_report.sh` fills.
 - `install.sh` — one-shot installer: copies gauntlet + all companion skills into the Claude tree and mirrors the reviewer-side `valuation` into the codex tree.
 - `companion-skills/` — the four bundled dependencies (`deep-research`, `search-as-code`, `valuation`, `hybrid-model-fusion`), so a clone is self-contained.
-- `eval/` — planted-fraud validation asset: fictional doctored preliminary report + GROUND-TRUTH answer sheet + deterministic `check.sh` (pure validation; the live pipeline never loads it).
+- `eval/` — the validation tier: planted-fraud fixture + GROUND-TRUTH answer sheet + machine-readable `detection.json`, the deterministic `check.sh` gate, four behavioral self-tests, and the automated live scored run (pure validation; the live pipeline never loads it).
+- `Makefile`, `.githooks/pre-commit`, `.github/workflows/ci.yml` — what actually fires the gate.
 - `docs/` — the approved implementation plan.
 
 ## Key design invariants (don't break these)
 
 - **`FUSION_FAST` stays 0** — fast mode switches codex to `workspace-write` + `--ignore-user-config`, killing MCP connectors and run-dir writes.
 - **`FUSION_CODEX_SAFETY_FALLBACK` stays 0** — every external panel call remains GPT-5.6 Sol; a failed bounded retry routes to Gauntlet's labeled self-review, not another GPT model.
-- **Never** swap in the `model-council-fast` runner (its lib hardcodes `FUSION_FAST=1`), and **never** pass `FUSION_RUN_STAGE=review` to the hybrid runner (attaches its peer-review `--output-schema`); gauntlet uses `gauntlet_review`.
+- **Never** swap in the `model-council-fast` runner (its lib hardcodes `FUSION_FAST=1`), and **never** pass `FUSION_RUN_STAGE=review` to the hybrid runner (attaches its peer-review `--output-schema`); gauntlet uses `gauntlet_review`. The whole env contract with that external launcher is **verified at startup** (`run_review.sh --contract-check`): a drifted or missing launcher is reported and Gauntlet's own artifact-equivalent raw-codex launcher runs instead, so the coupling can never degrade a review silently.
 - **Absolute paths only** in codex payloads — the reviewer's cwd is a throwaway scratch dir.
 - Stage 1 skips deep-research's optional Phase 7.6 cross-model critique; Stage 2 is the sole external reviewer path.
 - Reviewer-side subagents are the four GPT-5.6 Sol high lane processes orchestrated by the

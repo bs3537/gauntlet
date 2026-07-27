@@ -64,9 +64,13 @@ the session model, recording the deviation in `VERIFICATION_LOG.md`. Do not sile
 - `references/master_research_prompt.md` — the full universal master research prompt (Phases 0–6 and 8, v2 file set, degraded-mode self-review appendix). Stage 1 and Stage 5 execute it.
 - `references/reviewer_prompt_template.md` — the adversarial reviewer prompt with `{{PLACEHOLDERS}}`. Stage 2 assembles it.
 - `references/gauntlet_report_template.html` — Gauntlet-branded HTML report template (metric dashboard); Stage 5 fills it.
-- `scripts/run_review.sh` — preflight + codex launch (hardened runner with raw fallback) + QC gate.
+- `config/routing.env` — **the single source of truth for model IDs, display names and effort tiers.** The scripts read it, `render_prompt.sh` substitutes it into the reviewer template, `routing_lint.sh` fails on any stale copy elsewhere. A model bump is a one-line edit here plus whatever the lint lists.
+- `scripts/run_review.sh` — preflight (reachability + quota) + launcher-contract check + codex launch (external hardened runner, artifact-equivalent Gauntlet fallback) + QC gate.
+- `scripts/render_prompt.sh` — resolves the reviewer template's routing tokens from `config/routing.env` at assembly time; `--body` emits just the part Stage 2 sends.
+- `scripts/routing_lint.sh` — reports every stale model name in the tree with `file:line`.
 - `scripts/render_report.sh` — Stage 5 renders `FINAL_REPORT.md` → styled `FINAL_REPORT.html` (+ optional PDF) via the bundled deep-research `md_to_html.py`.
-- `eval/` — planted-fraud validation asset (fictional doctored preliminary report + GROUND-TRUTH answer sheet + deterministic `check.sh`); pure validation, nothing at runtime loads it (see Validation section below).
+- `eval/` — the validation tier: planted-fraud fixture + GROUND-TRUTH answer sheet + machine-readable `detection.json`, the deterministic `check.sh` gate, four behavioral self-tests, and the automated live scored run. Pure validation, nothing at runtime loads it (see Validation below).
+- `Makefile` / `.githooks/pre-commit` / `.github/workflows/ci.yml` — what actually FIRES the gate (`make check`, pre-commit, CI).
 
 ## Modes — full review (default) vs fast (no review)
 
@@ -96,11 +100,21 @@ Gauntlet runs in one of two modes:
    `~/Documents/<TICKER>_Gauntlet_<YYYYMMDD>/` — create it; everything lives there. `RUN_DIR` must
    always be used as an **absolute path**.
 2. Session-model check (above).
-3. Codex preflight (fail fast before hours of research):
-   `timeout 150 codex exec --skip-git-repo-check -m gpt-5.6-sol -c model_reasoning_effort=low -o "$RUN_DIR/preflight_codex.txt" - <<<'Reply with exactly: OK'` then check the file contains `OK`.
-   (Equivalently, Stage 2 can be launched with `PREFLIGHT=1`, which runs the same ping first.)
-   On failure: warn the user that Stage 2 will fall back to the labeled degraded-mode self-review
-   unless codex recovers, and continue.
+3. **Codex preflight — reachability AND quota (fail fast before hours of research):**
+   ```bash
+   bash <skill_dir>/scripts/run_review.sh --preflight-only "$RUN_DIR"
+   ```
+   One command, three outcomes, each with a different response — do NOT collapse them:
+   - **exit 0** — codex reachable, no limit signal → proceed with the full pipeline.
+   - **exit 4** — reachable but **QUOTA/RATE LIMITED**. Do not spend the ~1-hour first pass on a
+     review that cannot run: tell the user, and decide UP FRONT — run with `PANEL=0` (single
+     judge, ~1/5 the codex spend), wait for the limit to reset, or run fast mode. Record the
+     downgrade in `VERIFICATION_LOG.md`.
+   - **exit 1** — unreachable or unauthenticated → warn the user that Stage 2 will fall back to
+     the labeled degraded-mode self-review unless codex recovers, and continue.
+   Stage 2's judge launch runs the same probe by default (`PREFLIGHT=1` for `QC_MODE=judge`) and
+   propagates the same codes, so a limit that appears mid-run is still caught before the 20–60 min
+   judge wall. `PREFLIGHT=0` skips it. (The probe is one cheap `low`-effort codex call.)
 
 ## Stage 1 — First-pass research (in-session, orchestrated fan-out)
 
@@ -156,6 +170,7 @@ round 2 is always judge-only.
    ```bash
    for i in 1 2 3 4; do
      QC_MODE=lane REVIEWER_EFFORT="${REVIEWER_WORKER_EFFORT:-high}" \
+     QC_EXPECT_TICKER="<TICKER>" \
      PROMPT_FILE="$RUN_DIR/09_reviewer_lane$i.txt" \
      REVIEW_FILE="$RUN_DIR/10_reviewer_lane$i.md" \
      CAPTURE_FILE="$RUN_DIR/10_reviewer_lane$i.capture.md" \
@@ -164,30 +179,40 @@ round 2 is always judge-only.
    ```
    QC each `10_reviewer_lane$i.md` (size gate). A dropped lane is logged in `VERIFICATION_LOG.md`
    and the judge proceeds with the survivors; do not block the pipeline on one failed lane.
-3. **Assemble the judge prompt** `09_reviewer_prompt.txt`: copy everything below the
-   `<!-- TEMPLATE BEGINS -->` marker in `references/reviewer_prompt_template.md`, substitute every
-   `{{PLACEHOLDER}}` (company, ticker, as-of, verified price, absolute `RUN_DIR`, `REVIEW_OUT`,
-   prior-round line), inline the four `10_reviewer_lane*.md` at `{{LANE_FINDINGS}}` (or the literal
+3. **Assemble the judge prompt** `09_reviewer_prompt.txt`. Start from the renderer, which
+   emits the template body with the ROUTING tokens already resolved from `config/routing.env`
+   (never hand-copy model names into the prompt):
+   ```bash
+   bash <skill_dir>/scripts/render_prompt.sh <skill_dir>/references/reviewer_prompt_template.md --body \
+     > "$RUN_DIR/09_reviewer_prompt.txt"
+   ```
+   Then substitute every remaining run-specific `{{PLACEHOLDER}}` (company, ticker, as-of,
+   verified price, absolute `RUN_DIR`, `REVIEW_OUT`, prior-round line), inline the four
+   `10_reviewer_lane*.md` at `{{LANE_FINDINGS}}` (or the literal
    `none — single-pass review (panel disabled)` when `PANEL=0`), and inline the FULL text of
    `08_preliminary_report.md` at `{{PRELIMINARY_REPORT_FULL_TEXT}}`. Verify no `{{` remains:
    `grep -c '{{' 09_reviewer_prompt.txt` must print 0.
 4. **Launch the judge in background** (GPT-5.6 Sol xhigh; foreground Bash caps at 600 s and the judge
    runs 20–60 min; you are re-invoked when it exits; never sleep-poll):
    ```bash
-   bash <skill_dir>/scripts/run_review.sh "$RUN_DIR" 1
+   QC_EXPECT_TICKER="<TICKER>" bash <skill_dir>/scripts/run_review.sh "$RUN_DIR" 1
    ```
-   Defaults: `REVIEWER_MODEL=gpt-5.6-sol`, `REVIEWER_EFFORT=xhigh`,
-   `REVIEWER_WORKER_EFFORT=high`, `QC_MODE=judge`, `REVIEWER_TIMEOUT_S=3600`. The script pins
-   `FUSION_FAST=0`, snapshots `01–08` into
-   `review_backup_r1/`, delegates to the hardened `hybrid-model-fusion/scripts/run_codex.sh` in
-   standard mode (raw `codex exec` fallback built in), and double-captures the review. After exit,
-   sanity-check `10_review_capture_r1.md.routing.json`: expect `"fast": false` and
-   `"resolved_effort"` = the effort you passed.
-5. **QC the judge on exit** — exit code 0 means the review exists AND passed the gate (>3 KB;
-   VERDICT, /100 score, claim-verification table, compliance line all present). Exit 3 = QC fail,
-   124 = timeout, 1 = launch/auth failure. Script exit 0 is necessary but not sufficient: open
-   `10_adversarial_review_gpt56sol.md` and confirm it is a real review of THIS company that
-   reflects the lane findings.
+   Model and effort come from `config/routing.env` (currently `gpt-5.6-sol`, judge `xhigh`,
+   lane `high`); `QC_MODE=judge`, `REVIEWER_TIMEOUT_S=3600`, `PREFLIGHT=1` (judge default — one
+   cheap codex probe before the long judge wall). The script pins `FUSION_FAST=0`, snapshots
+   `01–08` into `review_backup_r1/`, **verifies the external launcher's env contract before
+   spending the wall on it** (see the coupling gotcha below), delegates to the hardened
+   `hybrid-model-fusion/scripts/run_codex.sh` in standard mode, and double-captures the review.
+   After exit, sanity-check `10_review_capture_r1.md.routing.json`: expect `"fast": false` and
+   `"resolved_effort"` = the effort you passed. That file is emitted on BOTH launcher paths, so
+   the check is valid even if the fallback ran.
+5. **QC the judge on exit** — exit code 0 means the review exists AND passed the gate: >3 KB,
+   VERDICT / compliance line present, a **parseable `NN/100` score in range**, a
+   claim-verification table with **real rows**, the **ticker named** (pass `QC_EXPECT_TICKER`),
+   and no pointer-stub. Exit 3 = QC fail, 4 = codex quota-limited, 124 = timeout, 1 = launch/auth
+   failure. The gate now catches empty stubs, wrong-company answers and unscored reviews on its
+   own — but still open `10_adversarial_review_gpt56sol.md` and confirm it is a real review of
+   THIS company that reflects the lane findings.
 6. **One relaunch** on any judge failure. If the relaunch also fails: execute the degraded-mode
    self-review appendix in `references/master_research_prompt.md`, save it as
    `10_selfreview_fallback.md`, and carry the label "external cross-model review unavailable —
@@ -313,6 +338,17 @@ into chat.
   divide by primary shares (p.446). The reviewer template's **FUTURE-DILUTION GUARDRAIL** and master
   prompt §4B enforce this; if a reviewer pushes the haircut anyway, **REJECT it in Stage-3
   adjudication** with the page anchors (this exact error occurred and was corrected on the KROS run).
+- **The Stage-2 launcher is owned by another skill — the coupling is now checked, not assumed.**
+  `run_review.sh` depends on `hybrid-model-fusion/scripts/run_codex.sh` through a private env
+  contract (`FUSION_FAST`, `FUSION_CODEX_SAFETY_FALLBACK`, `FUSION_TIMEOUT`,
+  `FUSION_CODEX_MODEL`, `FUSION_RUN_STAGE`), so an upstream edit to a neighboring skill used to
+  be able to degrade the review silently. The launcher (and the libs it sources) is therefore
+  verified at startup — flags honored, `--output-schema` still gated on stage `review`,
+  `danger-full-access` sandbox, routing json still emitted. If it drifted or is missing, the run
+  **says so** and uses the Gauntlet-owned raw-codex launcher, which is artifact-equivalent (same
+  capture, same `<capture>.routing.json`, same stream log) — so the fallback cannot mask the
+  breakage or change what later stages find on disk. `GAUNTLET_STRICT_CONTRACT=1` aborts instead.
+  Check it any time with `bash scripts/run_review.sh --contract-check`.
 - **`FUSION_FAST` must stay 0** (the script pins it): fast mode switches codex to
   `workspace-write` + `--ignore-user-config`, killing MCP connectors and run-dir writes.
 - **Absolute paths only** in the reviewer payload — the reviewer's cwd is a throwaway scratch dir;
@@ -342,7 +378,13 @@ into chat.
 | `REVIEWER_WORKER_EFFORT` | `high` | `model_reasoning_effort` for each reviewer research lane/subagent |
 | `REVIEWER_TIMEOUT_S` | `3600` | hard wall for one review attempt |
 | `QC_MIN_BYTES` | `3000` | minimum review size to pass QC |
-| `PREFLIGHT` | `0` | `1` = script pings codex before launching the review |
+| `QC_EXPECT_TICKER` | unset | if set, the review must name this ticker/company ≥ `QC_MIN_TICKER_HITS` times — catches empty stubs and wrong-company reviews the size+token gate would otherwise pass |
+| `QC_MIN_TICKER_HITS` | `2` | minimum `QC_EXPECT_TICKER` occurrences required |
+| `QC_MIN_TABLE_ROWS` | `3` | minimum claim-verification table rows (judge mode) — an announced but empty §4 did no verification work |
+| `PREFLIGHT` | judge `1`, lane `0` | `1` = probe codex before launching; on by default for the single judge (fail fast before the 20–60 min wall), off for the 4 parallel lanes (no 4× redundant ping); `PREFLIGHT=0` force-skips |
+| `GAUNTLET_CODEX_RUNNER` | hybrid-model-fusion `run_codex.sh` | the external hardened launcher; its env contract is verified at startup, and a drifted/absent launcher falls back to the Gauntlet-owned raw-codex path |
+| `GAUNTLET_STRICT_CONTRACT` | `0` | `1` = abort instead of falling back when the external launcher fails its contract check |
+| `GAUNTLET_ROUTING_CONF` | `config/routing.env` | the model-routing single source of truth the scripts read |
 | `PANEL` | `1` (intended) | orchestration flag: `0` = skip the 4 research lanes, run the single GPT-5.6 Sol xhigh judge only |
 | `QC_MODE` | `judge` | `judge` = full scored-review gate; `lane` = size-only gate for a research lane |
 | `PROMPT_FILE` / `REVIEW_FILE` / `CAPTURE_FILE` | round-derived | per-lane path overrides so `run_review.sh` runs each lane and the judge |
@@ -366,15 +408,37 @@ references it):
 - `eval/scenarios/planted-fraud-money-figures/GROUND-TRUTH.md` — the assessor answer sheet
   (planted text → pattern → correct value → expected response; pass ≥ 5/6, fail ≤ 3/6).
   Never include it in anything shown to the model under test.
-- `bash eval/check.sh` — the cheap deterministic gate (no LLM, no network): fixture ⇄
-  answer sheet ⇄ reviewer-template screen all in sync, banners present, no stray
-  placeholder braces. Run it after any edit to the fraud screen, the fixture, or the
-  answer sheet.
+- `eval/scenarios/planted-fraud-money-figures/detection.json` — the answer sheet in
+  machine-readable form (anchor + mechanism rules per fraud, accusation rules per control),
+  so a returned review is **scored by a script, not by eye**.
 
-The optional live smoke run (manual, quota-heavy) feeds the fixture through a real Stage-2
-`PANEL=0` review and scores the result against the answer sheet — procedure in
-`eval/README.md`. Smoke-grade by design: it validates that the screen exists and its
-patterns are catchable; it does not benchmark the reviewer.
+### Running the checks
+
+`make check` (or `bash eval/check.sh` if `make` is not installed) is the whole deterministic
+gate — no LLM, no network, no codex, no quota — and it is wired to fire automatically:
+`make hooks` installs a pre-commit hook, and `.github/workflows/ci.yml` runs it on every push.
+It covers:
+
+| Tier | What it proves |
+|---|---|
+| structural | fixture ⇄ answer sheet ⇄ `detection.json` ⇄ reviewer-template fraud screen in sync; banners present; no stray placeholder braces |
+| routing | every model/effort claim in SKILL/master-prompt/template matches `config/routing.env`; the template is tokenized (not hardcoded) and renders to the configured route; the executable `--show-routing` route matches; `scripts/routing_lint.sh` finds no stale model name anywhere else |
+| `eval/qc_selftest.sh` | the Stage-2 QC gate: numeric `NN/100` + range, ticker echo, claim-table rows, pointer-stub screen, size floor — and no false reject of a genuine long review |
+| `eval/preflight_selftest.sh` | the codex preflight maps healthy / quota-limited / dead to exit 0 / 4 / 1, and the judge launch inherits it |
+| `eval/launcher_smoke.sh` | the external and Gauntlet-owned launchers produce the same run-dir artifacts; a drifted launcher is rejected, not silently used |
+| `eval/score_selftest.sh` | the review scorer credits a full-catch review, FAILS a regressed one, reports precision misses, and requires figure/mechanism proximity |
+
+### The live scored run (quota-heavy, opt-in)
+
+`make eval-live` (or `bash eval/live_review.sh`) feeds the fixture through a **real** Stage-2
+`PANEL=0` review and scores it automatically against the answer sheet — assembly, launch, QC and
+scoring are all scripted, so the result is an exit code and a `catches N/6`, not an impression.
+`BLIND=1` strips the fixture's banner; `FAIL_ON_CONTROL_FP=1` also fails on a flagged control.
+Run it when the reviewer prompt, the fraud screen, or the reviewer model changes.
+
+Still smoke-grade by design: **one fixture**, synthetic figures. It answers "does the reviewer
+catch planted money-figure frauds at all?" — it does not benchmark reviewer quality. Extend it by
+adding a scenario directory with its own `GROUND-TRUTH.md` + `detection.json`.
 
 ## Dependencies
 
