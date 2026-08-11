@@ -131,7 +131,7 @@ When the topic involves stocks, public companies, approvals, clinical catalysts,
    - **Discovery lane:** broad landscape mapping, competitor search, narrative context
    - **Structured-data lane:** quotes, price history, filings, calendars, transcripts, and other machine-readable market data; prefer `FMP` when available for this lane
    - **Primary-source lane:** company IR, SEC, FDA, ClinicalTrials.gov, conference materials, and official transcripts
-   - **Social-sentiment lane (Tier 4):** X/FinTwit via Grok grok-4.3 + x_search (`~/.claude/skills/fintwit/scripts/fintwit_engine.py --ticker <TICKER>`); hypothesis-only context saved as `fintwit_context.md`; never anchors a claim and never overrides the structured-data or primary-source lanes
+   - **Social-sentiment lane (Tier 4):** X/FinTwit via Grok `grok-4.5` with reasoning effort `high` + x_search (`~/.claude/skills/fintwit/scripts/fintwit_engine.py --ticker <TICKER>`); hypothesis-only context saved as `fintwit_context.md`; never anchors a claim and never overrides the structured-data or primary-source lanes
 2. Treat discovery as hypothesis generation, not proof.
 3. Identify the exact claims that require primary-source confirmation:
    - approval vs. filing vs. designation

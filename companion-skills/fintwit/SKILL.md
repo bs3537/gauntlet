@@ -1,14 +1,15 @@
 ---
 name: fintwit
 description: >-
-  Pull live X / FinTwit social sentiment for a stock ticker using xAI Grok (grok-4.3) with the
+  Pull live X / FinTwit social sentiment for a stock ticker using xAI Grok (grok-4.5, reasoning
+  effort high) with the
   x_search tool. Trigger on "/fintwit", "FinTwit", "X sentiment", "Twitter sentiment", "what is X
-  saying about <ticker>", or as the mandatory social-sentiment step for ANY stock/ticker research
+  saying about TICKER", or as the mandatory social-sentiment step for ANY stock/ticker research
   query (simple or deep). Returns a labeled Markdown report (Sentiment verdict + 0-100 score, bull
   themes, bear themes, top posts, catalysts, caveats) plus an optional JSON sidecar. Output is SOCIAL
   SENTIMENT — Tier 4: never anchor material claims to it and never let it override structured data or
-  primary sources. Cost ~$0.05-0.15 per ticker (grok-4.3 $1.25/$2.50 per M tokens + x_search $5/1000
-  calls). Not for general web research (use Perplexity) or for fundamentals (use FMP / valuation).
+  primary sources. Pricing: grok-4.5 $2/$6 per 1M input/output tokens + x_search $5/1000 calls.
+  Not for general web research (use Perplexity) or for fundamentals (use FMP / valuation).
 ---
 
 # FinTwit / X Sentiment (xAI Grok + x_search)
@@ -42,8 +43,10 @@ bash ~/.claude/skills/fintwit/scripts/fintwit.sh "$RUN_DIR" NVDA   # writes $RUN
 ```
 
 Key flags: `--days N` (lookback, default 7), `--handles <file>` (restrict to curated accounts —
-see `references/handles.txt`), `--no-cache` (force fresh; same-day results are cached per ticker),
-`--dry-run` (print the request body without calling), `--model` (default `grok-4.3`).
+see `references/handles.txt`), `--no-cache` (force fresh; same-day results are cached per
+ticker/model/effort),
+`--dry-run` (print the request body without calling), `--model` (default `grok-4.5`), and `--effort`
+(default `high`).
 
 ## Output
 

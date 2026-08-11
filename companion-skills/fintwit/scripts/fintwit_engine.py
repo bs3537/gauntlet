@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FinTwit engine — pull live X / FinTwit sentiment on a stock ticker via xAI Grok + x_search.
 
-Calls the xAI Responses API (POST https://api.x.ai/v1/responses) with model grok-4.3 and the
+Calls the xAI Responses API (POST https://api.x.ai/v1/responses) with model grok-4.5 and the
 server-side `x_search` tool. Grok searches X in real time and returns a synthesized answer plus a
 flat `citations[]` array of x.com post URLs (the API does NOT return structured post objects, so we
 instruct Grok to format per-post lines and a trailing ```json fence we parse best-effort).
@@ -36,11 +36,18 @@ _TREE_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SECRET_FILE = _TREE_ROOT / "secrets" / "xai.env"
 CACHE_DIR = Path(__file__).resolve().parents[1] / ".cache"
 DEFAULT_WINDOWS_CURL = os.environ.get("XAI_WINDOWS_CURL", "/mnt/c/Windows/System32/curl.exe")
-DEFAULT_MODEL = os.environ.get("XAI_MODEL", "grok-4.3")
+DEFAULT_MODEL = os.environ.get("XAI_MODEL", "grok-4.5")
 DEFAULT_DAYS = 7
 DEFAULT_TIMEOUT = float(os.environ.get("XAI_HTTP_TIMEOUT", "120"))
 MAX_HANDLES = 20
 RETRYABLE = ("429", "500", "502", "503", "504", "timed out", "timeout", "Connection")
+
+
+def build_cache_key(ticker: str, days: int, to_date: str, model: str, effort: str) -> str:
+    """Keep cached sentiment isolated by the model and reasoning contract that produced it."""
+    model_key = re.sub(r"[^A-Za-z0-9_.-]+", "_", model)
+    effort_key = re.sub(r"[^A-Za-z0-9_.-]+", "_", effort or "default")
+    return f"{ticker}_{days}d_{to_date}_{model_key}_{effort_key}"
 
 
 # ── secrets / egress (mirrors perplexity-mcp.py) ──────────────────────────────
@@ -327,7 +334,10 @@ def main() -> int:
     out_dir = Path(args.out).expanduser() if args.out else None
 
     # ── same-day cache (ticker mode only) ──
-    cache_key = f"{ticker}_{days}d_{to_date}" if args.ticker and not handles and not exclude else None
+    cache_key = (
+        build_cache_key(ticker, days, to_date, args.model, args.effort)
+        if args.ticker and not handles and not exclude else None
+    )
     if cache_key and not args.no_cache:
         cached_md = CACHE_DIR / f"{cache_key}.md"
         if cached_md.exists() and cached_md.stat().st_size > 0:
