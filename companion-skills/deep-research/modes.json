@@ -9,7 +9,7 @@
     "judge_packets": "Round-robin verifier shards the judge selection is split across, each validated for exact claim-ID coverage (P0-A).",
     "research_subagents": "Concurrent research subagents. ultradeep is pinned at exactly 4 by CLAUDE.md.",
     "source_floor": "Minimum unique retained sources. Must equal MODE_SOURCE_TARGETS in audit_manifest.py.",
-    "worker_model_hint": "Per-tree value. The Claude tree pins Sonnet 5; the Codex tree pins gpt-5.6-sol. Authoritative routing stays in citation_manager.py ROLE_EXECUTION_BUDGETS.",
+    "worker_model_hint": "Per-tree value. The Claude tree pins Sonnet 5 at medium for evidence collection. Authoritative routing stays in citation_manager.py ROLE_EXECUTION_BUDGETS.",
     "worker_reasoning_effort": "Per-tree value; see worker_model_hint."
   },
   "modes": {
@@ -33,7 +33,7 @@
       "research_subagents": 1,
       "source_floor": 25,
       "worker_model_hint": "claude-sonnet-5",
-      "worker_reasoning_effort": "xhigh"
+      "worker_reasoning_effort": "medium"
     },
     "deep": {
       "research_lanes": 2,
@@ -44,7 +44,7 @@
       "research_subagents": 2,
       "source_floor": 50,
       "worker_model_hint": "claude-sonnet-5",
-      "worker_reasoning_effort": "xhigh"
+      "worker_reasoning_effort": "medium"
     },
     "ultradeep": {
       "research_lanes": 4,
@@ -55,7 +55,7 @@
       "research_subagents": 4,
       "source_floor": 100,
       "worker_model_hint": "claude-sonnet-5",
-      "worker_reasoning_effort": "xhigh"
+      "worker_reasoning_effort": "medium"
     }
   }
 }

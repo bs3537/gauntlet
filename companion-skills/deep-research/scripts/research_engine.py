@@ -42,9 +42,11 @@ def search_as_code_path() -> str:
 def default_cross_model_reviewer() -> str:
     surface = surface_home().name
     if surface == '.claude':
-        return 'codex'
-    if surface in {'.codex', '.gemini'}:
         return 'claude'
+    if surface == '.codex':
+        return 'codex'
+    if surface == '.gemini':
+        return 'agy'
     return 'codex'
 
 
@@ -85,7 +87,7 @@ PHASE_METADATA: dict[ResearchPhase, dict[str, str]] = {
     ResearchPhase.CRITIQUE: {'number': '6', 'name': 'CRITIQUE'},
     ResearchPhase.REFINE: {'number': '7', 'name': 'REFINE'},
     ResearchPhase.AUDIT: {'number': '7.5', 'name': 'AUDIT'},
-    ResearchPhase.CROSS_MODEL_CRITIQUE: {'number': '7.6', 'name': 'OPTIONAL CROSS-MODEL CRITIQUE'},
+    ResearchPhase.CROSS_MODEL_CRITIQUE: {'number': '7.6', 'name': 'FRESH SAME-MODEL ADVERSARIAL REVIEW'},
     ResearchPhase.PACKAGE: {'number': '8', 'name': 'PACKAGE'},
 }
 
@@ -403,11 +405,12 @@ Required commands:
             ResearchPhase.CROSS_MODEL_CRITIQUE: f"""
 # {phase_label(phase)}
 
-Optional advisory review. Use it to find blind spots and delta-retrieval targets; it is not a hard delivery
-gate by itself.
+Fresh top-level same-model adversarial review. It is required for high-stakes or investment-sensitive work
+and advisory otherwise. Resolve the exact selected model and same-or-higher effort from the live session;
+never delegate this phase to a subagent.
 
 Example command:
-- `python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --reviewer {default_cross_model_reviewer()} --timeout 600`
+- `python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --reviewer {default_cross_model_reviewer()} --model [exact-live-selected-model] --effort [same-or-higher-effort] --timeout 600`
 """,
             ResearchPhase.PACKAGE: f"""
 # {phase_label(phase)}

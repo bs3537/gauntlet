@@ -76,7 +76,7 @@ python scripts/run_trace.py coverage --dir [run_folder]
 **P2-1 editable-plan checkpoint:** In interactive runs, initialize the run with `--interactive`, pause on `plan.json`, let the user edit lanes/query families/source targets/stop conditions directly, then approve the edited plan before retrieval:
 
 ```bash
-python scripts/citation_manager.py init-run --out-dir [run_folder] --query "[question]" --mode [mode] --interactive
+python scripts/citation_manager.py init-run --out-dir [run_folder] --query "[question]" --mode [mode] --main-model [exact-live-selected-model] --main-effort [exact-live-selected-effort] --interactive
 # review/edit [run_folder]/plan.json
 python scripts/run_trace.py approve-plan --dir [run_folder] --approved-by user --note "Plan reviewed."
 ```
@@ -215,7 +215,7 @@ Read `plan_quality.json`, `coverage_diagnostics.json`, `coverage_summary.md`, an
 
 **Step 2: Spawn parallel deep-dive subagents — mode-scaled fan-out**
 
-Use subagents (the Agent tool) whenever the active runtime permits subagent spawning. This skill and the active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work, so do not require the user to restate subagent authorization in each research task. Pin subagents to Sonnet 5 at xhigh by default and pass `model: "claude-sonnet-5"` and `effort: "xhigh"` on Agent calls when overrides are supported. If subagents are unavailable, keep the same role distribution as a main-thread coverage checklist and use parallel retrieval tools where possible.
+Use subagents (the Agent tool) whenever the active runtime permits subagent spawning. This skill and the active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work, so do not require the user to restate subagent authorization in each research task. Pin subagents to Sonnet 5 at medium by default and pass `model: "claude-sonnet-5"` and `effort: "medium"` on Agent calls when overrides are supported. If subagents are unavailable, keep the same role distribution as a main-thread coverage checklist and use parallel retrieval tools where possible.
 
 Subagent count and wave structure scale by mode. The numeric constants below are a **view of `modes.json`** at the skill root, which is the single mechanical source of truth; `init-run` reads it and stamps the active tuple onto `run_manifest.mode_budget`, and `tests/test_modes_config.py` fails if this table's underlying constants drift from it.
 
@@ -226,9 +226,9 @@ Subagent count and wave structure scale by mode. The numeric constants below are
 | Deep | 2 | single wave, all parallel | 10-15 | 50-100 |
 | UltraDeep | 4 | single concurrent wave by default; fallback waves only if runtime limits prevent 4 at once | 12-18 | 100-300+ |
 
-**P2-4 effort/TTC budgeting per role:** Each planned lane in `plan.json` carries an `execution_budget` with `model_hint`, `reasoning_effort`, `timeout_seconds`, and `max_tool_calls`. Use these values when preparing Agent/subagent calls whenever the runtime supports model or effort overrides. Every Claude research worker and audit worker defaults to Sonnet 5 (`claude-sonnet-5`) at `xhigh`; role-specific timeout and tool-call budgets preserve breadth versus hostile-review depth. If the runtime cannot set effort/model parameters, keep the role assignment and disclose the fallback in the methodology appendix.
+**P2-4 effort/TTC budgeting per role:** Each planned lane in `plan.json` carries an `execution_budget` with `model_hint`, `reasoning_effort`, `timeout_seconds`, and `max_tool_calls`. Use these values when preparing Agent/subagent calls whenever the runtime supports model or effort overrides. Every Claude research worker and audit worker defaults to Sonnet 5 (`claude-sonnet-5`) at `medium`; role-specific timeout and tool-call budgets preserve breadth versus hostile-review depth. If the runtime cannot set effort/model parameters, keep the role assignment and disclose the fallback in the methodology appendix.
 
-**UltraDeep concurrency default:** For `ultradeep`, spawn up to 4 research subagents concurrently by default, even if the user's prompt did not mention subagents. Pass `model: "claude-sonnet-5"` and `effort: "xhigh"` on every Agent call where supported. If runtime, quota, authentication, or tool limits prevent 4 concurrent workers, spawn the maximum available and continue in waves until 4 total research workers have run. Disclose any fallback in the Methodology section. Use later delta-retrieval workers only for critical audit gaps, not as a substitute for the 4-worker default.
+**UltraDeep concurrency default:** For `ultradeep`, spawn up to 4 research subagents concurrently by default, even if the user's prompt did not mention subagents. Pass `model: "claude-sonnet-5"` and `effort: "medium"` on every Agent call where supported. If runtime, quota, authentication, or tool limits prevent 4 concurrent workers, spawn the maximum available and continue in waves until 4 total research workers have run. Disclose any fallback in the Methodology section. Use later delta-retrieval workers only for critical audit gaps, not as a substitute for the 4-worker default.
 
 **Subagent role distribution (lead assigns from this menu; not all roles are needed every run):**
 - Discovery — native web search first for broad landscape mapping, recency, and primary-document targets
@@ -381,7 +381,7 @@ If a core biomedical claim appears only in discovery or structured biomedical so
 - **Deep mode:** 50+ retained sources, each planned lane has primary or high-quality secondary evidence where the source class exists, and unresolved gaps are marked in `coverage_map.json`
 - **UltraDeep mode:** 100+ retained sources after the 4-worker default run, each planned lane is `covered`, `bounded`, or `gap_disclosed`, and low-confidence sources are not load-bearing for material claims
 
-The UltraDeep floor of 100+ sources reflects what the orchestrator-worker pattern can produce with 4 Sonnet 5 xhigh subagents, 12-18 tool calls each, and 2-3 retained sources per call. Higher source counts, including 200-300+, can be useful on long-running runs, but after roughly 150 unique primary-tier sources additional fan-out usually buys redundancy and dedup overhead more than new evidence.
+The UltraDeep floor of 100+ sources reflects what the orchestrator-worker pattern can produce with 4 Sonnet 5 medium subagents, 12-18 tool calls each, and 2-3 retained sources per call. Higher source counts, including 200-300+, can be useful on long-running runs, but after roughly 150 unique primary-tier sources additional fan-out usually buys redundancy and dedup overhead more than new evidence.
 
 **Countable retrieval budgets:** Use tool-call and source budgets the model can count, not hidden wall-clock gates:
 - **Quick:** main-thread retrieval, about 4-6 material provider/tool calls
@@ -609,7 +609,7 @@ Before confirming a conclusion in biomedical, translational, or clinical researc
 - What counterfactuals should be considered?
 
 **Persona-Based Critique (Deep/UltraDeep only):**
-Simulate 2-3 specific critic personas relevant to the topic:
+The selected main model—not a research Agent/subagent—simulates 2-3 specific critic personas relevant to the topic as an internal falsification pass. This does not satisfy Phase 7.6's independent fresh-instance gate:
 - "Skeptical Practitioner" — Would someone doing this daily trust these findings?
 - "Adversarial Reviewer" — What would a peer reviewer reject?
 - "Implementation Engineer" — Can these recommendations actually be executed?
@@ -649,9 +649,9 @@ If critique identifies a critical knowledge gap (not just a writing issue), retu
 
 **Step 1: Run two audit tracks in parallel**
 
-When subagents are permitted by the active runtime, spawn two read-only Sonnet 5 xhigh subagents (the Agent tool) in parallel and pass `model: "claude-sonnet-5"` and `effort: "xhigh"` where supported. If subagents are unavailable, run the same two audit tracks in the main thread before Phase 8. Both tracks receive absolute paths to the current draft markdown, `sources.jsonl`, `evidence.jsonl`, `claims.jsonl`, and the Phase 2 `plan.json`. They must not modify any file; they read and report only.
+When subagents are permitted by the active runtime, spawn two read-only Sonnet 5 medium subagents (the Agent tool) in parallel and pass `model: "claude-sonnet-5"` and `effort: "medium"` where supported. They may report missing locators, absent evidence rows, unresolved source conflicts, and coverage gaps only; for investment work they may not assess quantitative correctness or adjudicate conclusions. The selected main session model remains the verifier and judge over their mechanical findings. If subagents are unavailable, run the same evidence checks in the main thread before Phase 8. Both tracks receive absolute paths to the current draft markdown, `sources.jsonl`, `evidence.jsonl`, `claims.jsonl`, and the Phase 2 `plan.json`. They must not modify any file; they read and report only.
 
-Use xhigh effort for CitationAuditor and GapAuditor when supported. These are adversarial verification roles, not broad discovery lanes; quality is more important than speed for this pass.
+Use medium effort for CitationAuditor and GapAuditor when supported. These are evidence-completeness roles, not analytical or quantitative verification roles.
 
 **Audit Track A — CitationAuditor:**
 - For every `[N]` citation marker in the draft body, confirm `[N]` resolves to a row in `sources.jsonl`, that row has a corresponding `evidence.jsonl` entry with a real `evidence_quote`, and the quote actually supports the sentence it is cited on.
@@ -692,66 +692,44 @@ After fixes:
 
 ---
 
-## Phase 7.6: OPTIONAL CROSS-MODEL CRITIQUE - External Rubric Review
+## Phase 7.6: FRESH SAME-MODEL ADVERSARIAL REVIEW
 
-**Objective:** When time and tooling permit, run a time-boxed independent model critique over the draft report and a sampled `claims.jsonl` subset before Phase 8 packaging.
+**Objective:** Run an isolated top-level instance of the exact selected generating model over the locked draft, evidence, assumptions, and calculation artifacts before Phase 8 packaging. The legacy script filename is retained for compatibility; this is not a cross-model or subagent review.
 
 **When to execute:**
-- Optional for Standard/Deep/UltraDeep when the report is high-stakes, contentious, or investment-sensitive
+- Required for high-stakes or investment-sensitive Standard/Deep/UltraDeep work; otherwise optional
 - Skip for Quick mode unless explicitly requested
-- Skip when local Codex/AGY authentication, quota, or runtime state is unavailable
+- If the exact selected model cannot be launched after two materially different attempts, mark the report Partial/unreviewed rather than substituting another model or a subagent
 - Do not let this replace CitationAuditor, GapAuditor, or the delivery gate
+- Full-mode Gauntlet is the sole explicit exception and retains its documented different-model panel/judge
 
 **Command pattern:**
 
 ```bash
 python scripts/cross_model_critique.py build-prompt --dir [run_folder] --report [draft.md]
-python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] --timeout 600
+python scripts/cross_model_critique.py run --dir [run_folder] --report [draft.md] \
+  --reviewer claude --model [exact-live-selected-model] --effort [same-or-higher-effort] --timeout 600
 ```
 
-Omit `--reviewer` unless you are intentionally overriding the surface default. The hook picks an
-opposite-model reviewer by installed WSL surface:
+The run command fails closed unless `--model` and `--effort` are explicit. Resolve them from the live
+generating session immediately before launch; settings defaults alone do not prove that `/model` or
+`/effort` was not overridden. Reviewer surface must match the installed surface:
 
 | Installed surface | Default reviewer | Default reviewer command |
 | --- | --- | --- |
-| Claude Code WSL (`~/.claude`) | `codex` | `codex exec --model gpt-5.5 -c 'model_reasoning_effort="xhigh"' --ephemeral --skip-git-repo-check -` |
-| Codex CLI WSL (`~/.codex`) | `claude` | `claude --print --model opus --effort high --no-session-persistence` |
-| AGY/Gemini WSL (`~/.gemini`) | `claude` | `claude --print --model opus --effort high --no-session-persistence` |
+| Claude Code WSL (`~/.claude`) | `claude` | `claude --print --model [selected] --effort [same-or-higher] --no-session-persistence` |
+| Codex CLI WSL (`~/.codex`) | `codex` | `codex exec --model [selected] -c 'model_reasoning_effort="[same-or-higher]"' --ephemeral --skip-git-repo-check -` |
+| AGY/Gemini WSL (`~/.gemini`) | `agy` | `agy --print --model [selected]` |
 
-For Claude Code WSL runs, use the latest GPT model through Codex CLI at the highest supported effort
-(currently `gpt-5.5` with `model_reasoning_effort="xhigh"`):
+`DEEP_RESEARCH_SELECTED_MODEL` and `DEEP_RESEARCH_SELECTED_EFFORT` may support prompt building, but
+the `run` subcommand still requires explicit flags as an audit control. Use
+The hook does not accept environment or arbitrary command overrides. It compares the requested model
+and effort against `run_manifest.json.generator_identity`, which must be recorded from the live session
+at run initialization, and rejects a lower reviewer effort.
 
-```bash
-python scripts/cross_model_critique.py run \
-  --dir [run_folder] \
-  --report [draft.md] \
-  --reviewer codex \
-  --command "codex exec --model gpt-5.5 -c 'model_reasoning_effort=\"xhigh\"' --ephemeral --skip-git-repo-check -" \
-  --timeout 600
-```
+**Artifacts:** The hook writes its prompt, model output, and summary only to `[run_folder]/audit/fresh_same_model/`. It never rewrites locked primary artifacts, including `run_manifest.json`.
 
-For Codex CLI WSL or AGY/Gemini WSL runs, use the latest Opus model through Claude Code CLI at high
-effort:
-
-```bash
-python scripts/cross_model_critique.py run \
-  --dir [run_folder] \
-  --report [draft.md] \
-  --reviewer claude \
-  --command "claude --print --model opus --effort high --no-session-persistence" \
-  --timeout 600
-```
-
-Override only the model/effort with `--model` and `--effort`, or use
-`DEEP_RESEARCH_CODEX_MODEL`, `DEEP_RESEARCH_CODEX_REASONING_EFFORT`,
-`DEEP_RESEARCH_CLAUDE_MODEL`, and `DEEP_RESEARCH_CLAUDE_EFFORT`. Use
-`DEEP_RESEARCH_CROSS_MODEL_[REVIEWER]_COMMAND` only when replacing the full shell command.
-AGY/Gemini review remains available with `--reviewer agy` when a same-family Gemini critique is
-explicitly desired, but it is not the default for Codex or AGY/Gemini surfaces.
-
-**Artifacts:** The hook writes prompts and model outputs to `[run_folder]/audit/cross_model/` and appends summary metadata to `run_manifest.json.cross_model_critiques`.
-
-**Use of findings:** Treat the critique as advisory. Critical/high findings should either be fixed, converted into delta-retrieval queries, or explicitly rejected with rationale before Phase 8. The hook is not a delivery gate by itself.
+**Use of findings:** The original main session must adjudicate every finding. For required high-stakes or investment-sensitive runs, Phase 8 is blocked until the review status is `ok` and every critical/high finding is fixed, converted into completed delta retrieval, or explicitly rejected with evidence-backed rationale. For optional runs the critique is advisory.
 
 ---
 
@@ -794,13 +772,13 @@ Rather than linear thinking, branch into multiple reasoning paths:
 
 ### Parallel Agent Deployment
 
-When the runtime permits subagents, use subagents (the Agent tool) for:
+When the runtime permits subagents, use subagents (the Agent tool) only for bounded evidence work:
 - Parallel source retrieval
-- Independent verification paths
-- Competing hypothesis evaluation
-- Specialized domain analysis
+- Independent source inspection and extraction
+- Counter-evidence collection against named hypotheses
+- Bounded domain-source scouting
 
-Pin subagents to Sonnet 5 at xhigh by default, pass `model: "claude-sonnet-5"` and `effort: "xhigh"` where supported, and include the deep-research subagent brief in every prompt.
+Pin subagents to Sonnet 5 at medium by default, pass `model: "claude-sonnet-5"` and `effort: "medium"` where supported, and include the deep-research subagent brief in every prompt.
 
 ### Adaptive Depth Control
 

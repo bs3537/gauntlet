@@ -45,7 +45,7 @@ deep research in ultradeep mode: compare PostgreSQL vs Supabase for our stack
 
 Standalone Claude deep-research keeps the active Claude session as the lead. When per-agent
 overrides are supported, every delegated research, audit, and gap worker uses Sonnet 5
-(`claude-sonnet-5`) at `xhigh`. Delegated Deep and UltraDeep lane assignments are also recorded in
+(`claude-sonnet-5`) at `medium`. Delegated Deep and UltraDeep lane assignments are also recorded in
 `plan.json.execution_budget`.
 
 UltraDeep launches four non-overlapping workers concurrently when capacity allows; otherwise it
@@ -58,21 +58,21 @@ When Gauntlet is the parent workflow, its Stage-1 contract is:
 | Gauntlet Stage-1 role | Model | Effort |
 |---|---|---|
 | First-pass orchestrator and adjudicator | Opus 5 | `xhigh` |
-| Research, audit, and residual-gap subagents | Sonnet 5 (`claude-sonnet-5`) | `xhigh` |
+| Research, audit, and residual-gap subagents | Sonnet 5 (`claude-sonnet-5`) | `medium` |
 
-Gauntlet runs skip optional Phase 7.6 cross-model critique because Gauntlet Stage 2 is the sole
-external-review path.
+Full-mode Gauntlet runs skip Phase 7.6 because Gauntlet Stage 2 retains its explicitly authorized
+different-model panel/judge.
 
 ## Pipeline
 
-Clarify/Brief &rarr; Scope &rarr; Plan &rarr; **Retrieve** (parallel search + agents) &rarr; Triangulate &rarr; Outline Refinement &rarr; Synthesize &rarr; Critique (with loop-back) &rarr; Refine &rarr; Audit &rarr; Optional Cross-Model Critique &rarr; Package
+Clarify/Brief &rarr; Scope &rarr; Plan &rarr; **Retrieve** (parallel search + agents) &rarr; Triangulate &rarr; Outline Refinement &rarr; Synthesize &rarr; Critique (with loop-back) &rarr; Refine &rarr; Audit &rarr; Fresh Same-Model Review &rarr; Package
 
 Key features:
 - **Step 0**: Retrieves current date before searches (prevents stale training-data year assumptions)
 - **Clarify-or-brief**: One batched clarification round when interactive; otherwise persists `research_brief.md` and `run_manifest.json.assumptions` before retrieval
 - **Editable plan checkpoint**: Interactive runs pause on `plan.json`, accept user edits, and require `run_trace.py approve-plan` before retrieval trace records can start
 - **Run trace, phase metrics, and coverage map**: Persists `plan.json`, `coverage_map.json`, provider/subagent execution trace, per-phase timing/token/cost metrics, and planned-vs-executed coverage checks
-- **Role effort budgets**: `plan.json` pins every Claude worker lane to Sonnet 5 (`claude-sonnet-5`) at `xhigh`; per-role timeout/tool-call hints still tune breadth versus adversarial depth
+- **Role effort budgets**: `plan.json` pins every Claude worker lane to Sonnet 5 (`claude-sonnet-5`) at `medium`; per-role timeout/tool-call hints still tune breadth versus adversarial depth
 - **DRY tool routing**: `reference/tool-routing.md` locks Native web search first, Search-as-Code second, Targeted direct Perplexity follow-ups third, and Primary documents before conclusions, then layers BioMCP/PubMed, Semantic Scholar, Scite, FMP, FinTwit, fetch/open, and alternate-provider rules
 - **Local artifact ingestion**: `file_ingest.py` registers local PDFs, text files, images, and CSV/TSV tables as sources, preserving `file_manifest.jsonl`, extraction status, hashes, table profiles, and non-fabricated follow-up flags
 - **Data-analysis lane**: Quantitative local datasets get `data_profile.jsonl`, optional reproducible artifacts under `analysis/`, and computed claims cited back to source data plus calculation method
@@ -83,7 +83,7 @@ Key features:
 - **Biotech/pharma investment controls**: Primary-source routing, Perplexity/BioMCP/scite/FMP layering, pipeline-sweep gates, source-lineage preservation, and claim-ledger fields
 - **First Finish Search**: Adaptive quality thresholds by mode
 - **Critique loop-back**: Phase 6 can return to Phase 3 with delta-queries if critical gaps found
-- **Optional cross-model critique**: Phase 7.6 can shell the draft plus claims sample to the opposite model family for a time-boxed advisory rubric review: Claude Code -> Codex GPT/xhigh; Codex or AGY/Gemini -> Claude Opus/high
+- **Fresh same-model adversarial review**: Phase 7.6 shells locked artifacts to a new top-level instance of the exact live selected model at the same or higher effort; explicit model/effort flags prevent stale defaults, and no Agent/subagent can satisfy the gate
 - **Multi-persona red teaming**: Skeptical Practitioner, Adversarial Reviewer, Implementation Engineer (Deep/UltraDeep)
 - **Disk-persisted citations**: `sources.jsonl`, `evidence.jsonl`, and `claims.jsonl` survive context compaction and continuation agents
 
@@ -101,7 +101,7 @@ Reports saved to `~/Documents/[Topic]_Research_[Date]/`:
 - HTML (McKinsey-style, host-opened via `xdg-open` or `explorer.exe`)
 - PDF (professional print via Windows Chrome headless on WSL; WeasyPrint optional when installed)
 
-Reports >18K words auto-continue via recursive agent spawning with context preservation.
+Reports >18K words continue in the top-level main session with file-backed checkpoints; spawned workers remain evidence-only.
 
 ## Quality Standards
 
@@ -155,7 +155,7 @@ deep-research/
 │   ├── validate_report.py            # 9-check structure validator
 │   ├── verify_citations.py           # DOI/URL/hallucination checker
 │   ├── delivery_gate.py              # Strict final report package gate
-│   ├── cross_model_critique.py       # Optional opposite-model draft critique hook
+│   ├── cross_model_critique.py       # Legacy filename; fresh same-model draft review hook
 │   ├── verify_claim_support_llm.py   # Semantic claim-support verifier
 │   ├── run_trace.py                  # Run trace and coverage map accounting
 │   ├── source_evaluator.py           # Optional source-tier heuristic, not a delivery gate
@@ -178,7 +178,9 @@ deep-research/
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 3.0.1 | 2026-07-17 | Documented Sonnet 5/xhigh worker routing, the four-worker UltraDeep default, and the Opus 5/xhigh Gauntlet parent contract |
+| 3.0.2 | 2026-09-05 | Replaced ordinary opposite-model critique with a fail-closed fresh top-level same-selected-model review; preserved full-mode Gauntlet as the explicit different-model exception |
+| 3.0.2 | 2026-09-05 | Changed Claude delegated workers to Sonnet 5/medium while preserving the lead and external-review routes |
+| 3.0.1 | 2026-07-17 | Documented Sonnet 5/xhigh worker routing, the four-worker UltraDeep default, and the Opus 4.8/xhigh Gauntlet parent contract |
 | 3.0.0 | 2026-07-05 | Fusion-report hardening: citation display maps, lexical/table/subagent support, delivery gate wiring, eval harness, plan checkpoint, phase metrics, role budgets, batch ledger index, phase-provider cleanup, adversarial gate tests, and consistency sweep |
 | 2.3.1 | 2026-03-19 | Template/validator harmonization, structured evidence, critique loop-back, multi-persona red teaming |
 | 2.3 | 2026-03-19 | Contract harmonization, search-cli integration, dynamic year detection, disk-persisted citations, validation loops |

@@ -19,8 +19,8 @@ A bare ticker, "deep dive", or "analyze" does **not** trigger it.
                     │  Opus 5 · high   =  ORCHESTRATOR / REVIEWER / JUDGE                │
                     │      │                                                               │
    /gauntlet TICKER │      ├── deep-research (ultradeep) → 4 concurrent lanes             │
-        │           │      │        Sonnet 5 · xhigh   (+ Search-as-Code 2nd pass)         │
-        ▼           │      ├── extra Sonnet 5 xhigh Agent subagents (gap-fill)             │
+        │           │      │        Sonnet 5 · medium  (+ Search-as-Code 2nd pass)         │
+        ▼           │      ├── extra Sonnet 5 medium Agent subagents (gap-fill)            │
    Stage 0 intake   │      └── QC + independent verify + synthesize → 08_preliminary_report│
    + codex preflight└──────────────────────────────────┬──────────────────────────────────┘
                                                         │  (draft + artifacts on disk)
@@ -43,7 +43,7 @@ perspective. Neither replaces the other.
 | Role | Model | Effort | Where |
 |---|---|---|---|
 | First-pass orchestrator + adjudicator | Opus 5 | high | this Claude Code session |
-| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | xhigh | Claude deep-research ultradeep + Agent subagents |
+| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | medium | Claude deep-research ultradeep + Agent subagents |
 | Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | high | Codex deep-research worker contract; `codex exec` launched by Stage 2 |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | xhigh | `codex exec` (launched by Stage 2) |
 
@@ -52,7 +52,7 @@ perspective. Neither replaces the other.
 - Stage 0 checks that the active Claude session is Opus 5 at `high`; any session-model or effort
   deviation is disclosed and recorded in `VERIFICATION_LOG.md`.
 - Claude deep-research pins every delegated Stage-1 research, audit, and gap worker to Sonnet 5
-  (`claude-sonnet-5`) at `xhigh` when per-agent overrides are supported.
+  (`claude-sonnet-5`) at `medium` when per-agent overrides are supported.
 - **`config/routing.env` is the single source of truth** for every model ID, display name and
   effort tier. `scripts/run_review.sh` reads it for the Stage-2 route (reviewer model, lanes
   `high`, judge `xhigh`) and disables automatic alternate-model safety fallback;
@@ -76,7 +76,7 @@ perspective. Neither replaces the other.
   research prompt (Phases 0–6: scope/archetype, proof-based foundation, competitive moat,
   catalyst probability-of-success ensembles, financials + valuation, synthesis/convexity). It
   does **not** research alone: it drives **Claude deep-research at `ultradeep`** (four Sonnet 5
-  xhigh lanes on non-overlapping evidence streams) plus targeted Sonnet 5 xhigh subagents, QCs
+  medium lanes on non-overlapping evidence streams) plus targeted Sonnet 5 medium subagents, QCs
   every lane, verifies
   load-bearing claims itself, locks an evidence ledger, and writes `08_preliminary_report.md`.
 - **Stage 2 — Adversarial review (panel).** The gauntlet session launches **four GPT-5.6 Sol
@@ -127,7 +127,7 @@ go; there is nothing else to download or install separately.
 
 | Skill | Role in Gauntlet | Needed by |
 |---|---|---|
-| **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Sonnet 5 xhigh lanes) | first pass |
+| **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Sonnet 5 medium lanes) | first pass |
 | **`search-as-code`** | deep-research's second-pass source-discovery harness | first pass |
 | **`valuation`** | Damodaran-grounded rNPV/DCF/SOTP engine (dev-stage biotech §4B) | first pass + reviewer |
 | **`fintwit`** | Stage-1 Tier-4 X/sentiment pull → the report's *FinTwit / X Sentiment* section (optional; skipped when no xAI key) | first pass |
@@ -263,14 +263,14 @@ paths do not open from Windows).
   report that carries a prominent "NOT adversarially reviewed" banner and LOW confidence. Use it when
   speed matters more than the extra rigor; the default is always full review.
 - **Reasoning effort — fixed role routing.** Gauntlet defaults the Opus 5 first-pass
-  orchestrator to `high`, all Claude-side Sonnet 5 workers/subagents to `xhigh`, the GPT-5.6 Sol
+  orchestrator to `high`, all Claude-side Sonnet 5 workers/subagents to `medium`, the GPT-5.6 Sol
   reviewer judge to `xhigh`, and all reviewer workers/subagents to `high`. The judge reads
   `REVIEWER_EFFORT` (default `xhigh`); reviewer lanes read `REVIEWER_WORKER_EFFORT` (default
   `high`). Any lower-effort override must be explicit and recorded in `VERIFICATION_LOG.md`.
 
 ## Cost & quota (read before running)
 
-A full run is **deliberately heavy** — four Sonnet 5 xhigh deep-research lanes plus a five-call
+A full run is **deliberately heavy** — four Sonnet 5 medium deep-research lanes plus a five-call
 GPT-5.6 Sol codex panel (4 high lanes + 1 xhigh judge), each 15–60 minutes. One run can consume a
 large share of a ChatGPT plan's 5-hour/weekly limits. Use it for **high-stakes names, not routine
 screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol xhigh judge when quota is tight.

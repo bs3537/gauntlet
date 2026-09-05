@@ -16,9 +16,11 @@ SCRIPT = os.path.join(ROOT, 'scripts', 'research_engine.py')
 def expected_default_reviewer() -> str:
     surface = Path(ROOT).parents[1].name
     if surface == '.claude':
-        return 'codex'
-    if surface in {'.codex', '.gemini'}:
         return 'claude'
+    if surface == '.codex':
+        return 'codex'
+    if surface == '.gemini':
+        return 'agy'
     return 'codex'
 
 
@@ -76,6 +78,8 @@ class TestResearchEnginePhaseProvider(unittest.TestCase):
             capture_output=True, text=True, check=True,
         )
         self.assertIn(f'--reviewer {expected_default_reviewer()}', result.stdout)
+        self.assertIn('--model [exact-live-selected-model]', result.stdout)
+        self.assertIn('--effort [same-or-higher-effort]', result.stdout)
 
     def test_json_manifest_declares_external_state_model(self):
         result = subprocess.run(

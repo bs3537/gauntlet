@@ -4,6 +4,7 @@
 import json
 import importlib.util
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -21,9 +22,11 @@ SCRIPT = os.path.join(ROOT, 'scripts', 'cross_model_critique.py')
 def expected_default_reviewer() -> str:
     surface = ROOT.parents[1].name
     if surface == '.claude':
-        return 'codex'
-    if surface in {'.codex', '.gemini'}:
         return 'claude'
+    if surface == '.codex':
+        return 'codex'
+    if surface == '.gemini':
+        return 'agy'
     return 'codex'
 
 
@@ -88,6 +91,11 @@ class CrossModelCritiqueTests(unittest.TestCase):
                 'report': 'report.md',
             },
             'continuation': None,
+            'generator_identity': {
+                'model': 'selected-model',
+                'reasoning_effort': 'xhigh',
+                'recorded_at': '2026-07-05T00:00:00Z',
+            },
         }), encoding='utf-8')
 
     def tearDown(self):
@@ -101,10 +109,12 @@ class CrossModelCritiqueTests(unittest.TestCase):
         self.assertIn('Claims sample', prompt)
         self.assertIn('Revenue increased 10 percent.', prompt)
         self.assertIn('final delivery recommendation', prompt)
+        self.assertIn('Locked artifact inventory', prompt)
+        self.assertTrue(out['locked_artifacts'])
 
         with open(os.path.join(self.tmpdir, 'run_manifest.json')) as f:
             manifest = json.load(f)
-        self.assertEqual(manifest['cross_model_critiques'][0]['status'], 'prompt_written')
+        self.assertNotIn('cross_model_critiques', manifest)
 
     def test_omitted_reviewer_uses_surface_default(self):
         out = run_script('build-prompt', '--dir', self.tmpdir, '--report', self.report_path)
@@ -114,23 +124,13 @@ class CrossModelCritiqueTests(unittest.TestCase):
         self.assertTrue(out['prompt_path'].endswith(f'{expected}_prompt.md'))
         with open(os.path.join(self.tmpdir, 'run_manifest.json')) as f:
             manifest = json.load(f)
-        self.assertEqual(manifest['cross_model_critiques'][-1]['reviewer'], expected)
+        self.assertNotIn('cross_model_critiques', manifest)
 
-    def test_default_commands_use_opposite_model_with_pinned_effort(self):
+    def test_default_commands_fail_closed_without_selected_model_and_effort(self):
         module = load_script_module()
 
-        codex_command = module.default_command('codex')
-        self.assertIn('codex exec --model gpt-5.5', codex_command)
-        self.assertIn('model_reasoning_effort="xhigh"', codex_command)
-        self.assertIn('--ephemeral', codex_command)
-
-        claude_command = module.default_command('claude')
-        self.assertIn('claude --print --model opus', claude_command)
-        # Opus seats default to high effort across the skills; an explicit
-        # effort= argument or DEEP_RESEARCH_CLAUDE_EFFORT still overrides it
-        # (covered by test_model_and_effort_overrides_...).
-        self.assertIn('--effort high', claude_command)
-        self.assertIn('--no-session-persistence', claude_command)
+        self.assertIsNone(module.default_command('codex'))
+        self.assertIsNone(module.default_command('claude'))
 
     def test_model_and_effort_overrides_do_not_require_full_command_replacement(self):
         module = load_script_module()
@@ -143,13 +143,21 @@ class CrossModelCritiqueTests(unittest.TestCase):
         self.assertIn('claude --print --model claude-opus-next', claude_command)
         self.assertIn('--effort max', claude_command)
 
-    def test_environment_command_override_still_takes_precedence(self):
+    def test_environment_command_override_is_ignored(self):
         module = load_script_module()
 
-        with mock.patch.dict(os.environ, {'DEEP_RESEARCH_CROSS_MODEL_CLAUDE_COMMAND': 'custom claude'}):
-            self.assertEqual(module.default_command('claude'), 'custom claude')
-        with mock.patch.dict(os.environ, {'DEEP_RESEARCH_CROSS_MODEL_CODEX_COMMAND': 'custom codex'}):
-            self.assertEqual(module.default_command('codex'), 'custom codex')
+        with mock.patch.dict(os.environ, {'DEEP_RESEARCH_SAME_MODEL_CLAUDE_COMMAND': 'custom claude'}):
+            self.assertIn('claude --print --model selected-model', module.default_command('claude', model='selected-model', effort='xhigh'))
+        with mock.patch.dict(os.environ, {'DEEP_RESEARCH_SAME_MODEL_CODEX_COMMAND': 'custom codex'}):
+            self.assertIn('codex exec --model selected-model', module.default_command('codex', model='selected-model', effort='xhigh'))
+
+    def test_run_rejects_identity_mismatch(self):
+        module = load_script_module()
+        manifest = json.loads(Path(self.tmpdir, 'run_manifest.json').read_text(encoding='utf-8'))
+        with self.assertRaises(SystemExit):
+            module.validate_generator_identity(manifest, 'wrong-model', 'xhigh')
+        with self.assertRaises(SystemExit):
+            module.validate_generator_identity(manifest, 'selected-model', 'medium')
 
     def test_default_run_records_command_without_invoking_external_cli(self):
         module = load_script_module()
@@ -165,8 +173,8 @@ class CrossModelCritiqueTests(unittest.TestCase):
             dir=self.tmpdir,
             report=self.report_path,
             reviewer=None,
-            model=None,
-            effort=None,
+            model='selected-model',
+            effort='xhigh',
             out_dir=None,
             max_claims=12,
             max_report_chars=50000,
@@ -179,12 +187,13 @@ class CrossModelCritiqueTests(unittest.TestCase):
         expected = expected_default_reviewer()
         self.assertEqual(out['status'], 'ok')
         self.assertEqual(out['reviewer'], expected)
-        self.assertEqual(captured['command'], module.default_command(expected))
+        self.assertEqual(captured['command'], module.default_command(expected, model='selected-model', effort='xhigh'))
         self.assertIn('Claims sample', captured['prompt'])
-        self.assertEqual(out['model'], module.reviewer_profile(expected)['model'])
-        self.assertEqual(out['reasoning_effort'], module.reviewer_profile(expected)['reasoning_effort'])
+        self.assertEqual(out['model'], 'selected-model')
+        self.assertEqual(out['reasoning_effort'], 'xhigh')
 
-    def test_run_executes_fixture_reviewer_command(self):
+    def test_run_rejects_non_reviewer_command(self):
+        reviewer = expected_default_reviewer()
         reviewer_script = os.path.join(self.tmpdir, 'reviewer.py')
         Path(reviewer_script).write_text(
             'import sys\n'
@@ -194,21 +203,98 @@ class CrossModelCritiqueTests(unittest.TestCase):
             encoding='utf-8',
         )
 
-        out = run_script(
-            'run',
-            '--dir', self.tmpdir,
-            '--report', self.report_path,
-            '--reviewer', 'codex',
-            '--command', f'{sys.executable} {reviewer_script}',
-            '--timeout', '30',
+        result = subprocess.run(
+            [sys.executable, SCRIPT, 'run', '--dir', self.tmpdir, '--report', self.report_path,
+             '--reviewer', reviewer, '--model', 'selected-model', '--effort', 'xhigh',
+             '--command', f'{sys.executable} {reviewer_script}', '--timeout', '30'],
+            capture_output=True, text=True,
         )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('must invoke', result.stderr)
 
-        self.assertEqual(out['status'], 'ok')
-        output = Path(out['output_path']).read_text(encoding='utf-8')
-        self.assertIn('REVIEW OK', output)
-        with open(os.path.join(self.tmpdir, 'run_manifest.json')) as f:
-            manifest = json.load(f)
-        self.assertEqual(manifest['cross_model_critiques'][-1]['returncode'], 0)
+    def test_validator_rejects_model_or_effort_as_stray_tokens(self):
+        module = load_script_module()
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(
+                'codex exec --model wrong -c model_reasoning_effort=low --ephemeral selected-model xhigh',
+                'codex', 'selected-model', 'xhigh',
+            )
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(
+                'claude --print --model wrong --effort low --no-session-persistence selected-model xhigh',
+                'claude', 'selected-model', 'xhigh',
+            )
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(
+                'codex exec --model selected-model --model wrong -c model_reasoning_effort=xhigh --ephemeral',
+                'codex', 'selected-model', 'xhigh',
+            )
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(
+                'claude --print --model selected-model --model wrong --effort xhigh --no-session-persistence',
+                'claude', 'selected-model', 'xhigh',
+            )
+
+    def test_validator_rejects_extra_arguments_missing_isolation_and_same_name_wrapper(self):
+        module = load_script_module()
+        reviewer = expected_default_reviewer()
+        valid = module.default_command(reviewer, model='selected-model', effort='xhigh')
+        self.assertEqual(shlex.split(valid)[0], str(Path.home() / '.local' / 'bin' / reviewer))
+        isolation = '--ephemeral' if reviewer == 'codex' else '--no-session-persistence'
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(f'{valid} -- --model wrong', reviewer, 'selected-model', 'xhigh')
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(valid.replace(isolation, ''), reviewer, 'selected-model', 'xhigh')
+        wrapper = Path(self.tmpdir) / reviewer
+        wrapper.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
+        wrapped = valid.replace(reviewer, str(wrapper), 1)
+        with self.assertRaises(SystemExit):
+            module.validate_reviewer_command(wrapped, reviewer, 'selected-model', 'xhigh')
+
+        shadow_dir = Path(self.tmpdir) / 'shadow'
+        shadow_dir.mkdir()
+        shadow = shadow_dir / reviewer
+        shadow.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
+        shadow.chmod(0o755)
+        with mock.patch.dict(os.environ, {'PATH': f'{shadow_dir}:{os.environ.get("PATH", "")}'}, clear=False):
+            module.validate_reviewer_command(valid, reviewer, 'selected-model', 'xhigh')
+
+    def test_run_detects_locked_artifact_mutation(self):
+        module = load_script_module()
+        reviewer = expected_default_reviewer()
+
+        def mutating_run(command, prompt, timeout):
+            Path(self.report_path).write_text('changed during review\n', encoding='utf-8')
+            return subprocess.CompletedProcess(command, 0, 'REVIEW OK\n', '')
+
+        args = SimpleNamespace(
+            dir=self.tmpdir, report=self.report_path, reviewer=reviewer,
+            model='selected-model', effort='xhigh', out_dir=None,
+            max_claims=12, max_report_chars=50000, timeout=30, command=None,
+        )
+        with mock.patch.object(module, 'run_reviewer_command', mutating_run):
+            out = module.execute(args, run_command=True)
+        self.assertEqual(out['status'], 'failed_artifact_mutation')
+
+    def test_lock_includes_external_manifest_artifact_and_rejects_output_ancestor(self):
+        module = load_script_module()
+        external = Path(self.tmpdir).parent / f'{Path(self.tmpdir).name}-external.txt'
+        external.write_text('locked external input\n', encoding='utf-8')
+        self.addCleanup(external.unlink, missing_ok=True)
+        manifest_path = Path(self.tmpdir, 'run_manifest.json')
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        manifest['artifact_paths']['external_model'] = str(external)
+        manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+        rows = module.locked_artifacts(Path(self.tmpdir), manifest, Path(self.report_path))
+        self.assertIn(str(external.resolve()), {row['path'] for row in rows})
+
+        args = SimpleNamespace(
+            dir=self.tmpdir, report=self.report_path, reviewer=expected_default_reviewer(),
+            model='selected-model', effort='xhigh', out_dir=str(Path(self.tmpdir).parent),
+            max_claims=12, max_report_chars=50000, timeout=30, command=None,
+        )
+        with self.assertRaises(SystemExit):
+            module.execute(args, run_command=False)
 
 
 if __name__ == '__main__':

@@ -340,39 +340,39 @@ MODE_LANE_DEFAULTS = {
 
 ROLE_EXECUTION_BUDGETS = {
     'main_thread': {
-        'model_hint': 'runtime_default',
+        'model_hint': 'claude-sonnet-5',
         'reasoning_effort': 'medium',
         'timeout_seconds': 600,
         'max_tool_calls': 6,
-        'notes': 'Inline retrieval lane; keep narrow and evidence-led.',
+        'notes': 'Evidence-only core retrieval worker; the selected main model owns synthesis and analysis.',
     },
     'primary_source': {
         'model_hint': 'claude-sonnet-5',
-        'reasoning_effort': 'xhigh',
+        'reasoning_effort': 'medium',
         'timeout_seconds': 900,
         'max_tool_calls': 12,
-        'notes': 'Discovery and primary-source retrieval worker.',
+        'notes': 'Evidence-only discovery and primary-source retrieval worker.',
     },
     'corroboration': {
         'model_hint': 'claude-sonnet-5',
-        'reasoning_effort': 'xhigh',
+        'reasoning_effort': 'medium',
         'timeout_seconds': 900,
         'max_tool_calls': 12,
-        'notes': 'Independent corroboration worker.',
+        'notes': 'Evidence-only independent corroboration worker.',
     },
     'adversarial': {
         'model_hint': 'claude-sonnet-5',
-        'reasoning_effort': 'xhigh',
+        'reasoning_effort': 'medium',
         'timeout_seconds': 900,
         'max_tool_calls': 10,
-        'notes': 'Sonnet 5 xhigh adversarial and contradiction-finding worker.',
+        'notes': 'Sonnet 5 medium counter-evidence collector; no adjudication or quantitative verification.',
     },
     'gap_scout': {
         'model_hint': 'claude-sonnet-5',
-        'reasoning_effort': 'xhigh',
+        'reasoning_effort': 'medium',
         'timeout_seconds': 900,
         'max_tool_calls': 10,
-        'notes': 'Sonnet 5 xhigh coverage-gap and hard-target worker.',
+        'notes': 'Sonnet 5 medium coverage-gap and hard-target collector; no synthesis.',
     },
 }
 
@@ -510,6 +510,8 @@ def initial_coverage_map(plan: dict) -> dict:
 
 def cmd_init_run(args: argparse.Namespace) -> None:
     """Create run_manifest.json and empty JSONL artifact files."""
+    if bool(args.main_model) != bool(args.main_effort):
+        raise SystemExit('--main-model and --main-effort must be supplied together')
     out_dir = os.path.abspath(args.out_dir)
     os.makedirs(out_dir, exist_ok=True)
 
@@ -540,6 +542,11 @@ def cmd_init_run(args: argparse.Namespace) -> None:
         'mode_budget': load_mode_budget(args.mode),
         'started_at': started_at,
         'finished_at': None,
+        'generator_identity': ({
+            'model': args.main_model,
+            'reasoning_effort': args.main_effort,
+            'recorded_at': started_at,
+        } if args.main_model and args.main_effort else None),
         'assumptions': [],
         'provider_config': {
             'primary': 'native-web-search',
@@ -958,6 +965,8 @@ def main() -> None:
     p_init.add_argument('--out-dir', required=True, help='Output directory for the research run')
     p_init.add_argument('--query', default='', help='Original research question')
     p_init.add_argument('--mode', default='standard', choices=['quick', 'standard', 'deep', 'ultradeep'])
+    p_init.add_argument('--main-model', help='Exact live selected top-level model, locked for later same-model review')
+    p_init.add_argument('--main-effort', choices=['low', 'medium', 'high', 'xhigh', 'max', 'ultra'], help='Exact live selected top-level effort, locked for later same-model review')
     p_init.add_argument(
         '--interactive',
         action='store_true',

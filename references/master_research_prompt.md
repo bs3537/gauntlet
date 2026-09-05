@@ -175,7 +175,7 @@ you before anything enters the report.
 
 - Drive breadth with the **Claude deep-research skill at the `ultradeep` setting** — mandatory
 for a Gauntlet run (install it first; it chains its Search-as-Code second pass). Its
-four concurrent research lanes are your four **Sonnet 5 (`claude-sonnet-5`), xhigh-effort** research
+four concurrent research lanes are your four **Sonnet 5 (`claude-sonnet-5`), medium-effort** research
 subagents. Give each lane a non-overlapping evidence stream matched to the company's
 archetype — for example (1) demand, TAM, and epidemiology or unit volumes; (2)
 competition, moat, and pipeline or product roadmap; (3) filings, financials, and
@@ -186,7 +186,7 @@ non-overlapping and independently useful.
 - Do not run deep-research Phase 7.6 optional cross-model critique during Gauntlet Stage 1.
   Gauntlet Stage 2 is the sole external reviewer path; duplicating it here consumes quota and
   violates the bounded panel topology.
-- Spawn additional **Sonnet 5 (`claude-sonnet-5`), xhigh-effort** Agent subagents for any residual
+- Spawn additional **Sonnet 5 (`claude-sonnet-5`), medium-effort** Agent subagents for any residual
 coverage gap or deep single-source dive. Every subagent gets a complete brief:
 objective and decision relevance, exact output path and format, lane boundary and
 prohibited overlap, the source-identity/date/locator/direct-excerpt standard,

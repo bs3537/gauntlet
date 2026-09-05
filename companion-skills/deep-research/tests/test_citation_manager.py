@@ -57,9 +57,9 @@ class TestInitRun(unittest.TestCase):
             self.assertFalse(plan['checkpoint']['interactive'])
             budgets = {lane['role']: lane['execution_budget'] for lane in plan['lanes']}
             self.assertEqual(budgets['primary_source']['model_hint'], 'claude-sonnet-5')
-            self.assertEqual(budgets['primary_source']['reasoning_effort'], 'xhigh')
+            self.assertEqual(budgets['primary_source']['reasoning_effort'], 'medium')
             self.assertEqual(budgets['corroboration']['model_hint'], 'claude-sonnet-5')
-            self.assertEqual(budgets['corroboration']['reasoning_effort'], 'xhigh')
+            self.assertEqual(budgets['corroboration']['reasoning_effort'], 'medium')
 
             # Empty JSONL files exist
             for name in ('sources.jsonl', 'evidence.jsonl', 'claims.jsonl', 'file_manifest.jsonl', 'data_profile.jsonl'):
@@ -143,7 +143,7 @@ class TestInitRun(unittest.TestCase):
             self.assertEqual(trace['phase_metrics'], {})
             self.assertEqual(trace['events'][0]['phase'], 'finish_run')
 
-    def test_ultradeep_plan_assigns_sonnet5_xhigh_to_every_worker_lane(self):
+    def test_ultradeep_plan_assigns_sonnet5_medium_to_every_worker_lane(self):
         with tempfile.TemporaryDirectory() as d:
             run_cm('init-run', '--out-dir', d, '--query', 'test question', '--mode', 'ultradeep')
 
@@ -152,7 +152,7 @@ class TestInitRun(unittest.TestCase):
             budgets = {lane['role']: lane['execution_budget'] for lane in plan['lanes']}
             for role in ('primary_source', 'corroboration', 'adversarial', 'gap_scout'):
                 self.assertEqual(budgets[role]['model_hint'], 'claude-sonnet-5')
-                self.assertEqual(budgets[role]['reasoning_effort'], 'xhigh')
+                self.assertEqual(budgets[role]['reasoning_effort'], 'medium')
             self.assertGreaterEqual(budgets['adversarial']['timeout_seconds'], 900)
 
 

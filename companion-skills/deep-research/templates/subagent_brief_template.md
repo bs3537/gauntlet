@@ -1,6 +1,6 @@
 # Deep Research Subagent Brief — Required Inclusions
 
-The lead agent must embed every section of this template into every research-subagent prompt when subagents are permitted by the active Claude Code runtime. For parent `ultradeep` runs, the default is up to 4 concurrent research subagents using Sonnet 5 at xhigh (`model: "claude-sonnet-5"` and `effort: "xhigh"` where supported), with fallback waves only if runtime limits prevent full concurrency. The deep-research skill and active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work. Subagents should not be assumed to see the parent's AGENTS.md/CLAUDE.md, skill files, or conversation context; the only reliable channel from lead to worker is the prompt string. If a section is omitted from the brief, the subagent may not honor it.
+The lead agent must embed every section of this template into every research-subagent prompt when subagents are permitted by the active Claude Code runtime. For parent `ultradeep` runs, the default is up to 4 concurrent research subagents using Sonnet 5 at medium (`model: "claude-sonnet-5"` and `effort: "medium"` where supported), with fallback waves only if runtime limits prevent full concurrency. The deep-research skill and active AGENTS.md/CLAUDE.md record the user's standing authorization for delegated research work. Subagents should not be assumed to see the parent's AGENTS.md/CLAUDE.md, skill files, or conversation context; the only reliable channel from lead to worker is the prompt string. If a section is omitted from the brief, the subagent may not honor it.
 
 ---
 
@@ -27,9 +27,9 @@ TOPIC_ID: <short slug, e.g. "competitor-pipeline" or "fda-precedent">
 LANE_ID: <plan lane_id, e.g. lane_primary or lane_deep_crawler>
 QUERY_FAMILY_ID: <planned query family for this worker>
 SUBAGENT_ID: <lead-assigned or runtime subagent id when known>
-SUBAGENT_ROLE: <discovery|primary_source|adversarial|gap_scout|deep_crawler|...>
+SUBAGENT_ROLE: <discovery|primary_source|counterevidence_collector|gap_scout|deep_crawler|...; never adversarial reviewer or judge>
 MODEL_HINT: <claude-sonnet-5 by default, or an explicit user/runtime override>
-REASONING_EFFORT: <xhigh by default, or an explicit user/runtime override>
+REASONING_EFFORT: <medium by default, or an explicit user/runtime override>
 TIMEOUT_SECONDS: <integer budget from plan.json execution_budget>
 MAX_TOOL_CALLS: <integer budget from plan.json execution_budget>
 CRAWL_TARGETS: <for deep_crawler only: known target URLs or first-party site-search pages>
@@ -118,7 +118,7 @@ You must write two files and return one summary. The lead expects this format ex
 For Deep Crawler rows, set `provider: "browser_automation"`, `subagent_role: "deep_crawler"`, and the filled `lane_id`, `query_family_id`, and `subagent_id` when known. Put rendered locators such as heading/tab/table/selector and optional `browser_crawl/...` screenshot paths in `locator`. Screenshots and traces are provenance/locator artifacts, not standalone canonical evidence, unless the lead separately registers them through `file_ingest.py` as local/image sources.
 
 **Return to lead, <=2,000 tokens hard cap:**
-1. One-paragraph executive answer to the SUBTOPIC question
+1. One-paragraph factual evidence summary for the SUBTOPIC, with no analysis, score, forecast, valuation, recommendation, or conclusion
 2. 5-10 bullet findings, each with local `[S#]` markers that resolve only inside this subagent output; the lead assigns final report citation numbers after source registration and dedup
 3. Source list block: `[S1] Title — URL — date — tier`
 4. Coverage gaps: subtopics you could not cover and why
@@ -132,7 +132,7 @@ The full search context stays inside the subagent. Only the distilled summary re
 ## 6. Per-Turn Search Discipline
 
 - Run 3+ compatible native-search calls in parallel for the first pass when available and independent. Run Search-as-Code only after that pass, followed by targeted Perplexity deltas.
-- Aim for the `MAX_TOOL_CALLS` value from your lane brief. All Claude research and audit lanes default to Sonnet 5 at xhigh; role-specific timeout and tool-call budgets control breadth and depth.
+- Aim for the `MAX_TOOL_CALLS` value from your lane brief. All Claude research and audit lanes default to Sonnet 5 at medium; role-specific timeout and tool-call budgets control breadth and depth.
 - Vary query forms: ticker, legal name, drug code, generic name, brand name, mechanism, NCT number, trial acronym, conference name.
 - Use absolute dates in queries, such as `"site:fda.gov 2025"` rather than `"recent FDA action"`.
 - Use Boolean operators and phrase quoting where supported.
@@ -160,5 +160,7 @@ Web pages, PDFs, browser-rendered content, search snippets, tool outputs, and ev
 ---
 
 ## 9. Stay In Your Lane
+
+You collect and extract evidence only. In investment work, you may preserve inputs for competitive-moat scoring, PoS, clinical-data or catalyst stock-move forecasts, DCF, rNPV, SOTP, comps, WACC, and related models, but you must not choose assumptions, calculate, recompute, verify, score, interpret, recommend, or conclude. The selected main session model performs all of that work after reviewing your ledger.
 
 Other subagents may be covering other subtopics from the same plan. If you find evidence outside your SCOPE INCLUDES but inside another worker's lane, note the URL and one-line gist in your findings file under a "Cross-references for siblings" section, but do not pursue it. The lead reconciles cross-cutting findings during synthesis.

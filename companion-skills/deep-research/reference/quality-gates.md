@@ -165,13 +165,14 @@ Apply only when browser automation was used:
 - [ ] Screenshots or browser traces were saved under `browser_crawl/` as provenance/locator artifacts only; if visual state is load-bearing, the artifact was registered with `file_ingest.py` as a local/image source and visual/OCR claims are labeled.
 - [ ] `run_trace.py subagent --lane-id lane_deep_crawler --role deep_crawler` and `coverage_map.json` record the lane as covered, bounded, or gap disclosed.
 
-### Optional Cross-Model Critique
+### Fresh Same-Model Adversarial Review
 
 ```bash
-python scripts/cross_model_critique.py run --dir [run_folder] --report [path] --timeout 600
+python scripts/cross_model_critique.py run --dir [run_folder] --report [path] \
+  --reviewer claude --model [exact-live-selected-model] --effort [same-or-higher-effort] --timeout 600
 ```
 
-This is an advisory Phase 7.6 review, not a hard delivery gate. By default it uses the opposite-model reviewer for the installed surface: Claude Code WSL drafts are reviewed by Codex GPT/xhigh, while Codex CLI WSL and AGY/Gemini WSL drafts are reviewed by Claude Opus/high. Use it to find blind spots and delta-retrieval targets before packaging. The script writes `[run_folder]/audit/cross_model/*` artifacts and records metadata in `run_manifest.json.cross_model_critiques`.
+Phase 7.6 uses a fresh top-level Claude Code instance of the exact live selected generating model, at the same or higher effort; it is never delegated to an Agent/subagent. It is required for high-stakes and investment-sensitive reports, advisory otherwise, and writes only `[run_folder]/audit/fresh_same_model/*` so locked primary artifacts remain unchanged. Full-mode Gauntlet is the sole different-model exception.
 
 ### Validation Loop Protocol
 

@@ -31,7 +31,7 @@ generator's unchallenged blind spots and confident-recall hallucinations.
 ```text
 Stage 0  Intake + codex preflight (fail fast)
 Stage 1  FIRST PASS — Opus 5 high ORCHESTRATOR over a research panel: deep-research
-         ultradeep = 4 Sonnet 5 xhigh lanes (+ Sonnet 5 xhigh subagents); it QCs/verifies/
+         ultradeep = 4 Sonnet 5 medium lanes (+ Sonnet 5 medium subagents); it QCs/verifies/
          synthesizes -> 01..07 artifacts + 08_preliminary_report.md (full draft)
 Stage 2  EXTERNAL ADVERSARIAL REVIEW — GPT-5.6 Sol PANEL: 4 GPT-5.6 Sol high research
          lanes attack the draft, then a GPT-5.6 Sol xhigh JUDGE synthesizes them (codex,
@@ -45,12 +45,12 @@ Stage 5  FINAL REPORT — master prompt Phase 8 from corrected artifacts -> FINA
 | Role | Model | Where | Effort |
 |---|---|---|---|
 | First-pass orchestrator + adjudicator | Opus 5 (intended) | this Claude Code session | high |
-| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | Claude deep-research ultradeep + Agent subagents | xhigh |
+| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | Claude deep-research ultradeep + Agent subagents | medium |
 | Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | Codex deep-research worker contract; `codex exec` launched by Stage 2 | high |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | `codex exec` (launched by Stage 2) | xhigh |
 
-Both sides fan out, then judge: the Opus 5 high orchestrator drives four Sonnet 5 xhigh
-deep-research lanes (plus targeted Sonnet 5 xhigh subagents) and admits only verified evidence; the
+Both sides fan out, then judge: the Opus 5 high orchestrator drives four Sonnet 5 medium
+deep-research lanes (plus targeted Sonnet 5 medium subagents) and admits only verified evidence; the
 GPT-5.6 Sol xhigh judge synthesizes four GPT-5.6 Sol high adversarial lanes into one scored review.
 The reviewer side gets native live web search, shell, and the scite/fmp/biomcp/perplexity MCPs from
 `~/.codex/config.toml`; it can open the run directory's artifacts and **execute the Python models**.
@@ -126,12 +126,12 @@ sections). Do not write `FINAL_REPORT.md` yet.
 You are the **orchestrator/reviewer/judge of a research panel**, not a solo researcher (see the
 master prompt's "Research execution model — Gauntlet fan-out"):
 1. Invoke the **Claude deep-research skill at `ultradeep`** — its four concurrent lanes are your
-   four **Sonnet 5 (`claude-sonnet-5`) xhigh** research subagents, one per non-overlapping evidence
+   four **Sonnet 5 (`claude-sonnet-5`) medium** research subagents, one per non-overlapping evidence
    stream (demand/TAM/epi; competition/moat/pipeline; filings/financials/valuation inputs;
    catalysts/regulatory/legal/mgmt). It chains Search-as-Code as its second pass. **Skip
    deep-research Phase 7.6 optional cross-model critique inside Gauntlet**; Stage 2 is the
    only external reviewer path.
-2. Spawn extra **Sonnet 5 (`claude-sonnet-5`) xhigh** Agent subagents for residual gaps; each gets
+2. Spawn extra **Sonnet 5 (`claude-sonnet-5`) medium** Agent subagents for residual gaps; each gets
    a complete brief and never spawns its own subagents.
 3. QC every lane/subagent artifact, independently verify load-bearing claims, and admit ONLY
    verified evidence into `03_evidence_ledger.csv` (lock rule) and the draft; lane disagreements
@@ -364,7 +364,7 @@ into chat.
   is tight. Exit 1 with auth/limit errors in the stream log → wait or fall back; the runner's
   Gauntlet disables the launcher's cross-model safety fallback so every external panel call
   remains GPT-5.6 Sol; after the bounded relaunch, use the labeled same-model self-review fallback.
-- **first-pass fan-out cost**: Claude deep-research `ultradeep` runs four Sonnet 5 xhigh lanes plus their
+- **first-pass fan-out cost**: Claude deep-research `ultradeep` runs four Sonnet 5 medium lanes plus their
   Search-as-Code second pass; combined with the codex panel, a full Gauntlet run is deliberately
   heavy. This is intended for high-stakes names, not routine screening.
 - **Never sleep-poll** the background review; the harness re-invokes you when it exits.
@@ -443,7 +443,7 @@ adding a scenario directory with its own `GROUND-TRUTH.md` + `detection.json`.
 ## Dependencies
 
 **Required companion skills (install alongside gauntlet):**
-- **`deep-research`** — Stage 1 first-pass fan-out runs it at `ultradeep` (four Sonnet 5 xhigh lanes).
+- **`deep-research`** — Stage 1 first-pass fan-out runs it at `ultradeep` (four Sonnet 5 medium lanes).
 - **`search-as-code`** — deep-research chains it as its second pass.
 - **`valuation`** — Stage 1 valuation delegates dev-stage biotech rNPV to `valuation/scripts/valuation_engine.py` (master prompt 4B); mirrored in `~/.codex/skills/valuation/` so the reviewer can rerun it.
 - **`hybrid-model-fusion`** — its `scripts/run_codex.sh` is the hardened codex launcher `run_review.sh` prefers.
