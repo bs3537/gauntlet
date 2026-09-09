@@ -148,6 +148,10 @@ master prompt's "Research execution model — Gauntlet fan-out"):
    terminal**: create a key at console.x.ai, then save it into `~/.claude/secrets/xai.env` as the
    `XAI_API_KEY` variable (`chmod 600`), and re-run. `SKIP_FINTWIT=1` also skips. The `fintwit` skill
    must be installed (bundled in the repo's `companion-skills/`; installs with the others via `install.sh`).
+5. **SEC filings and transcripts via `edgar-intel` (default-on when exposed; full AND fast mode).** SEC filings and transcripts: when the local `edgar-intel` MCP is exposed (`mcp__edgar-intel__*`; Claude Code, Codex, Gemini and Grok trees), use it before any WebFetch/curl of sec.gov — `prefetch(ticker)` once, then `search_filings`, `get_section`, `list_sections`, `get_cover_page_facts`, `get_xbrl_facts`, `list_8k_exhibits`/`get_exhibit_text`, `fulltext_search_edgar`; every filing quote carries accession + item + char offsets + sec.gov URL and is verified by re-slicing. Transcripts in order: `find_transcript_exhibits` (8-K Ex-99, Tier 1) → issuer IR PDF → `sa-transcript` skill (Firefox + ClaudeCodeBrowser → `ingest_document`) → `get_transcript` API fallback → `[UNKNOWN — NOT VERIFIED]`; transcript quotes are Tier 2 and every figure is cross-checked against the 8-K Ex-99.1. If the server is not exposed, fall back to opening the sec.gov document and say so.
+   The filings/financials lane and the ledger lock use these locators; the Stage 2 codex reviewer has the
+   same server (`~/.codex/config.toml [mcp_servers.edgar-intel]`) and must re-slice quoted filing text
+   with `get_section`/`get_chunk` rather than re-downloading from sec.gov.
 
 ## Stage 2 — External adversarial review (GPT-5.6 Sol panel via codex)
 
@@ -447,6 +451,7 @@ adding a scenario directory with its own `GROUND-TRUTH.md` + `detection.json`.
 - **`search-as-code`** — deep-research chains it as its second pass.
 - **`valuation`** — Stage 1 valuation delegates dev-stage biotech rNPV to `valuation/scripts/valuation_engine.py` (master prompt 4B); mirrored in `~/.codex/skills/valuation/` so the reviewer can rerun it.
 - **`hybrid-model-fusion`** — its `scripts/run_codex.sh` is the hardened codex launcher `run_review.sh` prefers.
+- **`edgar-intel`** (MCP, not a skill; `~/edgar-intel`, launcher `~/.claude/scripts/edgar-intel-mcp.sh`) — Stage 1 filings/transcript locators and the Stage 2 reviewer's re-slice checks; optional but default-on when connected.
 - **`fintwit`** — Stage 1 runs the default-on Tier-4 X/sentiment step (`scripts/fintwit.sh "$RUN_DIR" <TICKER>` → `fintwit_context.md`, feeding the report's FinTwit / X Sentiment section). Requires an xAI API key at `~/.claude/secrets/xai.env` (the `XAI_API_KEY` variable, chmod 600, from console.x.ai); absent that, the step is skipped, the user is prompted to add a key, and the section says so. `SKIP_FINTWIT=1` disables it.
 
 `codex` on PATH and authenticated (preflight checks this). Prefers the hardened

@@ -34,7 +34,7 @@ All calls must be to `https://financialmodelingprep.com/stable/...`
 | `news` | YES | Recent news headlines |
 | `search` | YES | Ticker lookup |
 | `secFilings` | YES | Links to EDGAR filings |
-| `earningsTranscript` | NO — ACCESS DENIED | Requires Ultimate/Enterprise plan. Get transcripts via Perplexity + 8-K SEC filing instead. |
+| `earningsTranscript` | NO — ACCESS DENIED | Requires Ultimate/Enterprise plan. Get transcripts via the local `edgar-intel` MCP: `find_transcript_exhibits` → IR PDF → `sa-transcript` skill → `search_filings(doc_types=["transcript"])`; cross-check with the 8-K Ex-99.1. |
 
 ---
 
@@ -129,7 +129,7 @@ If Damodaran site is unreachable, use Perplexity to find the latest published ve
 | Industry beta (unlevered) | Damodaran `betas.xls` | FMP `peers` → compute average |
 | Synthetic credit rating / cost of debt | Coverage ratio → rating table (Ch.8 [printed p.230-238 / PDF p.249-257]); or FMP bond rating if available | Perplexity for latest credit rating |
 | Consensus EPS / revenue estimates | FMP `analyst` | Perplexity (cite source) |
-| Earnings transcript (qualitative guidance) | FMP `secFilings` → 8-K text; Perplexity for summary | Manual EDGAR 8-K search |
+| Earnings transcript (qualitative guidance) | `edgar-intel` (`find_transcript_exhibits`, `sa-transcript` skill, `search_filings(doc_types=["transcript"])`) | 8-K Ex-99.1 via `get_exhibit_text` |
 | Pipeline LoA / clinical data (biotech) | BioMCP + ClinicalTrials.gov + PubMed | Scite for citation-quality clinical paper data |
 | Industry margins / multiples for comparables | FMP `ratios` for peer set + Damodaran industry datasets | Perplexity (must verify vs. primary) |
 | NOL carry-forward | EDGAR 10-K footnotes (income taxes section) | FMP statements → deferred tax assets |
@@ -141,7 +141,7 @@ If Damodaran site is unreachable, use Perplexity to find the latest published ve
 
 1. **Always start with FMP MCP** for financials and price data. It is faster and structured.
 2. **If FMP MCP fails** (server not found, timeout), switch immediately to direct REST curl with `~/.fmp_api_key`.
-3. **For earnings transcripts**: FMP MCP will return ACCESS DENIED. Use `mcp__perplexity__perplexity_search` to find the transcript or key highlights, then cross-reference with the 8-K on EDGAR.
+3. **For earnings transcripts**: FMP MCP will return ACCESS DENIED. Use the local `edgar-intel` MCP (`find_transcript_exhibits` → IR PDF → `sa-transcript` skill → `search_filings(doc_types=["transcript"])`), then cross-reference figures with the 8-K Ex-99.1 (`get_exhibit_text`).
 4. **For bottom-up beta**: pull FMP `peers`, get beta for each peer, unlever using each peer's D/E and tax rate, average the unlevered betas, then relever at target D/E. This is the method Damodaran recommends as more reliable than regression beta for any non-stable firm.
 5. **Never use book-value WACC weights.** Always use market-value weights: ke × E/(D+E) + kd(1−t) × D/(D+E). [printed p.239 / PDF p.258]
 6. **Verify primary-source numbers before entering into models.** FMP ratios can include stale or pre-restatement figures. When in doubt, pull the 10-K directly.

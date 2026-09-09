@@ -88,6 +88,8 @@ Queries may carry a `query_type` (`filings`, `financials`, `governance`, `issuer
 
 With `--extract`, the top sources (Tier 1/2 first) are fetched in bounded parallel workers and the real document text is mined for an exact passage with a locator (`page:N` for PDFs via `pdftotext`→`pypdf`, `char_span:start-end` for HTML). Fetching allows only `http`/`https`, rejects private/loopback/link-local/metadata IP ranges, and checks redirects. These become `extracted_quote` evidence rows. Fetch/parse failures (paywalls, JS pages, 403/429, unsafe URL) are logged to `exclusion_log.jsonl`, never crash the run.
 
+For sec.gov results, prefer the local `edgar-intel` MCP for the verification pass when it is exposed: `ingest_filing(accession)` then `get_section`/`search_filings` give accession + item + char offsets instead of raw-HTML passage mining; transcripts follow the `edgar-intel` transcript order (`find_transcript_exhibits` → IR PDF → `sa-transcript` → API fallback).
+
 ## Stock research template
 
 `sac_search.py template --ticker MSFT --company "Microsoft Corporation" --issuer-domain microsoft.com --exchange NASDAQ --out plan.json` emits a standard institutional deep-dive plan (feature #7) covering **filings, latest results, governance, M&A, financial quality, valuation, peers, bear case** (24 queries, each tagged with a `query_type` so domain filters apply, and `entity`/`ticker` set so ticker-collision flags work). The downstream report scaffold is in [references/stock_report_scaffold.md](./references/stock_report_scaffold.md).

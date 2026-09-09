@@ -147,6 +147,8 @@ valuation claims to Tier 4.
 
 ### Required tool routing
 
+
+- **SEC filings and transcripts — `edgar-intel` MCP when exposed (`mcp__edgar-intel__*`).** Before any WebFetch/curl of sec.gov: `prefetch(ticker)` once (or confirm via `index_status`), then `search_filings`, `get_section`, `list_sections`, `get_cover_page_facts` (XBRL dei shares + cover sentence, both located — the capital-structure rebuild starts here), `get_xbrl_facts`, `list_8k_exhibits`/`get_exhibit_text`, `fulltext_search_edgar`. Every filing quote in the ledger carries accession + item + char_start/char_end + sec.gov URL and is verified by re-slicing (`get_section`/`get_chunk`). Transcripts: `find_transcript_exhibits` (8-K Ex-99, Tier 1) → issuer IR PDF → Claude `sa-transcript` skill (Firefox + ClaudeCodeBrowser → `ingest_document`) → `get_transcript` API fallback → `[UNKNOWN — NOT VERIFIED]`; transcript quotes are Tier 2, figures cross-checked to the 8-K Ex-99.1. If the server is not exposed, open the sec.gov document directly and record that in the Verification Log.
 - Use native web search extensively for discovery, then open authoritative originals.
 - Use available connectors and first inspect their tool schemas. Never guess
 connector names, parameters, fields, or response formats.

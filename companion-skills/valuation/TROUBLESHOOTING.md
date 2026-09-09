@@ -15,7 +15,7 @@
 
 **Excel opens but cells show 0 / blank, or validator says "recalc unavailable."** No LibreOffice (`soffice`) is installed, so openpyxl can't pre-compute formula values. The formulas are correct and compute the moment the file is opened in Excel/Sheets. The `Summary` sheet always carries the static computed values, and the authoritative numbers are in `results.json`. To enable a cached-value scan, install LibreOffice and re-open/save, or trust `results.json` (the math source of truth).
 
-**FMP returns 401/403.** You used a retired `/api/v3/` or `/api/v4/` endpoint — use `/stable/` only. If the claude.ai FMP MCP says "Server not found," fall back to `~/.fmp_api_key` + curl `https://financialmodelingprep.com/stable/...`. `earningsTranscript` is plan-gated (ACCESS DENIED) — get transcripts via Perplexity + the 8-K.
+**FMP returns 401/403.** You used a retired `/api/v3/` or `/api/v4/` endpoint — use `/stable/` only. If the claude.ai FMP MCP says "Server not found," fall back to `~/.fmp_api_key` + curl `https://financialmodelingprep.com/stable/...`. `earningsTranscript` is plan-gated (ACCESS DENIED) — get transcripts via the local `edgar-intel` MCP (`find_transcript_exhibits` → `sa-transcript` skill → `search_filings(doc_types=["transcript"])`) and cross-check with the 8-K Ex-99.1.
 
 **WACC looks wrong / outside 5–20%.** Check market-value (not book) weights, and that beta is bottom-up (unlever peers → relever to firm D/E) for private/pre-revenue/recent-IPO names [cost_of_capital.md]. For a legitimately high emerging-market discount rate, set `wacc.crp` (country-risk premium) so the band widens to 5%–(20%+crp) instead of warning; override the tax band with `wacc.tax_band` for non-US jurisdictions.
 
