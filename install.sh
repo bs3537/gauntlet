@@ -7,8 +7,8 @@
 # Claude Code skills tree in a single step — no separate downloads.
 #
 # It also mirrors the valuation engine (and a gauntlet parity copy) into the
-# codex skills tree, which the Stage-2 GPT-5.6 Sol reviewer needs to
-# independently rerun the rNPV/DCF model.
+# codex skills tree for shared reference compatibility; Stage-2 reviewers do not run or
+# independently recompute the rNPV/DCF model.
 #
 # Usage:
 #   ./install.sh
@@ -42,11 +42,8 @@ install_dir() {
 install_gauntlet() {
   local dst="$1"
   mkdir -p "$dst"
-  # config/ is REQUIRED, not optional: scripts/run_review.sh and scripts/render_prompt.sh
-  # read config/routing.env for the model IDs and effort tiers. Installing scripts without
-  # it silently falls back to the literal defaults baked into the scripts.
   cp -R "$REPO_DIR/SKILL.md" "$REPO_DIR/README.md" \
-        "$REPO_DIR/scripts" "$REPO_DIR/references" "$REPO_DIR/config" "$dst/"
+        "$REPO_DIR/scripts" "$REPO_DIR/references" "$dst/"
   [ -d "$REPO_DIR/docs" ] && cp -R "$REPO_DIR/docs" "$dst/"
 }
 
@@ -65,10 +62,10 @@ for s in "${COMPANIONS[@]}"; do
   install_dir "$REPO_DIR/companion-skills/$s" "$CLAUDE_SKILLS/$s"
 done
 
-# 2. Codex tree — reviewer needs valuation to rerun the engine; gauntlet parity copy.
+# 2. Codex tree — shared valuation reference compatibility; gauntlet parity copy.
 if [ -d "$HOME/.codex" ] || [ -n "${FORCE_CODEX_MIRROR:-}" ]; then
   echo "==> Mirroring reviewer-side skills into codex tree: $CODEX_SKILLS"
-  echo "    - valuation (so the GPT-5.6 Sol reviewer can rerun the rNPV engine)"
+  echo "    - valuation (shared reference compatibility; reviewers do not rerun models)"
   install_dir "$REPO_DIR/companion-skills/valuation" "$CODEX_SKILLS/valuation"
   echo "    - gauntlet (parity/reference copy — do not invoke from codex)"
   install_gauntlet "$CODEX_SKILLS/gauntlet"
