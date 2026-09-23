@@ -19,15 +19,15 @@ A bare ticker, "deep dive", or "analyze" does **not** trigger it.
                     │  Opus 5 · high   =  ORCHESTRATOR / REVIEWER / JUDGE                │
                     │      │                                                               │
    /gauntlet TICKER │      ├── deep-research (ultradeep) → 4 concurrent lanes             │
-        │           │      │        Sonnet 5 · medium  (+ Search-as-Code 2nd pass)         │
-        ▼           │      ├── extra Sonnet 5 medium Agent subagents (gap-fill)            │
+        │           │      │        Sonnet 5 · high  (+ Search-as-Code 2nd pass)           │
+        ▼           │      ├── extra Sonnet 5 high Agent subagents (gap-fill)              │
    Stage 0 intake   │      └── QC + independent verify + synthesize → 08_preliminary_report│
    + codex preflight└──────────────────────────────────┬──────────────────────────────────┘
                                                         │  (draft + artifacts on disk)
                     ┌───────────────────────── STAGE 2: ADVERSARIAL REVIEW ───────────────┐
                     │  GPT-5.6 Sol · xhigh  =  ORCHESTRATOR / JUDGE (via codex CLI)        │
                     │      ├── lane 1  D1 factual + rerun 04/05 models   ┐                 │
-                    │      ├── lane 2  D2 blind spots + missed signal    │ GPT-5.6 Sol     │
+                    │      ├── lane 2  D2 blind spots + missed signal    │ GPT-6 Luna      │
                     │      ├── lane 3  D3–D4 counter-thesis + logic      │ high ×4         │
                     │      ├── lane 4  D5–D6 sources + calibration       ┘                 │
                     │      └── JUDGE verifies + reconciles → 10_adversarial_review (/100)   │
@@ -43,8 +43,8 @@ perspective. Neither replaces the other.
 | Role | Model | Effort | Where |
 |---|---|---|---|
 | First-pass orchestrator + adjudicator | Opus 5 | high | this Claude Code session |
-| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | medium | Claude deep-research ultradeep + Agent subagents |
-| Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | high | Codex deep-research worker contract; `codex exec` launched by Stage 2 |
+| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | high | Claude deep-research ultradeep + Agent subagents |
+| Reviewer research lanes / subagents (×4) | GPT-6 Luna (`gpt-6-luna`) | high | Codex deep-research worker contract; `codex exec` launched by Stage 2 |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | xhigh | `codex exec` (launched by Stage 2) |
 
 ### How the routing is enforced
@@ -52,7 +52,7 @@ perspective. Neither replaces the other.
 - Stage 0 checks that the active Claude session is Opus 5 at `high`; any session-model or effort
   deviation is disclosed and recorded in `VERIFICATION_LOG.md`.
 - Claude deep-research pins every delegated Stage-1 research, audit, and gap worker to Sonnet 5
-  (`claude-sonnet-5`) at `medium` when per-agent overrides are supported.
+  (`claude-sonnet-5`) at `high` when per-agent overrides are supported.
 - **`config/routing.env` is the single source of truth** for every model ID, display name and
   effort tier. `scripts/run_review.sh` reads it for the Stage-2 route (reviewer model, lanes
   `high`, judge `xhigh`) and disables automatic alternate-model safety fallback;
@@ -76,10 +76,10 @@ perspective. Neither replaces the other.
   research prompt (Phases 0–6: scope/archetype, proof-based foundation, competitive moat,
   catalyst probability-of-success ensembles, financials + valuation, synthesis/convexity). It
   does **not** research alone: it drives **Claude deep-research at `ultradeep`** (four Sonnet 5
-  medium lanes on non-overlapping evidence streams) plus targeted Sonnet 5 medium subagents, QCs
+  high lanes on non-overlapping evidence streams) plus targeted Sonnet 5 high subagents, QCs
   every lane, verifies
   load-bearing claims itself, locks an evidence ledger, and writes `08_preliminary_report.md`.
-- **Stage 2 — Adversarial review (panel).** The gauntlet session launches **four GPT-5.6 Sol
+- **Stage 2 — Adversarial review (panel).** The gauntlet session launches **four GPT-6 Luna
   high codex lanes/subagents** — each attacking a different rubric slice under the Codex
   deep-research worker contract — then a **GPT-5.6 Sol xhigh judge** that treats the lane findings
   as claims to verify, reruns the Python models, does its
@@ -127,7 +127,7 @@ go; there is nothing else to download or install separately.
 
 | Skill | Role in Gauntlet | Needed by |
 |---|---|---|
-| **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Sonnet 5 medium lanes) | first pass |
+| **`deep-research`** | Stage-1 breadth engine, run at `ultradeep` (4 Sonnet 5 high lanes) | first pass |
 | **`search-as-code`** | deep-research's second-pass source-discovery harness | first pass |
 | **`valuation`** | Damodaran-grounded rNPV/DCF/SOTP engine (dev-stage biotech §4B) | first pass + reviewer |
 | **`fintwit`** | Stage-1 Tier-4 X/sentiment pull → the report's *FinTwit / X Sentiment* section (optional; skipped when no xAI key) | first pass |
@@ -263,15 +263,15 @@ paths do not open from Windows).
   report that carries a prominent "NOT adversarially reviewed" banner and LOW confidence. Use it when
   speed matters more than the extra rigor; the default is always full review.
 - **Reasoning effort — fixed role routing.** Gauntlet defaults the Opus 5 first-pass
-  orchestrator to `high`, all Claude-side Sonnet 5 workers/subagents to `medium`, the GPT-5.6 Sol
-  reviewer judge to `xhigh`, and all reviewer workers/subagents to `high`. The judge reads
-  `REVIEWER_EFFORT` (default `xhigh`); reviewer lanes read `REVIEWER_WORKER_EFFORT` (default
-  `high`). Any lower-effort override must be explicit and recorded in `VERIFICATION_LOG.md`.
+  orchestrator to `high`, all Claude-side Sonnet 5 workers/subagents to `high`, the GPT-5.6 Sol
+  reviewer judge to `xhigh`, and all reviewer workers/subagents to GPT-6 Luna `high`. The judge reads
+  `REVIEWER_EFFORT` (default `xhigh`); reviewer lanes read `REVIEWER_WORKER_MODEL` (default `gpt-6-luna`) and
+  `REVIEWER_WORKER_EFFORT` (default `high`). Any lower-effort override must be explicit and recorded in `VERIFICATION_LOG.md`.
 
 ## Cost & quota (read before running)
 
-A full run is **deliberately heavy** — four Sonnet 5 medium deep-research lanes plus a five-call
-GPT-5.6 Sol codex panel (4 high lanes + 1 xhigh judge), each 15–60 minutes. One run can consume a
+A full run is **deliberately heavy** — four Sonnet 5 high deep-research lanes plus a five-call
+codex panel (4 GPT-6 Luna high lanes + 1 GPT-5.6 Sol xhigh judge), each 15–60 minutes. One run can consume a
 large share of a ChatGPT plan's 5-hour/weekly limits. Use it for **high-stakes names, not routine
 screening**. Set `PANEL=0` to fall back to a single GPT-5.6 Sol xhigh judge when quota is tight.
 
@@ -325,9 +325,9 @@ Two additive validation layers guard the money figures:
 ## Key design invariants (don't break these)
 
 - **`FUSION_FAST` stays 0** — fast mode switches codex to `workspace-write` + `--ignore-user-config`, killing MCP connectors and run-dir writes.
-- **`FUSION_CODEX_SAFETY_FALLBACK` stays 0** — every external panel call remains GPT-5.6 Sol; a failed bounded retry routes to Gauntlet's labeled self-review, not another GPT model.
+- **`FUSION_CODEX_SAFETY_FALLBACK` stays 0** — every external panel call stays on its configured model (GPT-5.6 Sol judge, GPT-6 Luna lanes); a failed bounded retry routes to Gauntlet's labeled self-review, not another GPT model.
 - **Never** swap in the `model-council-fast` runner (its lib hardcodes `FUSION_FAST=1`), and **never** pass `FUSION_RUN_STAGE=review` to the hybrid runner (attaches its peer-review `--output-schema`); gauntlet uses `gauntlet_review`. The whole env contract with that external launcher is **verified at startup** (`run_review.sh --contract-check`): a drifted or missing launcher is reported and Gauntlet's own artifact-equivalent raw-codex launcher runs instead, so the coupling can never degrade a review silently.
 - **Absolute paths only** in codex payloads — the reviewer's cwd is a throwaway scratch dir.
 - Stage 1 skips deep-research's optional Phase 7.6 cross-model critique; Stage 2 is the sole external reviewer path.
-- Reviewer-side subagents are the four GPT-5.6 Sol high lane processes orchestrated by the
+- Reviewer-side subagents are the four GPT-6 Luna high lane processes orchestrated by the
   gauntlet session; every lane is a leaf and never spawns nested subagents.

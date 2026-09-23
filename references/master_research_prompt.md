@@ -177,7 +177,7 @@ you before anything enters the report.
 
 - Drive breadth with the **Claude deep-research skill at the `ultradeep` setting** — mandatory
 for a Gauntlet run (install it first; it chains its Search-as-Code second pass). Its
-four concurrent research lanes are your four **Sonnet 5 (`claude-sonnet-5`), medium-effort** research
+four concurrent research lanes are your four **Sonnet 5 (`claude-sonnet-5`), high-effort** research
 subagents. Give each lane a non-overlapping evidence stream matched to the company's
 archetype — for example (1) demand, TAM, and epidemiology or unit volumes; (2)
 competition, moat, and pipeline or product roadmap; (3) filings, financials, and
@@ -188,7 +188,7 @@ non-overlapping and independently useful.
 - Do not run deep-research Phase 7.6 optional cross-model critique during Gauntlet Stage 1.
   Gauntlet Stage 2 is the sole external reviewer path; duplicating it here consumes quota and
   violates the bounded panel topology.
-- Spawn additional **Sonnet 5 (`claude-sonnet-5`), medium-effort** Agent subagents for any residual
+- Spawn additional **Sonnet 5 (`claude-sonnet-5`), high-effort** Agent subagents for any residual
 coverage gap or deep single-source dive. Every subagent gets a complete brief:
 objective and decision relevance, exact output path and format, lane boundary and
 prohibited overlap, the source-identity/date/locator/direct-excerpt standard,
@@ -1084,7 +1084,7 @@ write FINAL_REPORT.md yet.
 Phase 7 is not a self-review in v2. Execute it per the Gauntlet `SKILL.md`:
 
 - **Stage 2** — external adversarial review of `08_preliminary_report.md` by a GPT-5.6 Sol
-  xhigh judge over GPT-5.6 Sol high workers via codex (`scripts/run_review.sh`), using
+  xhigh judge over GPT-6 Luna high workers via codex (`scripts/run_review.sh`), using
   `references/reviewer_prompt_template.md`.
 - **Stage 3** — adjudication: the first-pass model verifies and dispositions every reviewer
   finding (ACCEPT / PARTIAL / REJECT with evidence), corrects the working research,

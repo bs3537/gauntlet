@@ -135,7 +135,7 @@ present "PASS ≥ 5/6 catches · MARGINAL 4/6 · FAIL ≤ 3/6." "$GT" "answer-sh
 present "$GAUNTLET_LEAD_MODEL_DISPLAY $GAUNTLET_LEAD_EFFORT ORCHESTRATOR" "$SKILL" "first-pass lead route"
 present "$GAUNTLET_WORKER_MODEL_DISPLAY (\`$GAUNTLET_WORKER_MODEL_ID\`) $GAUNTLET_WORKER_EFFORT" "$SKILL" "Claude worker route"
 present "$GAUNTLET_REVIEWER_MODEL_DISPLAY $GAUNTLET_REVIEWER_JUDGE_EFFORT judge" "$SKILL" "reviewer judge route"
-present "$GAUNTLET_REVIEWER_MODEL_DISPLAY $GAUNTLET_REVIEWER_LANE_EFFORT research" "$SKILL" "reviewer worker route"
+present "$GAUNTLET_REVIEWER_LANE_MODEL_DISPLAY $GAUNTLET_REVIEWER_LANE_EFFORT research" "$SKILL" "reviewer worker route"
 present "$GAUNTLET_WORKER_MODEL_DISPLAY (\`$GAUNTLET_WORKER_MODEL_ID\`), ${GAUNTLET_WORKER_EFFORT}-effort" "$MASTER" "master-prompt Claude worker route"
 present "GAUNTLET_CODEX_SAFETY_FALLBACK=0" "$RUNNER" "reviewer cross-model fallback disable"
 present "Skip deep-research Phase 7.6 optional cross-model critique inside Gauntlet" "$SKILL" "bounded external-review topology"
@@ -146,11 +146,13 @@ absent "$GAUNTLET_REVIEWER_MODEL_DISPLAY max" "$SKILL" "stale reviewer judge rou
 # to exactly the configured route. That is what makes a model bump a one-line edit.
 present "{{REVIEWER_MODEL}} {{REVIEWER_JUDGE_EFFORT}} JUDGE" "$TEMPLATE" "review-template judge token"
 absent "$GAUNTLET_REVIEWER_MODEL_DISPLAY" "$TEMPLATE" "hardcoded reviewer name in a tokenized template"
+absent "$GAUNTLET_REVIEWER_LANE_MODEL_DISPLAY" "$TEMPLATE" "hardcoded lane name in a tokenized template"
+present "{{REVIEWER_LANE_MODEL}}, {{REVIEWER_LANE_EFFORT}}-effort research lanes" "$TEMPLATE" "review-template lane token"
 absent "$GAUNTLET_LEAD_MODEL_DISPLAY" "$TEMPLATE" "hardcoded lead name in a tokenized template"
 rendered="$(mktemp)"; trap 'rm -f "$rendered"' EXIT
 if bash "$RENDER" "$TEMPLATE" > "$rendered" 2>/dev/null; then
   present "$GAUNTLET_REVIEWER_MODEL_DISPLAY $GAUNTLET_REVIEWER_JUDGE_EFFORT JUDGE" "$rendered" "rendered judge route"
-  present "$GAUNTLET_REVIEWER_MODEL_DISPLAY, ${GAUNTLET_REVIEWER_LANE_EFFORT}-effort research lanes/subagents" "$rendered" "rendered lane route"
+  present "$GAUNTLET_REVIEWER_LANE_MODEL_DISPLAY, ${GAUNTLET_REVIEWER_LANE_EFFORT}-effort research lanes/subagents" "$rendered" "rendered lane route"
   present "$GAUNTLET_LEAD_MODEL_DISPLAY orchestrator with $GAUNTLET_WORKER_MODEL_DISPLAY" "$rendered" "rendered first-pass provenance"
   grep -qE '\{\{(LEAD|WORKER|REVIEWER)_[A-Z_]*\}\}' "$rendered" &&
     fail "routing token left unresolved after rendering the reviewer template"
@@ -159,13 +161,13 @@ else
 fi
 
 # Executable route (what the launcher would actually pass to codex), also derived.
-lane_route="$(env -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT -u PREFLIGHT QC_MODE=lane \
+lane_route="$(env -u REVIEWER_MODEL -u REVIEWER_WORKER_MODEL -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT -u PREFLIGHT QC_MODE=lane \
   "$RUNNER" --show-routing)" || fail "lane routing probe failed"
-judge_route="$(env -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT -u PREFLIGHT QC_MODE=judge \
+judge_route="$(env -u REVIEWER_MODEL -u REVIEWER_WORKER_MODEL -u REVIEWER_EFFORT -u REVIEWER_WORKER_EFFORT -u PREFLIGHT QC_MODE=judge \
   "$RUNNER" --show-routing)" || fail "judge routing probe failed"
 # Lane route: lane effort, preflight OFF (4 parallel lanes must not ping codex 4x).
 # Judge route: judge effort, preflight ON (fail fast before the long judge wall).
-[ "$lane_route" = "model=$GAUNTLET_REVIEWER_MODEL_ID effort=$GAUNTLET_REVIEWER_LANE_EFFORT qc_mode=lane preflight=0 safety_fallback=disabled" ] ||
+[ "$lane_route" = "model=$GAUNTLET_REVIEWER_LANE_MODEL_ID effort=$GAUNTLET_REVIEWER_LANE_EFFORT qc_mode=lane preflight=0 safety_fallback=disabled" ] ||
   fail "lane executable route mismatch: $lane_route"
 [ "$judge_route" = "model=$GAUNTLET_REVIEWER_MODEL_ID effort=$GAUNTLET_REVIEWER_JUDGE_EFFORT qc_mode=judge preflight=1 safety_fallback=disabled" ] ||
   fail "judge executable route mismatch: $judge_route"

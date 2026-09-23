@@ -31,9 +31,9 @@ generator's unchallenged blind spots and confident-recall hallucinations.
 ```text
 Stage 0  Intake + codex preflight (fail fast)
 Stage 1  FIRST PASS — Opus 5 high ORCHESTRATOR over a research panel: deep-research
-         ultradeep = 4 Sonnet 5 medium lanes (+ Sonnet 5 medium subagents); it QCs/verifies/
+         ultradeep = 4 Sonnet 5 high lanes (+ Sonnet 5 high subagents); it QCs/verifies/
          synthesizes -> 01..07 artifacts + 08_preliminary_report.md (full draft)
-Stage 2  EXTERNAL ADVERSARIAL REVIEW — GPT-5.6 Sol PANEL: 4 GPT-5.6 Sol high research
+Stage 2  EXTERNAL ADVERSARIAL REVIEW — codex PANEL: 4 GPT-6 Luna high research
          lanes attack the draft, then a GPT-5.6 Sol xhigh JUDGE synthesizes them (codex,
          scripts/run_review.sh, background) -> 10_adversarial_review_gpt56sol.md (/100, QC-gated)
 Stage 3  ADJUDICATION — first-pass model dispositions EVERY finding with independent
@@ -45,13 +45,13 @@ Stage 5  FINAL REPORT — master prompt Phase 8 from corrected artifacts -> FINA
 | Role | Model | Where | Effort |
 |---|---|---|---|
 | First-pass orchestrator + adjudicator | Opus 5 (intended) | this Claude Code session | high |
-| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | Claude deep-research ultradeep + Agent subagents | medium |
-| Reviewer research lanes / subagents (×4) | GPT-5.6 Sol | Codex deep-research worker contract; `codex exec` launched by Stage 2 | high |
+| First-pass research lanes / subagents (×4+) | Sonnet 5 (`claude-sonnet-5`) | Claude deep-research ultradeep + Agent subagents | high |
+| Reviewer research lanes / subagents (×4) | GPT-6 Luna (`gpt-6-luna`) | Codex deep-research worker contract; `codex exec` launched by Stage 2 | high |
 | Reviewer orchestrator / judge | GPT-5.6 Sol | `codex exec` (launched by Stage 2) | xhigh |
 
-Both sides fan out, then judge: the Opus 5 high orchestrator drives four Sonnet 5 medium
-deep-research lanes (plus targeted Sonnet 5 medium subagents) and admits only verified evidence; the
-GPT-5.6 Sol xhigh judge synthesizes four GPT-5.6 Sol high adversarial lanes into one scored review.
+Both sides fan out, then judge: the Opus 5 high orchestrator drives four Sonnet 5 high
+deep-research lanes (plus targeted Sonnet 5 high subagents) and admits only verified evidence; the
+GPT-5.6 Sol xhigh judge synthesizes four GPT-6 Luna high research lanes into one scored review.
 The reviewer side gets native live web search, shell, and the scite/fmp/biomcp/perplexity MCPs from
 `~/.codex/config.toml`; it can open the run directory's artifacts and **execute the Python models**.
 
@@ -126,12 +126,12 @@ sections). Do not write `FINAL_REPORT.md` yet.
 You are the **orchestrator/reviewer/judge of a research panel**, not a solo researcher (see the
 master prompt's "Research execution model — Gauntlet fan-out"):
 1. Invoke the **Claude deep-research skill at `ultradeep`** — its four concurrent lanes are your
-   four **Sonnet 5 (`claude-sonnet-5`) medium** research subagents, one per non-overlapping evidence
+   four **Sonnet 5 (`claude-sonnet-5`) high** research subagents, one per non-overlapping evidence
    stream (demand/TAM/epi; competition/moat/pipeline; filings/financials/valuation inputs;
    catalysts/regulatory/legal/mgmt). It chains Search-as-Code as its second pass. **Skip
    deep-research Phase 7.6 optional cross-model critique inside Gauntlet**; Stage 2 is the
    only external reviewer path.
-2. Spawn extra **Sonnet 5 (`claude-sonnet-5`) medium** Agent subagents for residual gaps; each gets
+2. Spawn extra **Sonnet 5 (`claude-sonnet-5`) high** Agent subagents for residual gaps; each gets
    a complete brief and never spawns its own subagents.
 3. QC every lane/subagent artifact, independently verify load-bearing claims, and admit ONLY
    verified evidence into `03_evidence_ledger.csv` (lock rule) and the draft; lane disagreements
@@ -155,11 +155,11 @@ master prompt's "Research execution model — Gauntlet fan-out"):
 
 ## Stage 2 — External adversarial review (GPT-5.6 Sol panel via codex)
 
-The review is a **four-lane panel judged by GPT-5.6 Sol xhigh**. Four GPT-5.6 Sol high research
+The review is a **four-lane panel judged by GPT-5.6 Sol xhigh**. Four GPT-6 Luna high research
 lanes act as the reviewer-side subagents/workers and attack the draft on different rubric slices,
 then one GPT-5.6 Sol xhigh judge verifies, reconciles, and synthesizes them into the single scored
 `/100` review. The lanes follow the Codex WSL deep-research worker routing contract
-(`gpt-5.6-sol`, `high`). **All five codex calls are orchestrated HERE, by this session** — each
+(`gpt-6-luna`, `high`). **All five codex calls are orchestrated HERE, by this session** — each
 `codex exec` lane is a leaf and never spawns nested subagents. Set
 `PANEL=0` to skip the lanes and run the single-judge review only (quota-constrained runs); Stage 4
 round 2 is always judge-only.
@@ -201,8 +201,8 @@ round 2 is always judge-only.
    ```bash
    QC_EXPECT_TICKER="<TICKER>" bash <skill_dir>/scripts/run_review.sh "$RUN_DIR" 1
    ```
-   Model and effort come from `config/routing.env` (currently `gpt-5.6-sol`, judge `xhigh`,
-   lane `high`); `QC_MODE=judge`, `REVIEWER_TIMEOUT_S=3600`, `PREFLIGHT=1` (judge default — one
+   Model and effort come from `config/routing.env` (currently judge `gpt-5.6-sol` `xhigh`,
+   lanes `gpt-6-luna` `high`); `QC_MODE=judge`, `REVIEWER_TIMEOUT_S=3600`, `PREFLIGHT=1` (judge default — one
    cheap codex probe before the long judge wall). The script pins `FUSION_FAST=0`, snapshots
    `01–08` into `review_backup_r1/`, **verifies the external launcher's env contract before
    spending the wall on it** (see the coupling gotcha below), delegates to the hardened
@@ -362,13 +362,13 @@ into chat.
   file) plus the script's promote-on-QC logic is the mitigation — keep both.
 - **Reviewer file clobber**: reviewer is instructed read-only outside its output file, and the
   script snapshots `01–08` to `review_backup_r<round>/` before launch. Restore from there if needed.
-- **codex quota (the panel multiplies it)**: the reviewer panel is FIVE codex calls — 4 GPT-5.6 Sol
+- **codex quota (the panel multiplies it)**: the reviewer panel is FIVE codex calls — 4 GPT-6 Luna
   high lanes + 1 GPT-5.6 Sol xhigh judge — each 15–60 min, so one Gauntlet run can consume a large
   share of the ChatGPT-plan 5-hour/weekly limits. Set `PANEL=0` for a single-judge review when quota
   is tight. Exit 1 with auth/limit errors in the stream log → wait or fall back; the runner's
   Gauntlet disables the launcher's cross-model safety fallback so every external panel call
   remains GPT-5.6 Sol; after the bounded relaunch, use the labeled same-model self-review fallback.
-- **first-pass fan-out cost**: Claude deep-research `ultradeep` runs four Sonnet 5 medium lanes plus their
+- **first-pass fan-out cost**: Claude deep-research `ultradeep` runs four Sonnet 5 high lanes plus their
   Search-as-Code second pass; combined with the codex panel, a full Gauntlet run is deliberately
   heavy. This is intended for high-stakes names, not routine screening.
 - **Never sleep-poll** the background review; the harness re-invokes you when it exits.
@@ -377,7 +377,8 @@ into chat.
 
 | Var | Default | Meaning |
 |---|---|---|
-| `REVIEWER_MODEL` | `gpt-5.6-sol` | codex model for the review |
+| `REVIEWER_MODEL` | judge `gpt-5.6-sol` / lane `gpt-6-luna` | explicit codex model override for this call |
+| `REVIEWER_WORKER_MODEL` | `gpt-6-luna` | codex model for each reviewer research lane/subagent |
 | `REVIEWER_EFFORT` | `xhigh` | `model_reasoning_effort` for the reviewer judge |
 | `REVIEWER_WORKER_EFFORT` | `high` | `model_reasoning_effort` for each reviewer research lane/subagent |
 | `REVIEWER_TIMEOUT_S` | `3600` | hard wall for one review attempt |
@@ -447,7 +448,7 @@ adding a scenario directory with its own `GROUND-TRUTH.md` + `detection.json`.
 ## Dependencies
 
 **Required companion skills (install alongside gauntlet):**
-- **`deep-research`** — Stage 1 first-pass fan-out runs it at `ultradeep` (four Sonnet 5 medium lanes).
+- **`deep-research`** — Stage 1 first-pass fan-out runs it at `ultradeep` (four Sonnet 5 high lanes).
 - **`search-as-code`** — deep-research chains it as its second pass.
 - **`valuation`** — Stage 1 valuation delegates dev-stage biotech rNPV to `valuation/scripts/valuation_engine.py` (master prompt 4B); mirrored in `~/.codex/skills/valuation/` so the reviewer can rerun it.
 - **`hybrid-model-fusion`** — its `scripts/run_codex.sh` is the hardened codex launcher `run_review.sh` prefers.

@@ -11,7 +11,7 @@ The orchestrator copies everything BELOW the `<!-- TEMPLATE BEGINS -->` marker i
 - `{{REVIEW_OUT}}` — absolute path the reviewer must write: round 1 `{{RUN_DIR}}/10_adversarial_review_gpt56sol.md`, round 2 `{{RUN_DIR}}/10b_adversarial_review_gpt56sol_r2.md`
 - `{{PRIOR_ROUND_LINE}}` — round 1: `PRIOR ROUND: none (this is round 1).` · round 2: `PRIOR ROUND: round-1 score was <N>/100; this is round 2 reviewing the CORRECTED draft. Move the score >=2 pts from the prior round, or justify stability.`
 - `{{PRELIMINARY_REPORT_FULL_TEXT}}` — the complete text of `08_preliminary_report.md` (round 2: `08b_preliminary_report_r2.md`), inlined verbatim
-- `{{LANE_FINDINGS}}` — the inlined findings of the four {{REVIEWER_MODEL}} {{REVIEWER_LANE_EFFORT}} adversarial research lanes/subagents (`10_reviewer_lane1..4.md`), concatenated under labeled headers; or the literal `none — single-pass review (panel disabled)` when `PANEL=0`
+- `{{LANE_FINDINGS}}` — the inlined findings of the four {{REVIEWER_LANE_MODEL}} {{REVIEWER_LANE_EFFORT}} adversarial research lanes/subagents (`10_reviewer_lane1..4.md`), concatenated under labeled headers; or the literal `none — single-pass review (panel disabled)` when `PANEL=0`
 
 <!-- TEMPLATE BEGINS -->
 ═══════════════════════════════════════════════════════════
@@ -47,7 +47,7 @@ Supplying the missing second perspective IS your core value. Prioritize these tw
 
 YOU LEAD AN ADVERSARIAL RESEARCH PANEL (orchestrator / reviewer / judge)
 You are the {{REVIEWER_MODEL}} {{REVIEWER_JUDGE_EFFORT}} JUDGE of a four-lane adversarial panel. Four independent
-{{REVIEWER_MODEL}}, {{REVIEWER_LANE_EFFORT}}-effort research lanes/subagents have already attacked this report, each on a
+{{REVIEWER_LANE_MODEL}}, {{REVIEWER_LANE_EFFORT}}-effort research lanes/subagents have already attacked this report, each on a
 different slice of the rubric below (typically: D1 factual grounding and model
 recomputation; D2 blind spots and missed signal; D3–D4 counter-thesis and logical
 chain; D5–D6 source reliability and calibration). Their findings are inlined under
@@ -359,7 +359,7 @@ Working artifacts on disk (read-only; open/execute as needed):
 | {{RUN_DIR}}/07_working_research.md | Working research notes |
 | {{RUN_DIR}}/08_preliminary_report.md | The PRELIMINARY report under review (inlined below) |
 
-LANE FINDINGS — four independent {{REVIEWER_MODEL}} {{REVIEWER_LANE_EFFORT}} adversarial research lanes/subagents
+LANE FINDINGS — four independent {{REVIEWER_LANE_MODEL}} {{REVIEWER_LANE_EFFORT}} adversarial research lanes/subagents
 ────────────────────────────────────────────────
 Claims to verify and adjudicate, not truth. Confirm, incorporate, or refute each.
 

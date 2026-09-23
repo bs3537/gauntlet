@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# run_review.sh — launch the Gauntlet external adversarial reviewer (GPT-5.6 Sol via codex)
+# run_review.sh — launch a Gauntlet external adversarial reviewer call via codex (GPT-5.6 Sol
+# judge, or a GPT-6 Luna research lane with QC_MODE=lane)
 # on an assembled reviewer prompt, then QC-gate the returned review.
 #
 # Usage:
@@ -13,7 +14,9 @@
 # Round 2 expects <run_dir>/09b_reviewer_prompt_r2.txt  -> 10b_adversarial_review_gpt56sol_r2.md
 #
 # Env:
-#   REVIEWER_MODEL      default from config/routing.env (GAUNTLET_REVIEWER_MODEL_ID)
+#   REVIEWER_MODEL      explicit override; default is the config's judge model
+#                       (GAUNTLET_REVIEWER_MODEL_ID) for QC_MODE=judge and lane model for QC_MODE=lane
+#   REVIEWER_WORKER_MODEL   lane default (config GAUNTLET_REVIEWER_LANE_MODEL_ID)
 #   REVIEWER_EFFORT     explicit override; default is the config's judge effort for
 #                       QC_MODE=judge and lane effort for QC_MODE=lane
 #   REVIEWER_WORKER_EFFORT  lane default (config GAUNTLET_REVIEWER_LANE_EFFORT)
@@ -80,11 +83,12 @@ if [ -f "$ROUTING_CONF" ]; then
   . "$ROUTING_CONF"
 fi
 
-REVIEWER_MODEL="${REVIEWER_MODEL:-${GAUNTLET_REVIEWER_MODEL_ID:-gpt-5.6-sol}}"
 QC_MODE="${QC_MODE:-judge}"   # judge = full scored-review gate; lane = size-only
 case "$QC_MODE" in
-  lane)  REVIEWER_EFFORT="${REVIEWER_EFFORT:-${REVIEWER_WORKER_EFFORT:-${GAUNTLET_REVIEWER_LANE_EFFORT:-high}}}" ;;
-  judge) REVIEWER_EFFORT="${REVIEWER_EFFORT:-${GAUNTLET_REVIEWER_JUDGE_EFFORT:-xhigh}}" ;;
+  lane)  REVIEWER_MODEL="${REVIEWER_MODEL:-${REVIEWER_WORKER_MODEL:-${GAUNTLET_REVIEWER_LANE_MODEL_ID:-gpt-6-luna}}}"
+         REVIEWER_EFFORT="${REVIEWER_EFFORT:-${REVIEWER_WORKER_EFFORT:-${GAUNTLET_REVIEWER_LANE_EFFORT:-high}}}" ;;
+  judge) REVIEWER_MODEL="${REVIEWER_MODEL:-${GAUNTLET_REVIEWER_MODEL_ID:-gpt-5.6-sol}}"
+         REVIEWER_EFFORT="${REVIEWER_EFFORT:-${GAUNTLET_REVIEWER_JUDGE_EFFORT:-xhigh}}" ;;
   *) echo "[run_review] invalid QC_MODE: $QC_MODE (expected judge or lane)" >&2; exit 2 ;;
 esac
 # Fail-fast preflight defaults on for the judge (one call, cheap insurance against
